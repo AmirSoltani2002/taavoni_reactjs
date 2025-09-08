@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Welcome from "./pages/welcome";
 import {Signin} from "./pages/signin";
 import {Signup} from "./pages/signup";
@@ -17,7 +17,6 @@ function App() {
           <ErrorBoundary>
             <Layout>
               <Routes>
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/*" element={<LockedPage />} />
               </Routes>
             </Layout>

@@ -1,4 +1,4 @@
-export function postData<Type>(url: string, data: Type) {
+export function postData<Type>(url: string, data: Type, token?: string) {
   // Default options are marked with *
   return fetch(url, {
     method: 'POST', // *GET, POST, PUT, DELETE, etc.
@@ -6,8 +6,8 @@ export function postData<Type>(url: string, data: Type) {
     // cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
     credentials: 'same-origin', // include, *same-origin, omit
     headers: {
-      'Content-Type': 'application/json'
-      // 'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Type': 'application/json',
+      'Authorization': token ? `Bearer ${token}`: ''
     },
     redirect: 'follow', // manual, *follow, error
     referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url

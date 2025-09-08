@@ -12,12 +12,15 @@ import { Input } from "../ui/input"
 import { Label } from "../ui/label"
 import { api_base_url } from "../../config"
 import type { LoginData } from "./interfaces"
+import { useNavigate } from "react-router-dom"
+import Cookies from "js-cookie"
 
 export function LoginForm({
   className,
   type,
   ...props
 }: React.ComponentProps<"div"> & { type: string }) {
+  const navigate = useNavigate();
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
@@ -30,12 +33,14 @@ export function LoginForm({
         <CardContent>
           <form onSubmit={e => {
             e.preventDefault();
-            postData<LoginData>(api_base_url + '/auth/email', {
+            postData<LoginData>(api_base_url + '/auth/email/', {
               email: (e.target as HTMLFormElement).email.value,
-              password: (e.target as HTMLFormElement).password.value,
-              type: type
+              password: (e.target as HTMLFormElement).password.value
             }).then(response => {
-              console.log(response); // JSON data parsed by `data.json()` call
+              if(response.token) {
+                Cookies.set('token', response.token);
+              }
+              navigate('/dashboard', { replace: true});
             });
           }}>
             <div className="flex flex-col gap-6">
