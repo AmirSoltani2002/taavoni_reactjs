@@ -30,7 +30,7 @@ export function LoginForm({
         <CardContent>
           <form onSubmit={e => {
             e.preventDefault();
-            postData<LoginData>(api_base_url + '/login', {
+            postData<LoginData>(api_base_url + '/auth/email', {
               email: (e.target as HTMLFormElement).email.value,
               password: (e.target as HTMLFormElement).password.value,
               type: type
@@ -65,15 +65,12 @@ export function LoginForm({
                 <Button type="submit" className="w-full">
                   ورود
                 </Button>
-                <Button onClick={e => e.preventDefault()} type="button" variant="outline" className="w-full">
-                  ورود با گوگل
-                </Button>
               </div>
             </div>
             {type !== 'admin' && <div className="mt-4 text-center text-sm">
               حساب کاربری ندارید؟
               <a href="/signup" className="underline underline-offset-4">
-                ثبتنام
+                {"ثبت‌نام"}
               </a>
             </div>}
           </form>

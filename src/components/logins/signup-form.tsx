@@ -27,7 +27,7 @@ import {
 import { SignupDataMap, type SignupData } from "./interfaces"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
-import { toast } from "sonner"
+import { toast } from "sonner";
 export function SignupForm({
   className,
   ...props
@@ -45,16 +45,17 @@ export function SignupForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={e => {
+          <form onSubmit={(e) => {
             e.preventDefault();
             // Handle form submission logic here
             if((e.target as HTMLFormElement).password.value !== (e.target as HTMLFormElement).passwordRepeat.value){
-              toast
+              toast("رمز عبور با تکرار آن مطابقت ندارد.");
+              return;
             }
             const formData = new FormData(e.currentTarget);
             const data = {...Object.fromEntries(formData.entries()), birthDate: `${date?.toLocaleDateString(timeFormat)}`};
             console.log({data});
-            postData<SignupData>(api_base_url + '/signup', data as SignupData).then(response => {
+            postData<SignupData>(api_base_url + '/users', data as SignupData).then(response => {
               console.log(response);
             });
           }}>
@@ -216,7 +217,7 @@ export function SignupForm({
               </div>
               <div className="flex flex-col gap-3">
                 <Button type="submit" className="w-full">
-                  ورود
+                  {"ثبت‌نام"}
                 </Button>
               </div>
             </div>

@@ -1,6 +1,6 @@
 import { StepBack } from "lucide-react"
 import { project_name } from "../config"
-import { SignupForm } from "../components/logins/signin-form"
+import { SignupForm } from "../components/logins/signup-form"
 
 export const Signup: React.FC = () => {
 

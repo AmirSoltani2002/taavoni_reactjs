@@ -1,3 +1,11 @@
+@font-face {
+  font-family: 'Anjoman';
+  src: url('/src/assets/fonts/AnjomanVariableGX.ttf') format('truetype-variations');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -116,6 +124,9 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    font-family: 'Anjoman', sans-serif;
+    direction: rtl;
+    scroll-behavior: smooth;
   }
   body {
     @apply bg-background text-foreground;
