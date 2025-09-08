@@ -1,4 +1,4 @@
-import { Building, ChartBar, Home, User } from "lucide-react"
+import { Building, ChartBar, ChevronDown, Home, User } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 
 import {
@@ -8,9 +8,13 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "./ui/collapsible";
 
 export function AppSidebar() {
   const location = useLocation();
@@ -43,23 +47,57 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel>پنل مدیریت</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map((item) => {
-                const isActive =
-                  location.pathname === item.url ||
-                  location.pathname.startsWith(`${item.url}/`);
+            {items.map((item) => {
+              const isActive =
+                location.pathname === item.url ||
+                location.pathname.startsWith(`${item.url}/`);
+              if(item.title === 'داشبورد'){
                 return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive}>
-                      <NavLink to={item.url}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  <SidebarMenu>
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild isActive={isActive}>
+                        <NavLink to={item.url}>
+                          <item.icon />
+                          <span>{item.title}</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </SidebarMenu>
                 );
-              })}
-            </SidebarMenu>
+              } else {
+                const isNew = location.pathname.startsWith(item.url) && location.pathname.endsWith('create');
+                const isList = location.pathname.startsWith(item.url) && location.pathname.endsWith('list');
+                return (
+                  <Collapsible key={item.title} defaultOpen={isActive}>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton isActive={isActive} className="justify-between">
+                        <div className="flex items-center gap-2">
+                          <item.icon />
+                          <span>{item.title}</span>
+                        </div>
+                        <ChevronDown />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenu>
+                        <SidebarMenuSub>
+                          <SidebarMenuSubItem>
+                            <NavLink to={`${item.url}/list`} className={isList ? 'font-bold' : ''}>
+                              {`مشاهده همه ${item.title}`}
+                            </NavLink>
+                          </SidebarMenuSubItem>
+                          <SidebarMenuSubItem>
+                            <NavLink to={`${item.url}/create`} className={isNew ? 'font-bold' : ''}>
+                              {`ایجاد ${item.title} جدید`}
+                            </NavLink>
+                          </SidebarMenuSubItem>
+                        </SidebarMenuSub>
+                      </SidebarMenu>
+                    </CollapsibleContent>
+                  </Collapsible>
+                );
+              }
+            })}
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
