@@ -10,13 +10,13 @@ import {
   PopoverTrigger,
 } from "../ui/popover"
 
-export const Calendar22 = ({title = 'تاریخ تولد', date, setDate}: {title?: string, date: Date | undefined, setDate: (date: Date | undefined) => void}) => {
+export const Calendar22 = ({title, date, setDate}: {title?: string, date: Date | undefined, setDate: (date: Date | undefined) => void}) => {
   const [open, setOpen] = React.useState(false)
   return (
     <div className="flex flex-col gap-3">
-      <Label htmlFor="date" className="px-1 -mb-2.5">
+      {title && <Label htmlFor="date" className="px-1 -mb-2.5">
         {title}
-      </Label>
+      </Label>}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -36,6 +36,7 @@ export const Calendar22 = ({title = 'تاریخ تولد', date, setDate}: {titl
             onSelect={setDate}
             captionLayout="dropdown"
             className="rounded-lg border shadow-sm"
+            endMonth={new Date((new Date()).getFullYear() + 10, 12)}
           />
         </PopoverContent>
       </Popover>

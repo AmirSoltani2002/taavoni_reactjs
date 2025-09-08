@@ -5,6 +5,7 @@ import {Signup} from "./pages/signup";
 import Layout from "./components/app/layout";
 import LockedPage from "./components/app/locked-page";
 import ErrorBoundary from "./components/app/ErrorBoundry";
+import ProjectCreate from "./pages/projects/create";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <ErrorBoundary>
             <Layout>
               <Routes>
+                <Route path="/projects/create" element={<ErrorBoundary><ProjectCreate /></ErrorBoundary>} />
                 <Route path="/*" element={<LockedPage />} />
               </Routes>
             </Layout>

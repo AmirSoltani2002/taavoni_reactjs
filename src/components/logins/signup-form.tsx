@@ -66,6 +66,7 @@ export function SignupForm({
                     <div className="grid gap-3">  
                         {(item === 'تاریخ تولد') && (
                             <Calendar22
+                                title="تاریخ تولد"
                                 date={date}
                                 setDate={setDate}
                             />

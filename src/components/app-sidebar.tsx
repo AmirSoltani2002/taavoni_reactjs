@@ -8,7 +8,6 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
@@ -27,16 +26,22 @@ export function AppSidebar() {
     },
     {
       title: "کاربران",
+      title_create: "ایجاد کاربر جدید",
+      title_list: "مشاهده همه کاربران",
       url: "/users",
       icon: User,
     },
     {
       title: "پروژه‌ها",
+      title_create: "ایجاد پروژه جدید",
+      title_list: "مشاهده همه پروژه‌ها",
       url: "/projects",
       icon: Building,
     },
     {
       title: "آگهی‌ها",
+      title_create: "ایجاد آگهی جدید",
+      title_list: "مشاهده همه آگهی‌ها",
       url: "/sales",
       icon: ChartBar,
     },
@@ -83,12 +88,12 @@ export function AppSidebar() {
                         <SidebarMenuSub>
                           <SidebarMenuSubItem>
                             <NavLink to={`${item.url}/list`} className={isList ? 'font-bold' : ''}>
-                              {`مشاهده همه ${item.title}`}
+                              {item.title_list}
                             </NavLink>
                           </SidebarMenuSubItem>
                           <SidebarMenuSubItem>
                             <NavLink to={`${item.url}/create`} className={isNew ? 'font-bold' : ''}>
-                              {`ایجاد ${item.title} جدید`}
+                              {item.title_create}
                             </NavLink>
                           </SidebarMenuSubItem>
                         </SidebarMenuSub>
