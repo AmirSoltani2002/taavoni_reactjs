@@ -14,6 +14,7 @@ import { api_base_url } from "../../config"
 import type { LoginData } from "./interfaces"
 import { useNavigate } from "react-router-dom"
 import Cookies from "js-cookie"
+import { toast } from "sonner"
 
 export function LoginForm({
   className,
@@ -41,6 +42,8 @@ export function LoginForm({
                 Cookies.set('token', response.token);
               }
               navigate('/dashboard', { replace: true});
+            }).catch(err => {
+              toast.error(err?.message ?? "دسترسی به اینترنت متصل نیست.")
             });
           }}>
             <div className="flex flex-col gap-6">

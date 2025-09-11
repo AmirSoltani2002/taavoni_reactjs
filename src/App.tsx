@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Welcome from "./pages/welcome";
 import {Signin} from "./pages/signin";
 import {Signup} from "./pages/signup";
-import Layout from "./components/app/layout";
+import Layout, {SimpleLayout} from "./components/app/layout";
 import LockedPage from "./components/app/locked-page";
 import ErrorBoundary from "./components/app/ErrorBoundry";
 import ProjectCreate from "./pages/projects/create";
@@ -12,8 +12,8 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<ErrorBoundary><Welcome /></ErrorBoundary>} />
-        <Route path="/signin" element={<ErrorBoundary><Signin /></ErrorBoundary>} />
-        <Route path="/signup" element={<ErrorBoundary><Signup /></ErrorBoundary>} />
+        <Route path="/signin" element={<SimpleLayout><Signin /></SimpleLayout>} />
+        <Route path="/signup" element={<SimpleLayout><Signup /></SimpleLayout>} />
         <Route path="/*" element={
           <ErrorBoundary>
             <Layout>

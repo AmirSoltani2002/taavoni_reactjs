@@ -2,6 +2,7 @@ import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/s
 import { AppSidebar } from "@/components/app-sidebar"
 import Cookies from 'js-cookie';
 import { Toaster } from "@/components/ui/sonner";
+import ErrorBoundary from "./ErrorBoundry";
  
 export default function Layout({ children }: { children: React.ReactNode }) {
   const defaultOpen = Cookies.get('sidebar_state') === 'true';
@@ -14,5 +15,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <Toaster />
       </SidebarInset>
     </SidebarProvider>
+  )
+}
+export function SimpleLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <ErrorBoundary>
+      <main>{children}</main>
+      <Toaster richColors position='top-center' />
+    </ErrorBoundary>
   )
 }
