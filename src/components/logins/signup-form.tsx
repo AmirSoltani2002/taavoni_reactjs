@@ -1,7 +1,7 @@
 import * as React from "react"
 import { cn } from "../../lib/utils"
 import { Button } from "../ui/button"
-import { api_base_url, timeFormat } from "../../config"
+import { timeFormat } from "../../config"
 import { Calendar22 } from "../calendars/calendar"
 import {Switch} from "../ui/switch"
 import { postData } from "../../general"
@@ -55,7 +55,7 @@ export function SignupForm({
             const formData = new FormData(e.currentTarget);
             const data = {...Object.fromEntries(formData.entries()), birthDate: `${date?.toLocaleDateString(timeFormat)}`};
             console.log({data});
-            postData<SignupData>(api_base_url + '/users', data as SignupData).then(response => {
+            postData<SignupData>('/users', data as SignupData).then(response => {
               console.log(response);
             });
           }}>

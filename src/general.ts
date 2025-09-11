@@ -5,34 +5,21 @@ export const getToken = () => {
   return Cookies.get('token') || '';
 }
 
-export function postData<Type>(url: string, data: Type, token?: string) {
+export function postData<Type>(endpoint: string, data: Type, tokenRequired: boolean = false) {
   // Default options are marked with *
-  return fetch(url, {
+  const token = getToken();
+  return fetch(`${api_base_url}${endpoint}`, {
     method: 'POST', // *GET, POST, PUT, DELETE, etc.
     // mode: 'cors', // no-cors, *cors, same-origin
     // cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
     credentials: 'same-origin', // include, *same-origin, omit
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': token ? `Bearer ${token}`: ''
+      'Authorization': (token && tokenRequired) ? `Bearer ${token}`: ''
     },
     redirect: 'follow', // manual, *follow, error
     referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
     body: JSON.stringify(data) // body data type must match "Content-Type" header
-  })
-  .then(response => response.json()) // parses JSON response into native JavaScript objects
-}
-
-export function postForm(url: string, data: FormData) {
-  return fetch(url, {
-    method: 'POST',
-    credentials: 'same-origin', // include, *same-origin, omit
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    redirect: 'follow', // manual, *follow, error
-    referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
-    body: data
   })
   .then(response => response.json()) // parses JSON response into native JavaScript objects
 }

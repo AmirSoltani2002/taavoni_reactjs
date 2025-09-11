@@ -10,7 +10,6 @@ import {
 } from "../ui/card"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
-import { api_base_url } from "../../config"
 import type { LoginData } from "./interfaces"
 import { useNavigate } from "react-router-dom"
 import Cookies from "js-cookie"
@@ -34,7 +33,7 @@ export function LoginForm({
         <CardContent>
           <form onSubmit={e => {
             e.preventDefault();
-            postData<LoginData>(api_base_url + '/auth/email/', {
+            postData<LoginData>('/auth/email/', {
               email: (e.target as HTMLFormElement).email.value,
               password: (e.target as HTMLFormElement).password.value
             }).then(response => {
