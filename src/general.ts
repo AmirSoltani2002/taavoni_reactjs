@@ -1,3 +1,10 @@
+import Cookies from "js-cookie";
+import { api_base_url } from "./config";
+
+export const getToken = () => {
+  return Cookies.get('token') || '';
+}
+
 export function postData<Type>(url: string, data: Type, token?: string) {
   // Default options are marked with *
   return fetch(url, {
@@ -29,3 +36,28 @@ export function postForm(url: string, data: FormData) {
   })
   .then(response => response.json()) // parses JSON response into native JavaScript objects
 }
+
+export const getTable = async(tableName: string, onGot?: (data: any) => void) => {
+  const token =  getToken()
+  try{
+    const resp = await fetch(`${api_base_url}/${tableName}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': token ? `Bearer ${token}`: ''
+      }
+    });
+    if(resp.ok){
+      const data = await resp.json();
+      console.info({data});
+      if(onGot){
+        onGot(data);
+      } else {
+        return data;
+      }
+    }
+  } catch (err: any) {
+    return []
+  }
+  
+}
+

@@ -6,6 +6,7 @@ import Layout, {SimpleLayout} from "./components/app/layout";
 import LockedPage from "./components/app/locked-page";
 import ErrorBoundary from "./components/app/ErrorBoundry";
 import ProjectCreate from "./pages/projects/create";
+import UsersList from "./pages/users/userList";
 
 function App() {
   return (
@@ -18,7 +19,8 @@ function App() {
           <ErrorBoundary>
             <Layout>
               <Routes>
-                <Route path="/projects/create" element={<ErrorBoundary><ProjectCreate /></ErrorBoundary>} />
+                <Route path="/projects/create" element={<ProjectCreate />} />
+                <Route path="/users/list" element={<UsersList />} />
                 <Route path="/*" element={<LockedPage />} />
               </Routes>
             </Layout>
