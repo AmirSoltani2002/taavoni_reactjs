@@ -7,6 +7,7 @@ import LockedPage from "./components/app/locked-page";
 import ErrorBoundary from "./components/app/ErrorBoundry";
 import ProjectCreate from "./pages/projects/create";
 import UsersList from "./pages/users/userList";
+import UserCreate from "./pages/users/create";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
               <Routes>
                 <Route path="/projects/create" element={<ProjectCreate />} />
                 <Route path="/users/list" element={<UsersList />} />
+                <Route path="/users/create" element={<UserCreate />} />
                 <Route path="/*" element={<LockedPage />} />
               </Routes>
             </Layout>

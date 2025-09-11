@@ -12,7 +12,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <SidebarInset>
         <SidebarTrigger />
         <main>{children}</main>
-        <Toaster />
+        <Toaster richColors position='top-center' expand />
       </SidebarInset>
     </SidebarProvider>
   )

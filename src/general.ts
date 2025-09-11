@@ -1,5 +1,6 @@
 import Cookies from "js-cookie";
 import { api_base_url } from "./config";
+import { toast } from "sonner";
 
 export const getToken = () => {
   return Cookies.get('token') || '';
@@ -24,7 +25,7 @@ export function postData<Type>(endpoint: string, data: Type, tokenRequired: bool
   .then(response => response.json()) // parses JSON response into native JavaScript objects
 }
 
-export const getTable = async(tableName: string, onGot?: (data: any) => void) => {
+export const getTable = async(tableName: string, onGot?: (data: any) => void, verbose: boolean=true) => {
   const token =  getToken()
   try{
     const resp = await fetch(`${api_base_url}/${tableName}`, {
@@ -35,7 +36,6 @@ export const getTable = async(tableName: string, onGot?: (data: any) => void) =>
     });
     if(resp.ok){
       const data = await resp.json();
-      console.info({data});
       if(onGot){
         onGot(data);
       } else {
@@ -43,8 +43,145 @@ export const getTable = async(tableName: string, onGot?: (data: any) => void) =>
       }
     }
   } catch (err: any) {
+    if(verbose){
+      if(err.message){
+        toast.error(err.message);
+      } else {
+        toast.error('خطایی رخ داده است');
+      }
+    }
     return []
+  } 
+}
+
+export const postTable = async(tableName: string, row: any, onPosted?: (data: any) => void, verbose: boolean=true) => {
+  const token =  getToken()
+  try{
+    const resp = await fetch(`${api_base_url}/${tableName}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}`: ''
+      },
+      body: JSON.stringify(row)
+    });
+    if(resp.ok){
+      const data = await resp.json();
+      console.info({data});
+      if(onPosted){
+        onPosted(data);
+      } else {
+        return data;
+      }
+    } else {
+      if(verbose){
+        const err = await resp.json();
+        if(err.message){
+          if(typeof err.message === 'object') {
+            Object.values(err.message).forEach((m: any) => {
+              toast.error(m as string);
+            });
+            return;
+          }
+          toast.error(err.message);
+        } else {
+          toast.error('خطایی رخ داده است');
+        }
+      }
+    }
+  } catch (err: any) {
+    if(verbose){
+      if(err.message){
+        toast.error(err.message);
+      } else {
+        toast.error('خطایی رخ داده است');
+      }
+    }
+    return null
   }
-  
+}
+
+export const deleteTableRow = async(tableName: string, id: number, onDeleted?: (data: any) => void, verbose: boolean=true) => {
+  const token =  getToken()
+  try{
+    const resp = await fetch(`${api_base_url}/${tableName}/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': token ? `Bearer ${token}`: ''
+      }
+    });
+    if(resp.ok){
+      const data = await resp.json();
+      console.info({data});
+      if(onDeleted){
+        onDeleted(data);
+      } else {
+        return data;
+      }
+    } else {
+      if(verbose){
+        const err = await resp.json();
+        if(err.message){
+          if(typeof err.message === 'object') {
+            Object.values(err.message).forEach((m: any) => {
+              toast.error(m as string);
+            });
+            return;
+          }
+          toast.error(err.message);
+        } else {
+          toast.error('خطایی رخ داده است');
+        }
+      }
+    }
+  } catch (err: any) {
+    if(verbose){
+      if(err.message){
+        toast.error(err.message);
+      } else {
+        toast.error('خطایی رخ داده است');
+      }
+    }
+    return null
+  }
+}
+export const updateTableRow = async(tableName: string, id: number, row: any, onUpdated?: (data: any) => void, verbose: boolean=true) => {
+  const token =  getToken()
+  try{
+    const resp = await fetch(`${api_base_url}/${tableName}/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}`: ''
+      },
+      body: JSON.stringify(row)
+    });
+    if(resp.ok){
+      const data = await resp.json();
+      console.info({data});
+      if(onUpdated){
+        onUpdated(data);
+      } else {
+        return data;
+      }
+    } else {
+      if(verbose){
+        const err = await resp.json();
+        if(err.message){
+          if(typeof err.message === 'object') {
+            Object.values(err.message).forEach((m: any) => {
+              toast.error(m as string);
+            });
+            return;
+          }
+          toast.error(err.message);
+        } else {
+          toast.error('خطایی رخ داده است');
+        }
+      }
+    }
+  } catch (err: any) {
+    return null
+  }
 }
 
