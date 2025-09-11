@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -60,7 +59,6 @@ const initialState: UserForm = {
 export default function UserCreate() {
   const [form, setForm] = useState<UserForm>(initialState);
   const [birthDate, setBirthDate] = useState<Date | undefined>(undefined);
-  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
