@@ -6,6 +6,7 @@ export const getToken = () => {
   return Cookies.get('token') || '';
 }
 
+export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 export function postData<Type>(endpoint: string, data: Type, tokenRequired: boolean = false) {
   // Default options are marked with *
   const token = getToken();
@@ -41,6 +42,28 @@ export const getTable = async(tableName: string, onGot?: (data: any) => void, ve
       } else {
         return data;
       }
+    } else if(resp.status === 401) {
+      toast.error('توکن شما منقضی شده است. لطفا دوباره وارد شوید');
+      // Go to login page
+      await sleep(3000);
+      window.location.href = '/';
+      return [];
+    } else {
+      if(verbose){
+        const err = await resp.json();
+        if(err.message){
+          if(typeof err.message === 'object') {
+            Object.values(err.message).forEach((m: any) => {
+              toast.error(m as string);
+            });
+            return;
+          }
+          toast.error(err.message);
+        }
+        else {
+          toast.error('خطایی رخ داده است');
+        }
+      }
     }
   } catch (err: any) {
     if(verbose){
@@ -73,6 +96,12 @@ export const postTable = async(tableName: string, row: any, onPosted?: (data: an
       } else {
         return data;
       }
+    } else if(resp.status === 401) {
+      toast.error('توکن شما منقضی شده است. لطفا دوباره وارد شوید');
+      // Go to login page
+      await sleep(3000);
+      window.location.href = '/';
+      return [];
     } else {
       if(verbose){
         const err = await resp.json();
@@ -84,7 +113,8 @@ export const postTable = async(tableName: string, row: any, onPosted?: (data: an
             return;
           }
           toast.error(err.message);
-        } else {
+        }
+        else {
           toast.error('خطایی رخ داده است');
         }
       }
@@ -118,6 +148,12 @@ export const deleteTableRow = async(tableName: string, id: number, onDeleted?: (
       } else {
         return data;
       }
+    } else if(resp.status === 401) {
+      toast.error('توکن شما منقضی شده است. لطفا دوباره وارد شوید');
+      // Go to login page
+      await sleep(3000);
+      window.location.href = '/';
+      return [];
     } else {
       if(verbose){
         const err = await resp.json();
@@ -129,7 +165,8 @@ export const deleteTableRow = async(tableName: string, id: number, onDeleted?: (
             return;
           }
           toast.error(err.message);
-        } else {
+        }
+        else {
           toast.error('خطایی رخ داده است');
         }
       }
@@ -164,6 +201,12 @@ export const updateTableRow = async(tableName: string, id: number, row: any, onU
       } else {
         return data;
       }
+    } else if(resp.status === 401) {
+      toast.error('توکن شما منقضی شده است. لطفا دوباره وارد شوید');
+      // Go to login page
+      await sleep(3000);
+      window.location.href = '/';
+      return [];
     } else {
       if(verbose){
         const err = await resp.json();
@@ -175,7 +218,8 @@ export const updateTableRow = async(tableName: string, id: number, row: any, onU
             return;
           }
           toast.error(err.message);
-        } else {
+        }
+        else {
           toast.error('خطایی رخ داده است');
         }
       }

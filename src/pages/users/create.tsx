@@ -23,12 +23,11 @@ type UserForm = {
   homePhone: string;
   workPhone: string;
   nationalNumber: string;
-  nationalCard: string;
   address: string;
   sex: "male" | "female" | "";
   birthDay: string;
   type: "admin" | "tehranUni" | "otherUni" | "free" | "employee" | "";
-  isargaryPercent: number | null;
+  isargaryPercent: string | undefined;
   azadeEsaratMonths: number | null;
   azadeMonths: number | null;
   shahedFamilyNumber: number | null;
@@ -44,15 +43,14 @@ const initialState: UserForm = {
   homePhone: "",
   workPhone: "",
   nationalNumber: "",
-  nationalCard: "",
   address: "",
   sex: "",
   birthDay: "",
   type: "",
-  isargaryPercent: null,
-  azadeEsaratMonths: null,
-  azadeMonths: null,
-  shahedFamilyNumber: null,
+  isargaryPercent: undefined,
+  azadeEsaratMonths: 0,
+  azadeMonths: 0,
+  shahedFamilyNumber: 0,
   shahedRelation: "",
 };
 
@@ -166,7 +164,16 @@ export default function UserCreate() {
           </div>
           <div>
             <Label>درصد ایثارگری</Label>
-            <Input name="isargaryPercent" value={form.isargaryPercent ?? ""} onChange={handleNumberChange} type="number" min="0" max="100" />
+            <Select value={form.isargaryPercent} onValueChange={v => handleSelect("isargaryPercent", v)} required>
+              <SelectTrigger>
+                <SelectValue placeholder="انتخاب کنید" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10-15">۱۰-۱۵٪</SelectItem>
+                <SelectItem value="15-20">۱۵-۲۰٪</SelectItem>
+                <SelectItem value="+20">بیش از ۲۰٪</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label>ماه های اسارت</Label>

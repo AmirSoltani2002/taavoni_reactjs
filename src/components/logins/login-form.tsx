@@ -39,8 +39,12 @@ export function LoginForm({
             }).then(response => {
               if(response.token) {
                 Cookies.set('token', response.token);
+                navigate('/dashboard', { replace: true});
+              } else if(response.message) {
+                toast.error(response.message);
+              } else {
+                toast.error('خطا در ورود به سیستم، لطفا دوباره تلاش کنید');
               }
-              navigate('/dashboard', { replace: true});
             }).catch(err => {
               toast.error(err?.message ?? "دسترسی به اینترنت متصل نیست.")
             });
