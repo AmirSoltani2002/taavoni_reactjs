@@ -182,6 +182,7 @@ export const deleteTableRow = async(tableName: string, id: number, onDeleted?: (
       const data = await resp.json();
       console.info({data});
       if(onDeleted){
+        toast.success('حذف با موفقیت انجام شد');
         onDeleted(data);
       } else {
         return data;

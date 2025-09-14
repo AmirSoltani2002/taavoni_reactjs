@@ -14,7 +14,7 @@ import { postTable } from "@/general";
 import { toast } from "sonner";
 
 // User type based on columns.tsx
-type UserForm = {
+export type UserForm = {
   name: string;
   lastName: string;
   email: string;
@@ -34,7 +34,7 @@ type UserForm = {
   shahedRelation: "azade_wife" | "azade_child" | "jan_wife" | "jan_child" | "";
 };
 
-const initialState: UserForm = {
+export const initialState: UserForm = {
   name: "",
   lastName: "",
   email: "",
@@ -54,9 +54,18 @@ const initialState: UserForm = {
   shahedRelation: "",
 };
 
-export default function UserCreate() {
-  const [form, setForm] = useState<UserForm>(initialState);
-  const [birthDate, setBirthDate] = useState<Date | undefined>(undefined);
+
+type UserCreateProps = {
+  initialValues?: UserForm;
+  onSubmit?: (values: UserForm) => void;
+  isEdit?: boolean;
+};
+
+export default function UserCreate({ initialValues, onSubmit, isEdit }: UserCreateProps) {
+  const [form, setForm] = useState<UserForm>(initialValues || initialState);
+  const [birthDate, setBirthDate] = useState<Date | undefined>(
+    initialValues?.birthDay ? new Date(initialValues.birthDay) : undefined
+  );
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -74,20 +83,25 @@ export default function UserCreate() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if(!form.birthDay) {
-        toast.error('تاریخ تولد الزامی است');
-         return;
+    if (!form.birthDay) {
+      toast.error('تاریخ تولد الزامی است');
+      return;
     }
-    // TODO: Replace with actual API call
-    // Example: await createUser(form)
-    postTable('users', form, (_data) => {toast.success('کاربر با موفقیت ایجاد شد'); setForm(initialState); setBirthDate(undefined);});
-    // navigate("/users/list");
+    if (onSubmit) {
+      onSubmit(form);
+    } else {
+      postTable('users', form, (_data) => {
+        toast.success('کاربر با موفقیت ایجاد شد');
+        setForm(initialState);
+        setBirthDate(undefined);
+      });
+    }
   };
 
   return (
     <div className="container mx-auto max-w-xl py-10">
-      <h1 className="text-2xl font-bold mb-6">ایجاد کاربر جدید</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
+  <h1 className="text-2xl font-bold mb-6">{isEdit ? "ویرایش کاربر" : "ایجاد کاربر جدید"}</h1>
+  <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label>نام*</Label>
@@ -101,10 +115,10 @@ export default function UserCreate() {
             <Label>ایمیل*</Label>
             <Input name="email" value={form.email} onChange={handleChange} type="email" required />
           </div>
-          <div>
+          {!isEdit && <div>
             <Label>رمز عبور*</Label>
             <Input name="password" value={form.password} onChange={handleChange} type="password" required />
-          </div>
+          </div>}
           <div>
             <Label>موبایل*</Label>
             <Input name="mobile" value={form.mobile} onChange={handleChange} required />
@@ -202,7 +216,7 @@ export default function UserCreate() {
             </Select>
           </div>
         </div>
-        <Button type="submit" className="w-full mt-4">ایجاد کاربر</Button>
+        <Button type="submit" className="w-full mt-4">{`${isEdit ? 'تغییر' : 'افزودن'} کاربر`}</Button>
       </form>
     </div>
   );

@@ -141,15 +141,4 @@ export const columns: ColumnDef<User>[] = [
             }
         }
     },
-    {
-        accessorKey: "id",
-        header: "عملیات",
-        cell: ({ row }) => (
-            <div className="flex gap-2" key={row.original.id}>
-                <button className="text-blue-500 hover:underline">ویرایش</button>
-                <button className="text-red-500 hover:underline">حذف</button>
-            </div>
-        ),
-    },
-    
 ]
