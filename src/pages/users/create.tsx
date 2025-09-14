@@ -80,7 +80,7 @@ export default function UserCreate() {
     }
     // TODO: Replace with actual API call
     // Example: await createUser(form)
-    postTable('users', form);
+    postTable('users', form, (_data) => {toast.success('کاربر با موفقیت ایجاد شد'); setForm(initialState); setBirthDate(undefined);});
     // navigate("/users/list");
   };
 
@@ -164,7 +164,7 @@ export default function UserCreate() {
           </div>
           <div>
             <Label>درصد ایثارگری</Label>
-            <Select value={form.isargaryPercent} onValueChange={v => handleSelect("isargaryPercent", v)} required>
+            <Select value={form.isargaryPercent} onValueChange={v => handleSelect("isargaryPercent", v)}>
               <SelectTrigger>
                 <SelectValue placeholder="انتخاب کنید" />
               </SelectTrigger>
@@ -189,9 +189,9 @@ export default function UserCreate() {
           </div>
           <div>
             <Label>ارتباط با ایثارگر</Label>
-            <Select value={form.shahedRelation ?? ""} onValueChange={v => handleSelect("shahedRelation", v)}>
+            <Select value={form.shahedRelation ?? ""} onValueChange={v => handleSelect("shahedRelation", v)} required>
               <SelectTrigger>
-                <SelectValue placeholder="ندارد" />
+                <SelectValue placeholder="انتخاب کنید" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="azade_wife">همسر آزاده</SelectItem>

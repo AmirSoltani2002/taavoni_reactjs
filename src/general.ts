@@ -6,6 +6,36 @@ export const getToken = () => {
   return Cookies.get('token') || '';
 }
 
+const getFarsiError = (err: string) => {
+  const Errors: {
+    [k: string]: string
+  } = {
+    '401': 'توکن شما منقضی شده است. لطفا دوباره وارد شوید',
+    '409': 'اطلاعات تکراری است و قابل ثبت نمی‌باشد',
+    'homephone must be a valid phone number': 'شماره منزل باید شماره درست باشد.',
+    'mobile must be a valid phone number': 'شماره موبایل باید شماره درست باشد.',
+    'workphone must be a valid phone number': 'شماره محل کار باید شماره درست باشد.',
+    'sex should not be empty': 'لطفا جنسیت را مشخص کنید',
+    'email must be an email': 'ایمیل وارد شده صحیح نمی‌باشد',
+    'type should not be empty': 'نوع حساب کاربری را تعیین کنید',
+    'password is not strong enough': 'لطفا رمز عبور قوی‌تری انتخاب کنید',
+    'shahedrelation must be one of the following values: azade_wife, azade_child, jan_wife, jan_child': 'لطفا ارتباط خود با ایثارگر را مشخص کنید'
+  }
+
+  const Skips: string[] = [
+    'type must be one of the following values: system, admin, tehranuni, otheruni, free, employee',
+
+  ]
+  if(Skips.includes(err.toLowerCase())) {
+    return null;
+  }
+  if(Object.keys(Errors).includes(err.toLowerCase())) {
+    return Errors[err.toLowerCase()];
+  } else {
+    return err;
+  }
+}
+
 export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 export function postData<Type>(endpoint: string, data: Type, tokenRequired: boolean = false) {
   // Default options are marked with *
@@ -43,7 +73,7 @@ export const getTable = async(tableName: string, onGot?: (data: any) => void, ve
         return data;
       }
     } else if(resp.status === 401) {
-      toast.error('توکن شما منقضی شده است. لطفا دوباره وارد شوید');
+      toast.error(getFarsiError('401'));
       // Go to login page
       await sleep(3000);
       window.location.href = '/';
@@ -54,7 +84,10 @@ export const getTable = async(tableName: string, onGot?: (data: any) => void, ve
         if(err.message){
           if(typeof err.message === 'object') {
             Object.values(err.message).forEach((m: any) => {
-              toast.error(m as string);
+              const msg = getFarsiError(m);
+              if(msg){
+                toast.error(getFarsiError(m));
+              }
             });
             return;
           }
@@ -97,18 +130,23 @@ export const postTable = async(tableName: string, row: any, onPosted?: (data: an
         return data;
       }
     } else if(resp.status === 401) {
-      toast.error('توکن شما منقضی شده است. لطفا دوباره وارد شوید');
+      toast.error(getFarsiError('401'));
       // Go to login page
       await sleep(3000);
       window.location.href = '/';
       return [];
+    } else if(resp.status === 409) {
+      toast.error(getFarsiError('409'))
     } else {
       if(verbose){
         const err = await resp.json();
         if(err.message){
           if(typeof err.message === 'object') {
             Object.values(err.message).forEach((m: any) => {
-              toast.error(m as string);
+              const msg = getFarsiError(m);
+              if(msg){
+                toast.error(getFarsiError(m));
+              }
             });
             return;
           }
@@ -149,7 +187,7 @@ export const deleteTableRow = async(tableName: string, id: number, onDeleted?: (
         return data;
       }
     } else if(resp.status === 401) {
-      toast.error('توکن شما منقضی شده است. لطفا دوباره وارد شوید');
+      toast.error(getFarsiError('401'));
       // Go to login page
       await sleep(3000);
       window.location.href = '/';
@@ -160,7 +198,10 @@ export const deleteTableRow = async(tableName: string, id: number, onDeleted?: (
         if(err.message){
           if(typeof err.message === 'object') {
             Object.values(err.message).forEach((m: any) => {
-              toast.error(m as string);
+              const msg = getFarsiError(m);
+              if(msg){
+                toast.error(getFarsiError(m));
+              }
             });
             return;
           }
@@ -202,7 +243,7 @@ export const updateTableRow = async(tableName: string, id: number, row: any, onU
         return data;
       }
     } else if(resp.status === 401) {
-      toast.error('توکن شما منقضی شده است. لطفا دوباره وارد شوید');
+      toast.error(getFarsiError('401'));
       // Go to login page
       await sleep(3000);
       window.location.href = '/';
@@ -213,7 +254,10 @@ export const updateTableRow = async(tableName: string, id: number, row: any, onU
         if(err.message){
           if(typeof err.message === 'object') {
             Object.values(err.message).forEach((m: any) => {
-              toast.error(m as string);
+              const msg = getFarsiError(m);
+              if(msg){
+                toast.error(getFarsiError(m));
+              }
             });
             return;
           }
