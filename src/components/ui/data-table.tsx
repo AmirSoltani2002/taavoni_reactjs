@@ -7,9 +7,9 @@ import {
 } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
-import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { deleteTableRow, updateTableRow } from "@/general";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import {
   Table,
@@ -19,6 +19,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -40,7 +47,35 @@ export function DataTable<TData extends { id?: number }, TValue>({
   const hasId = data.length > 0 && data[0].id !== undefined;
   const [deleteRow, setDeleteRow] = useState<TData | null>(null);
   const [editRow, setEditRow] = useState<TData | null>(null);
-
+  const EditElement = useMemo(() => {
+    if(!EditComponent || !editRow){
+      return undefined;
+    } else {
+      return <div className="fixed overflow-auto inset-0 z-50 flex items-center justify-center bg-black/40" 
+        onClick={(e) => {
+          if(e.target === e.currentTarget){
+            setEditRow(null);
+          }
+        }}>
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg relative">
+            <Button className="absolute left-2 top-2" size="icon" variant="ghost" onClick={() => setEditRow(null)}>✕</Button>
+            <EditComponent
+              initialValues={editRow}
+              isEdit
+              onSubmit={async (values: any) => {
+                // updateTableRow must be imported in the parent or here
+                if (tableName && editRow.id) {
+                  await updateTableRow(tableName, editRow.id, values, () => {
+                    if (onRefresh) onRefresh();
+                    setEditRow(null);
+                  });
+                }
+              }}
+            />
+          </div>
+        </div>;
+    }
+  }, [EditComponent, editRow]);
   const allColumns = hasId && tableName
     ? [
         ...columns,
@@ -52,50 +87,10 @@ export function DataTable<TData extends { id?: number }, TValue>({
               {EditComponent && (
                 <>
                   <Button size="sm" variant="outline" onClick={() => setEditRow(row.original)}><Pencil /></Button>
-                  {editRow && editRow.id === row.original.id && (
-                    <div className="fixed overflow-auto inset-0 z-50 flex items-center justify-center bg-black/40" 
-                    onClick={(e) => {
-                      if(e.target === e.currentTarget){
-                        setEditRow(null);
-                      }
-                    }}>
-                      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg relative">
-                        <Button className="absolute left-2 top-2" size="icon" variant="ghost" onClick={() => setEditRow(null)}>✕</Button>
-                        <EditComponent
-                          initialValues={editRow}
-                          isEdit
-                          onSubmit={async (values: any) => {
-                            // updateTableRow must be imported in the parent or here
-                            if (tableName && editRow.id) {
-                              await updateTableRow(tableName, editRow.id, values, () => {
-                                if (onRefresh) onRefresh();
-                                setEditRow(null);
-                              });
-                            }
-                          }}
-                        />
-                      </div>
-                    </div>
-                  )}
+                  {editRow && editRow.id === row.original.id && EditElement}
                 </>
               )}
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button size="sm" variant="destructive" onClick={() => setDeleteRow(row.original)}><Trash2 /></Button>
-                </DialogTrigger>
-                {deleteRow && deleteRow.id === row.original.id && <DialogContent>
-                  <DialogTitle>حذف رکورد</DialogTitle>
-                  <div>آیا مطمئن هستید؟</div>
-                  <DialogFooter>
-                    <Button variant="secondary" onClick={() => setDeleteRow(null)}>انصراف</Button>
-                    <Button variant="destructive" onClick={async () => {
-                      await deleteTableRow(tableName, row.original.id!);
-                      setDeleteRow(null);
-                      if (onRefresh) onRefresh();
-                    }}>حذف</Button>
-                  </DialogFooter>
-                </DialogContent>}
-              </Dialog>
+              <Button size="sm" variant="destructive" onClick={() => setDeleteRow(row.original)}><Trash2 /></Button>    
             </div>
           ),
         } as ColumnDef<TData, TValue>,
@@ -132,16 +127,29 @@ export function DataTable<TData extends { id?: number }, TValue>({
         <TableBody>
           {table.getRowModel().rows?.length ? (
             table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                data-state={row.getIsSelected() && "selected"}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
-              </TableRow>
+              <ContextMenu key={row.id}>
+                <ContextMenuTrigger asChild>
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                </ContextMenuTrigger>
+                <ContextMenuContent>
+                  {EditComponent && (
+                    <ContextMenuItem onClick={() => setEditRow(row.original)}>ویرایش</ContextMenuItem>
+                  )}
+                  {EditElement}
+                  <ContextMenuItem style={{color: 'red'}} onClick={() => setDeleteRow(row.original)}>
+                    حذف
+                  </ContextMenuItem>
+                </ContextMenuContent>
+              </ContextMenu>
             ))
           ) : (
             <TableRow>
@@ -152,6 +160,20 @@ export function DataTable<TData extends { id?: number }, TValue>({
           )}
         </TableBody>
       </Table>
+      {(tableName && deleteRow) && <Dialog open>
+        <DialogContent showCloseButton>
+          <DialogTitle>حذف رکورد</DialogTitle>
+          <div>آیا مطمئن هستید؟</div>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setDeleteRow(null)}>انصراف</Button>
+            <Button variant="destructive" onClick={async () => {
+              await deleteTableRow(tableName, deleteRow.id!);
+              setDeleteRow(null);
+              if (onRefresh) onRefresh();
+            }}>حذف</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>}
     </div>
   );
 }

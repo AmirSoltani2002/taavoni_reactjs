@@ -31,7 +31,7 @@ export type UserForm = {
   azadeEsaratMonths: number | null;
   azadeMonths: number | null;
   shahedFamilyNumber: number | null;
-  shahedRelation: "azade_wife" | "azade_child" | "jan_wife" | "jan_child" | "";
+  shahedRelation: null | "azade_wife" | "azade_child" | "jan_wife" | "jan_child";
 };
 
 export const initialState: UserForm = {
@@ -51,7 +51,7 @@ export const initialState: UserForm = {
   azadeEsaratMonths: 0,
   azadeMonths: 0,
   shahedFamilyNumber: 0,
-  shahedRelation: "",
+  shahedRelation: null,
 };
 
 
