@@ -19,7 +19,12 @@ const getFarsiError = (err: string) => {
     'email must be an email': 'ایمیل وارد شده صحیح نمی‌باشد',
     'type should not be empty': 'نوع حساب کاربری را تعیین کنید',
     'password is not strong enough': 'لطفا رمز عبور قوی‌تری انتخاب کنید',
-    'shahedrelation must be one of the following values: azade_wife, azade_child, jan_wife, jan_child': 'لطفا ارتباط خود با ایثارگر را مشخص کنید'
+    'shahedrelation must be one of the following values: azade_wife, azade_child, jan_wife, jan_child': 'لطفا ارتباط خود با ایثارگر را مشخص کنید',
+
+    'floorcount must be a number conforming to the specified constraints': 'لطفا تعداد طبقات را مشخص کنید',
+    'startdate must be a date instance': 'تاریخ شروع پروژه را مشخص کنید',
+    'enddate must be a date instance': 'تاریخ پایان پروژه را مشخص کنید',
+
   }
 
   const Skips: string[] = [
@@ -37,7 +42,7 @@ const getFarsiError = (err: string) => {
 }
 
 export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-export function postData<Type>(endpoint: string, data: Type, tokenRequired: boolean = false) {
+export function postData<Type>(endpoint: string, data: Type, tokenRequired: boolean = true) {
   // Default options are marked with *
   const token = getToken();
   return fetch(`${api_base_url}${endpoint}`, {
@@ -228,7 +233,7 @@ export const updateTableRow = async(tableName: string, id: number, row: any, onU
   const token =  getToken()
   try{
     const resp = await fetch(`${api_base_url}/${tableName}/${id}`, {
-      method: 'PATCH',
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': token ? `Bearer ${token}`: ''

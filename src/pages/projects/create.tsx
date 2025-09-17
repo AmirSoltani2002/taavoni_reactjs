@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Plus, Trash } from "lucide-react";
 import { Calendar22 } from "@/components/calendars/calendar";
-import { CityPicker } from "@/components/ui/city-picker";
+import { postTable } from "@/general";
+import { PageLoader } from "@/components/ui/loader";
 
 interface UnitType {
   id: number;
@@ -30,30 +31,31 @@ interface Unit {
 }
 
 export default function ProjectCreate() {
+  const [loading, setLoading] =  useState(false);
   const [project, setProject] = useState<{
     name: string;
-    city: string;
     address: string;
-    postal_code: string;
-    start_date: Date | undefined;
-    end_date: Date | undefined;
-    floors: number;
-    units_count: number;
-    land_area: number;
-    building_area: number;
-    description: string;
+    startDate: Date | undefined;
+    endDate: Date | undefined;
+    floorCount : number;
+    unitCount: number;
+    blockNumber: number;
+    landArea: number;
+    buildingArea: number;
+    sharedArea: number;
+    options: string;
   }>({
     name: "",
-    city: "",
     address: "",
-    postal_code: "",
-    start_date: undefined,
-    end_date: undefined,
-    floors: 0,
-    units_count: 0,
-    land_area: 0,
-    building_area: 0,
-    description: "",
+    startDate: undefined,
+    endDate: undefined,
+    floorCount : 0,
+    unitCount: 0,
+    blockNumber: 1,
+    landArea: 0,
+    buildingArea: 0,
+    sharedArea: 0,
+    options: "",
   });
 
   const [unitTypes, setUnitTypes] = useState<UnitType[]>([]);
@@ -78,19 +80,18 @@ export default function ProjectCreate() {
   };
 
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async(e: React.FormEvent) => {
     e.preventDefault();
-
+    try{
+      setLoading(true);
+      await postTable('projects', project);
+    } catch(_){}
+    setLoading(false);
     // TODO: replace with API call
-    console.log("Project:", project);
     console.log("Units:", units);
-    alert("Project created!");
   };
 
   useEffect(() => {
-    const totalUnits = unitTypes.reduce((sum, u) => sum + u.count, 0);
-    handleProjectChange("units_count", totalUnits);
-
     const generatedUnits: Unit[] = [];
     unitTypes.forEach((type) => {
       for (let i = 0; i < type.count; i++) {
@@ -121,41 +122,45 @@ export default function ProjectCreate() {
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>نام پروژه</Label>
-              <Input type='text' name="name" value={project.name} onChange={(e) => handleProjectChange(e.target.name, e.target.value)} />
-            </div>
-            <div>
-              <Label>شهر</Label>
-              <CityPicker provinceId={8} onCityChange={(city) => handleProjectChange('city', city)} />
+              <Input required type='text' name="name" value={project.name} onChange={(e) => handleProjectChange(e.target.name, e.target.value)} />
             </div>
             <div className="md:col-span-2">
               <Label>آدرس</Label>
-              <Input type='text' name="address" value={project.address} onChange={(e) => handleProjectChange(e.target.name, e.target.value)} />
+              <Input required type='text' name="address" value={project.address} onChange={(e) => handleProjectChange(e.target.name, e.target.value)} />
             </div>
             <div>
-              <Calendar22 title="تاریخ شروع" date={project.start_date} setDate={(d) => handleProjectChange('start_date', d)} />
+              <Calendar22 title="تاریخ شروع" date={project.startDate} setDate={(d) => handleProjectChange('startDate', d)} />
             </div>
             <div>
-              <Calendar22 title="تاریخ پایان" date={project.end_date} setDate={(d) => handleProjectChange('end_date', d)} />
+              <Calendar22 title="تاریخ پایان" date={project.endDate} setDate={(d) => handleProjectChange('endDate', d)} />
             </div>
             <div>
-              <Label>تعداد طبقات</Label>
-              <Input type='number' name="floors" value={project.floors} onChange={(e) => handleProjectChange(e.target.name, e.target.value)} />
+              <Label>تعداد بلوک‌های پروژه</Label>
+              <Input required type='number' name="blockNumber" value={project.blockNumber} onChange={(e) => handleProjectChange(e.target.name, e.target.value)} />
+            </div>
+            <div>
+              <Label>تعداد طبقات{project.blockNumber > 1 ? ' (مجموع طبقات همه بلوک‌ها)' : ''}</Label>
+              <Input required type='number' name="floorCount" value={project.floorCount } onChange={(e) => handleProjectChange(e.target.name, e.target.value)} />
+            </div>
+            <div>
+              <Label>تعداد کل واحدهای پروژه</Label>
+              <Input aria-required type='number' name="unitCount" value={project.unitCount} onChange={(e) => handleProjectChange(e.target.name, e.target.value)} />
             </div>
             <div>
               <Label>مساحت زمین (متر)</Label>
-              <Input type='number' name="land_area" value={project.land_area} onChange={(e) => handleProjectChange(e.target.name, e.target.value)} />
+              <Input required type='number' name="landArea" value={project.landArea} onChange={(e) => handleProjectChange(e.target.name, e.target.value)} />
             </div>
             <div>
               <Label>زیربنا (متر)</Label>
-              <Input type='number' name="building_area" value={project.building_area} onChange={(e) => handleProjectChange(e.target.name, e.target.value)} />
+              <Input required type='number' name="buildingArea" value={project.buildingArea} onChange={(e) => handleProjectChange(e.target.name, e.target.value)} />
             </div>
             <div>
-              <Label>کد پستی</Label>
-              <Input type='text' name="postal_code" value={project.postal_code} onChange={(e) => handleProjectChange(e.target.name, e.target.value)} />
+              <Label>مشاعات (متر)</Label>
+              <Input required type='number' name="sharedArea" value={project.sharedArea} onChange={(e) => handleProjectChange(e.target.name, e.target.value)} />
             </div>
             <div className="md:col-span-2">
               <Label>توضیحات</Label>
-              <Input type="text" name="description" value={project.description} onChange={(e) => handleProjectChange(e.target.name, e.target.value)} />
+              <Input type="text" name="options" value={project.options} onChange={(e) => handleProjectChange(e.target.name, e.target.value)} />
             </div>
           </CardContent>
         </Card>
@@ -220,13 +225,14 @@ export default function ProjectCreate() {
           </CardContent>
         </Card>
         
-        {project.units_count > 0 && <div className="text-muted-foreground text-xl">
-          {`این پروژه شامل ${project.units_count} واحد است.`}
+        {project.unitCount > 0 && <div className="text-muted-foreground text-xl">
+          {`این پروژه شامل ${project.unitCount} واحد است.`}
         </div>}
         <Button type="submit" className="w-full">
           ذخیره پروژه
         </Button>
       </form>
+      {loading && <PageLoader />}
     </div>
   );
 }

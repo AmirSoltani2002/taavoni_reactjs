@@ -8,27 +8,31 @@ import ErrorBoundary from "./components/app/ErrorBoundry";
 import ProjectCreate from "./pages/projects/create";
 import UsersList from "./pages/users/userList";
 import UserCreate from "./pages/users/create";
+import { Suspense } from "react";
+import { PageLoader } from "./components/ui/loader";
 
 function App() {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<ErrorBoundary><Welcome /></ErrorBoundary>} />
-        <Route path="/signin" element={<SimpleLayout><Signin /></SimpleLayout>} />
-        <Route path="/signup" element={<SimpleLayout><Signup /></SimpleLayout>} />
-        <Route path="/*" element={
-          <ErrorBoundary>
-            <Layout>
-              <Routes>
-                <Route path="/projects/create" element={<ProjectCreate />} />
-                <Route path="/users/list" element={<UsersList />} />
-                <Route path="/users/create" element={<UserCreate />} />
-                <Route path="/*" element={<LockedPage />} />
-              </Routes>
-            </Layout>
-          </ErrorBoundary>
-        } />
-      </Routes>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/" element={<ErrorBoundary><Welcome /></ErrorBoundary>} />
+          <Route path="/signin" element={<SimpleLayout><Signin /></SimpleLayout>} />
+          <Route path="/signup" element={<SimpleLayout><Signup /></SimpleLayout>} />
+          <Route path="/*" element={
+            <ErrorBoundary>
+              <Layout>
+                <Routes>
+                  <Route path="/projects/create" element={<ProjectCreate />} />
+                  <Route path="/users/list" element={<UsersList />} />
+                  <Route path="/users/create" element={<UserCreate />} />
+                  <Route path="/*" element={<LockedPage />} />
+                </Routes>
+              </Layout>
+            </ErrorBoundary>
+          } />
+        </Routes>
+      </Suspense>
     </Router>
   );
 }

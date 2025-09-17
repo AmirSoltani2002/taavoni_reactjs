@@ -22,11 +22,12 @@ import { shahr } from "iran-cities-json"
 interface CityPickerProps {
     provinceId?: number;
     onCityChange?: (city: string) => void;
+    defaultCity?: string;
 }
 
-export function CityPicker({provinceId, onCityChange}: CityPickerProps) {
+export function CityPicker({provinceId, onCityChange, defaultCity}: CityPickerProps) {
   const [open, setOpen] = React.useState(false)
-  const [value, setValue] = React.useState("")
+  const [value, setValue] = React.useState(defaultCity)
   const cities = shahr.filter(city => city.ostan === provinceId).map((city) => ({ label: city.name, value: city.name }));
   return (
     <Popover open={open} onOpenChange={setOpen}>
