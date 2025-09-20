@@ -162,7 +162,7 @@ export default function UserCreate({ initialValues, onSubmit, isEdit }: UserCrea
             />
           </div>
           <div>
-            <Label>نوع اکانت*</Label>
+            <Label>نوع حساب کاربری*</Label>
             <Select value={form.type} onValueChange={v => handleSelect("type", v)} required>
               <SelectTrigger>
                 <SelectValue placeholder="انتخاب کنید" />

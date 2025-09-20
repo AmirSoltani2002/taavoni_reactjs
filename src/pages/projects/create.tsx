@@ -14,20 +14,18 @@ interface UnitType {
   count: number;
   area: number;
   bedrooms: number;
-  bathrooms: number;
   block?: string;
   options?: string;
 }
 
 interface Unit {
-  land_lord: number;
-  unit_number: number;
-  floor: number;
+  projectId?: number;
+  unit_number?: number;
+  floor?: number;
   block?: string;
-  area: number;
-  bedrooms: number;
-  bathrooms: number;
-  point: number;
+  area?: number;
+  roomCount?: number;
+  point?: number;
 }
 
 export default function ProjectCreate() {
@@ -67,7 +65,7 @@ export default function ProjectCreate() {
   };
 
   const addUnitType = () => {
-    setUnitTypes([...unitTypes, { id: nextId, count: 0, area: 0, bedrooms: 0, bathrooms: 0 }]);
+    setUnitTypes([...unitTypes, { id: nextId, count: 0, area: 0, bedrooms: 0 }]);
     setNextId(nextId + 1);
   };
 
@@ -84,7 +82,8 @@ export default function ProjectCreate() {
     e.preventDefault();
     try{
       setLoading(true);
-      await postTable('projects', project);
+      // await postTable('projects', project);
+      await postTable('subprojects/multiple', units);
     } catch(_){}
     setLoading(false);
     // TODO: replace with API call
@@ -96,13 +95,11 @@ export default function ProjectCreate() {
     unitTypes.forEach((type) => {
       for (let i = 0; i < type.count; i++) {
         generatedUnits.push({
-          land_lord: 0,
           unit_number: generatedUnits.length + 1,
           floor: 0,
           block: type.block,
           area: type.area,
-          bedrooms: type.bedrooms,
-          bathrooms: type.bathrooms,
+          roomCount: type.bedrooms,
           point: 0,
         });
       }
@@ -198,14 +195,6 @@ export default function ProjectCreate() {
                     type="number"
                     value={u.bedrooms}
                     onChange={(e) => updateUnitType(u.id, "bedrooms", Number(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label>حمام</Label>
-                  <Input
-                    type="number"
-                    value={u.bathrooms}
-                    onChange={(e) => updateUnitType(u.id, "bathrooms", Number(e.target.value))}
                   />
                 </div>
                 <div>

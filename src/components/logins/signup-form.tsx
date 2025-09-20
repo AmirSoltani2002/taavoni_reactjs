@@ -4,7 +4,7 @@ import { Button } from "../ui/button"
 import { timeFormat } from "../../config"
 import { Calendar22 } from "../calendars/calendar"
 import {Switch} from "../ui/switch"
-import { postData } from "../../general"
+import { postTable } from "../../general"
 import {
   Card,
   CardContent,
@@ -54,10 +54,7 @@ export function SignupForm({
             }
             const formData = new FormData(e.currentTarget);
             const data = {...Object.fromEntries(formData.entries()), birthDate: `${date?.toLocaleDateString(timeFormat)}`};
-            console.log({data});
-            postData<SignupData>('/users', data as SignupData).then(response => {
-              console.log(response);
-            });
+            postTable('/users', data as SignupData)
           }}>
             <div className="flex flex-col gap-6">
               <div className="grid grid-cols-2 gap-4">
