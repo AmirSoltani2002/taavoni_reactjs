@@ -1,4 +1,4 @@
-import { Building, ChartBar, ChevronDown, Home, User } from "lucide-react"
+import { Building, ChartBar, ChevronDown, Home, User, Clipboard } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 
 import {
@@ -45,6 +45,11 @@ export function AppSidebar() {
       url: "/sales",
       icon: ChartBar,
     },
+    {
+      title: "پشتیبانی",
+      url: "/tickets/list",
+      icon: Clipboard
+    }
   ]
   return (
     <Sidebar side='right' collapsible="icon" variant='floating'>
@@ -56,7 +61,7 @@ export function AppSidebar() {
               const isActive =
                 location.pathname === item.url ||
                 location.pathname.startsWith(`${item.url}/`);
-              if(item.title === 'داشبورد'){
+              if(['داشبورد', 'پشتیبانی'].includes(item.title)){
                 return (
                   <SidebarMenu>
                     <SidebarMenuItem key={item.title}>

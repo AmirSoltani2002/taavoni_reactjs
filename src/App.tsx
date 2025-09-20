@@ -10,7 +10,8 @@ import UsersList from "./pages/users/userList";
 import UserCreate from "./pages/users/create";
 import { Suspense } from "react";
 import { PageLoader } from "./components/ui/loader";
-import ChatPage from "./pages/ticketing/chat";
+import ChatPage from "./pages/tickets/chat";
+import TicketsList from "./pages/tickets/ticketList";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
                 <Routes>
                   <Route path="/projects/create" element={<ProjectCreate />} />
                   <Route path="/users/list" element={<UsersList />} />
+                  <Route path="/tickets/list" element={<TicketsList />} />
                   <Route path="/users/create" element={<UserCreate />} />
                   <Route path="/chat" element={<ChatPage />} />
                   <Route path="/*" element={<LockedPage />} />
