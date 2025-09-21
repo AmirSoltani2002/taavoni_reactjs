@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react"
 import { Chat, ChatHeader, ChatContent, ChatMessage, ChatInput } from "@/components/ui/chat"
 import { useParams } from "react-router-dom"
-import type { OtherTicket, SubProjectTicket } from "./columns";
+import type { OtherChat, OtherTicket, SubProjectTicket } from "./columns";
 import { getTable, postTable } from "@/general";
+import { type User } from "../users/columns";
 
 const TicketNotFound = <div>
       تیکت مورد نظر پیدا نشد
@@ -13,7 +14,10 @@ export default function ChatPage() {
     return TicketNotFound;
   }
   const [ticket, setTicket] = useState<OtherTicket | SubProjectTicket>();
-  const [chat, setChat] = useState<any>();
+  const [chat, setChat] = useState<OtherChat[]>();
+  const [self, setSelf] = useState<User>();
+  const [otherGuy, setOtherGuy] = useState<User>();
+
 
   useEffect(() => {
     getTable(
@@ -26,49 +30,58 @@ export default function ChatPage() {
       }
     );
   }, []);
-  
-  useEffect(() => {
-    console.log({chat})
-  }, [chat])
-  
-  const [messages, setMessages] = useState([
-    { sender: "Admin", content: "سلام! چطور میتونم کمک کنم؟", date: "12:30", isSelf: false },
-    { sender: "Me", content: "میخواستم وضعیت پروژه رو بدونم. \n\n آیا cash-flow مناسبی جریان دارد؟", date: "12:31", isSelf: true },
-    { sender: "Admin", content: "خوشبختانه طبق آخرین خبر همه چیز طبق برنامه‌ریزی است", date: "15:02", isSelf: false },
-  ])
 
+  useEffect(() => {
+    getTable(`/users/profile`, setSelf);
+  }, []);
+
+  useEffect(() => {
+    if(!self || !ticket){
+      return;
+    }
+    if(self.type === 'admin') {
+      getTable(`/users/${ticket.userId}`, setOtherGuy);
+    }
+  }, [self, ticket])
+  
   const handleSend = async(content: string) => {
     if(!ticket){return};
     const msg = {
       ticketId: ticket.id,
-      text: content,
+      message: content,
     }
-    const newMsg = {
-
-      ////
-      sender: "Ali",
-      content: content,
-      date: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      isSelf: true,
-    };
     await postTable(
       ticketType === 'other' 
       ? `other-chats`
       : `subproject-chats`,
       msg,
-    )
-    setMessages([...messages, newMsg])
+    );
+    await getTable(
+      ticketType === 'other' 
+      ? `other-tickets/chat/${ticketId}`
+      : `sub-project-tickets/chat/${ticketId}`,
+      (d) => {
+        setTicket(d[0]);
+        setChat(d[0]?.chats);
+      }
+    );
   }
 
-  if(!ticket || !ticket.type) {
+  if(!ticket || !ticket.type || !chat) {
     return TicketNotFound;
   }
   return (
     <Chat>
       <ChatHeader title={ticket?.type} />
       <ChatContent>
-        {messages.map((msg, i) => (
-          <ChatMessage key={i} {...msg} />
+        {chat.map((msg, i) => (
+          <ChatMessage key={i} 
+            sender={otherGuy ? otherGuy.name : 'Admin'}
+            content={msg.message || ''}
+            dateString={msg.updatedAt || ''}
+            isSelf={msg.senderId === self?.id}
+            selfName={self?.name || ''}
+          />
         ))}
       </ChatContent>
       <ChatInput onSend={handleSend} />

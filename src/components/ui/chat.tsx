@@ -19,8 +19,8 @@ export function ChatHeader({ title }: { title: string }) {
       <h2 className="text-lg font-semibold">{title}</h2>
       {/* Right side actions */}
       <div className="flex gap-2">
-        <Button variant="ghost" size="sm">جستجو</Button>
-        <Button variant="ghost" size="sm">بستن</Button>
+        {/* <Button variant="ghost" size="sm">جستجو</Button>
+        <Button variant="ghost" size="sm">بستن</Button> */}
       </div>
     </div>
   )
@@ -39,19 +39,22 @@ export function ChatContent({ children }: { children: ReactNode }) {
 interface ChatMessageProps {
   sender: string
   content: string
-  date: string
+  dateString: string
   isSelf?: boolean
+  selfName: string
 }
-export function ChatMessage({ sender, content, date, isSelf }: ChatMessageProps) {
+export function ChatMessage({ sender, content, dateString, isSelf, selfName }: ChatMessageProps) {
+  const d = new Date(dateString);
+  const date = `${d.getHours()}:${d.getMinutes()}`
   return (
     <div
-      className={`flex items-end gap-2 ${
+      className={`flex items-end gap-2 py-1 ${
         !isSelf ? "justify-end" : "justify-start"
       }`}
     >
       {isSelf && (
         <Avatar className="bg-muted">
-          <AvatarFallback className="bg-muted">{sender[0]}</AvatarFallback>
+          <AvatarFallback className="bg-muted">{selfName[0]}</AvatarFallback>
         </Avatar>
       )}
       <div

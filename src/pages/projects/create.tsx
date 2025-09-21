@@ -22,10 +22,11 @@ interface Unit {
   projectId?: number;
   unit_number?: number;
   floor?: number;
-  block?: string;
+  block?: string | number;
   area?: number;
   roomCount?: number;
   point?: number;
+  options?: string;
 }
 
 export default function ProjectCreate() {
@@ -95,12 +96,13 @@ export default function ProjectCreate() {
     unitTypes.forEach((type) => {
       for (let i = 0; i < type.count; i++) {
         generatedUnits.push({
-          unit_number: generatedUnits.length + 1,
-          floor: 0,
-          block: type.block,
           area: type.area,
-          roomCount: type.bedrooms,
+          floor: 0,
           point: 0,
+          block: type.block || 1,
+          roomCount: type.bedrooms,
+          options: '',        
+          projectId: 1,
         });
       }
     });
@@ -163,56 +165,61 @@ export default function ProjectCreate() {
         </Card>
 
         {/* Unit Types */}
-        <Card>
-          <CardHeader className="flex items-center justify-between">
-            <CardTitle>تیپ واحدها</CardTitle>
-            <Button type="button" variant="outline" onClick={addUnitType}>
-              <Plus className="h-4 w-4 mr-2" /> افزودن تیپ
-            </Button>
+        {Array.from({length: project.blockNumber}).map((_, b) => <Card className="flex flex-row flex-wrap p-4">
+          <CardHeader>
+            <CardTitle style={{width: 'max-content'}}>{`بلوک ${b}ام`}</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {unitTypes.map((u) => (
-              <div key={u.id} className="grid grid-cols-6 gap-2 items-end border p-2 rounded">
-                <div>
-                  <Label>تعداد</Label>
-                  <Input
-                    type="number"
-                    value={u.count}
-                    onChange={(e) => updateUnitType(u.id, "count", Number(e.target.value))}
-                  />
+          {Array.from({length: project.floorCount}).map((_, i) => <Card className="flex flex-col width-full">
+            <CardHeader className="flex items-center justify-between">
+              <CardTitle>{`تیپ واحدهای طبقه ${i}ام`}</CardTitle>
+              <Button type="button" variant="outline" onClick={addUnitType}>
+                <Plus className="h-4 w-4 mr-2" /> افزودن تیپ
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {unitTypes.map((u) => (
+                <div key={u.id} className="grid grid-cols-6 gap-2 items-end border p-2 rounded">
+                  <div>
+                    <Label>تعداد</Label>
+                    <Input
+                      type="number"
+                      value={u.count}
+                      onChange={(e) => updateUnitType(u.id, "count", Number(e.target.value))}
+                    />
+                  </div>
+                  <div>
+                    <Label>متراژ</Label>
+                    <Input
+                      type="number"
+                      value={u.area}
+                      onChange={(e) => updateUnitType(u.id, "area", Number(e.target.value))}
+                    />
+                  </div>
+                  <div>
+                    <Label>خواب</Label>
+                    <Input
+                      type="number"
+                      value={u.bedrooms}
+                      onChange={(e) => updateUnitType(u.id, "bedrooms", Number(e.target.value))}
+                    />
+                  </div>
+                  <div>
+                    <Label>بلوک</Label>
+                    <Input
+                      value={u.block || ""}
+                      onChange={(e) => updateUnitType(u.id, "block", e.target.value)}
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <Button type="button" variant="destructive" onClick={() => removeUnitType(u.id)}>
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-                <div>
-                  <Label>متراژ</Label>
-                  <Input
-                    type="number"
-                    value={u.area}
-                    onChange={(e) => updateUnitType(u.id, "area", Number(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label>خواب</Label>
-                  <Input
-                    type="number"
-                    value={u.bedrooms}
-                    onChange={(e) => updateUnitType(u.id, "bedrooms", Number(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label>بلوک</Label>
-                  <Input
-                    value={u.block || ""}
-                    onChange={(e) => updateUnitType(u.id, "block", e.target.value)}
-                  />
-                </div>
-                <div className="flex justify-end">
-                  <Button type="button" variant="destructive" onClick={() => removeUnitType(u.id)}>
-                    <Trash className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+              ))}
+            </CardContent>
+          </Card>)}
+        </Card>)}
         
         {project.unitCount > 0 && <div className="text-muted-foreground text-xl">
           {`این پروژه شامل ${project.unitCount} واحد است.`}
