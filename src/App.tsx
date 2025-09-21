@@ -28,6 +28,7 @@ function App() {
                   <Route path="/projects/create" element={<ProjectCreate />} />
                   <Route path="/users/list" element={<UsersList />} />
                   <Route path="/tickets/list" element={<TicketsList />} />
+                  <Route path="/tickets/:ticketType/:ticketId" element={<ChatPage />} />
                   <Route path="/users/create" element={<UserCreate />} />
                   <Route path="/chat" element={<ChatPage />} />
                   <Route path="/*" element={<LockedPage />} />

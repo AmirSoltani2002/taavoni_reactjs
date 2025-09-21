@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { columns, type OtherTicket, type SubProjectTicket } from "./columns"
 import { DataTable } from "@/components/ui/data-table"
-import { getTable } from "@/general"
+import { getTable, postTable } from "@/general"
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom";
 import {
@@ -56,8 +56,16 @@ export default function TicketsList() {
                         </div>
                     </div>
                     <DialogFooter>
-                        {newTicketTitle && <Button onClick={() => {
-                            navigate(`/tickets/create?title=${newTicketTitle}`)
+                        {newTicketTitle && <Button onClick={async() => {
+                            const user = await getTable('users/profile');
+                            const newTicket = await postTable('other-tickets', {
+                                type: newTicketTitle,
+                                recieverId: 1,
+                                userId: user.id,
+                            })
+                            if(newTicket){
+                                navigate(`/tickets/other/${newTicket.id}`)
+                            }
                         }}>
                             ایجاد تیکت
                         </Button>}

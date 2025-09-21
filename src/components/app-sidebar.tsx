@@ -63,7 +63,7 @@ export function AppSidebar() {
                 location.pathname.startsWith(`${item.url}/`);
               if(['داشبورد', 'پشتیبانی'].includes(item.title)){
                 return (
-                  <SidebarMenu>
+                  <SidebarMenu key={item.title}>
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild isActive={isActive}>
                         <NavLink to={item.url}>

@@ -29,7 +29,7 @@ export function ChatHeader({ title }: { title: string }) {
 // Messages container
 export function ChatContent({ children }: { children: ReactNode }) {
   return (
-    <ScrollArea className="flex-1 p-4 space-y-4">
+    <ScrollArea className="flex-1 p-4 space-y-4 overflow-auto">
       {children}
     </ScrollArea>
   )
