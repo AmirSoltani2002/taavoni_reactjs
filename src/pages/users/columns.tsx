@@ -1,3 +1,4 @@
+import { api_base_url } from "@/config";
 import { type ColumnDef } from "@tanstack/react-table"
  
 // This type is used to define the shape of our data.
@@ -26,7 +27,14 @@ export type User = {
     updatedAt: string;
     workPhone: string;
 }
- 
+export type UserDoc = {
+    id?: number;
+    userId?: number;
+    document?: string;
+    detail?: null,
+    createdAt?: string;
+    updatedAt?: string;
+}
 export const columns: ColumnDef<User>[] = [
     {
         accessorKey: "name",
@@ -141,4 +149,33 @@ export const columns: ColumnDef<User>[] = [
             }
         }
     },
+]
+
+export const docs_columns: ColumnDef<UserDoc>[] = [
+    {
+        header: 'موضوع عکس',
+        accessorFn: (row) => row.detail || 'بدون موضوع',
+    },
+    {
+        header: 'تاریخ آپلود',
+        accessorFn: (row) => {
+            if(row.updatedAt){
+                return (new Date(row.updatedAt)).toLocaleDateString('fa-IR');
+            } else {
+                return 'بدون تاریخ'
+            }
+        }
+    },
+    {
+        header: 'تصویر',
+        accessorFn: row => row.document ?? row.document ?? '', // return string URL only
+        // render JSX in `cell`
+        cell: ({cell}) => {
+            const src = cell.getValue() as string;
+            const parts = src?.split('-') ?? [];
+            const filename = parts.length ? parts[parts.length - 1] : 'img';
+            if (!src) return 'بدون تصویر';
+            return <img src={`${api_base_url.replace('/api', '')}${src}`} alt={filename} style={{ maxWidth: 120 }} />;
+        }
+    }
 ]

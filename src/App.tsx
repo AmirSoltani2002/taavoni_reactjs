@@ -13,6 +13,7 @@ import ChatPage from "./pages/tickets/chat";
 import TicketsList from "./pages/tickets/ticketList";
 import { Suspense } from "react";
 import { PageLoader } from "./components/ui/loader";
+import ProfilePage from "./pages/profile";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
             <ErrorBoundary>
               <Layout>
                 <Routes>
+                  <Route path="/dashboard" element={<ProfilePage />} />
                   <Route path="/projects/create" element={<ProjectCreate />} />
                   <Route path="/projects/list" element={<ProjectsList />} />
                   <Route path="/tickets/list" element={<TicketsList />} />

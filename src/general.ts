@@ -45,14 +45,26 @@ const getFarsiError = (err: string) => {
 export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // File upload function
-export const uploadFile = async (file: File, endpoint: string = 'upload'): Promise<string | null> => {
+export const uploadFile = async (
+  tableName: string, 
+  file: File, 
+  options?: {titleName: string; titleValue: string}[], 
+  userId?: number, 
+  verbose: boolean = true
+): Promise<string | undefined> => {
   const token = getToken();
-  
+  if(!userId){return 'no user';}
   try {
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('userId', `${userId}`);
+    options?.forEach(x => {
+      if(x?.titleName) {
+        formData.append(x.titleName, x.titleValue || '');
+      }
+    })
     
-    const response = await fetch(`${api_base_url}/${endpoint}`, {
+    const response = await fetch(`${api_base_url}/${tableName}`, {
       method: 'POST',
       headers: {
         'Authorization': token ? `Bearer ${token}` : ''
@@ -63,22 +75,31 @@ export const uploadFile = async (file: File, endpoint: string = 'upload'): Promi
     
     if (response.ok) {
       const data = await response.json();
-      // Usually backend returns { url: 'path/to/uploaded/file.jpg' } or { filename: 'uuid.jpg' }
       return data.url || data.filename || data.path;
-    } else if (response.status === 401) {
-      toast.error(getFarsiError('401'));
-      await sleep(3000);
-      window.location.href = '/';
-      return null;
+    } else if(response.status === 409) {
+      toast.error(getFarsiError('409'))
     } else {
-      const err = await response.json();
-      toast.error(err.message || 'خطا در آپلود فایل');
-      return null;
+      if(verbose){
+        const err = await response.json();
+        if(err.message){
+          const errors = typeof err.message === 'object' ? err.message : [err.message]
+          Object.values(errors).forEach((m: any) => {
+            const msg = getFarsiError(m);
+            if(msg){
+              toast.error(getFarsiError(m));
+            }
+          });
+          return;
+        }
+        else {
+          toast.error('خطایی رخ داده است');
+        }
+      }
     }
   } catch (error: any) {
     console.error('Upload error:', error);
     toast.error('خطا در آپلود فایل');
-    return null;
+    return;
   }
 };
 
@@ -115,25 +136,6 @@ export const uploadMultipleFiles = async (files: File[], endpoint: string = 'upl
     return [];
   }
 };
-export function postData<Type>(endpoint: string, data: Type, tokenRequired: boolean = true) {
-  // Default options are marked with *
-  const token = getToken();
-  return fetch(`${api_base_url}${endpoint}`, {
-    method: 'POST', // *GET, POST, PUT, DELETE, etc.
-    // mode: 'cors', // no-cors, *cors, same-origin
-    // cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
-    credentials: 'same-origin', // include, *same-origin, omit
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': (token && tokenRequired) ? `Bearer ${token}`: ''
-    },
-    redirect: 'follow', // manual, *follow, error
-    referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
-    body: JSON.stringify(data) // body data type must match "Content-Type" header
-  })
-  .then(response => response.json()) // parses JSON response into native JavaScript objects
-}
-
 export const getTable = async(tableName: string, onGot?: (data: any) => void, verbose: boolean=true) => {
   const token =  getToken()
   try{
