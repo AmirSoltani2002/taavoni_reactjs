@@ -1,5 +1,8 @@
-import { Building, ChartBar, ChevronDown, Home, User } from "lucide-react"
+import { Building, ChartBar, ChevronDown, Home, User, Clipboard } from "lucide-react"
 import { NavLink, useLocation, useNavigate } from "react-router-dom"
+import { useEffect, useState } from "react";
+import { type User as UserType } from "@/pages/users/columns";
+import { getTable } from "@/general";
 
 import {
   Sidebar,
@@ -21,47 +24,105 @@ import Cookies from "js-cookie";
 export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const items = [
+    const [items, setItems] = useState<{
+    title: string;
+    title_create?: string;
+    title_list?: string;
+    url: string;
+    icon: typeof Home
+  }[]>([
     {
       title: "داشبورد",
       url: "/dashboard",
       icon: Home,
     },
-    {
-      title: "کاربران",
-      title_create: "ایجاد کاربر جدید",
-      title_list: "مشاهده همه کاربران",
-      url: "/users",
-      icon: User,
-    },
-    {
-      title: "پروژه‌ها",
-      title_create: "ایجاد پروژه جدید",
-      title_list: "مشاهده همه پروژه‌ها",
-      url: "/projects",
-      icon: Building,
-    },
-    {
-      title: "آگهی‌ها",
-      title_create: "ایجاد آگهی جدید",
-      title_list: "مشاهده همه آگهی‌ها",
-      url: "/sales",
-      icon: ChartBar,
-    },
-  ]
+  ])
+
+  const [userInfo, setUser] = useState<UserType>();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    getTable('users/profile', (d) => {
+      console.log({d});
+      setUser(d);
+      setIsAdmin(d?.type === 'admin' || d?.type === 'system')
+    });
+  }, []);
+
+  useEffect(() => {
+    if(isAdmin) {
+      setItems([
+        {
+          title: "داشبورد",
+          url: "/dashboard",
+          icon: Home,
+        },
+        {
+          title: "کاربران",
+          title_create: "ایجاد کاربر جدید",
+          title_list: "مشاهده همه کاربران",
+          url: "/users",
+          icon: User,
+        },
+        {
+          title: "پروژه‌ها",
+          title_create: "ایجاد پروژه جدید",
+          title_list: "مشاهده همه پروژه‌ها",
+          url: "/projects",
+          icon: Building,
+        },
+        {
+          title: "آگهی‌ها",
+          title_create: "ایجاد آگهی جدید",
+          title_list: "مشاهده همه آگهی‌ها",
+          url: "/sales",
+          icon: ChartBar,
+        },
+        {
+          title: "پشتیبانی",
+          url: "/tickets/list",
+          icon: Clipboard
+        }
+      ])
+    } else {
+      setItems([
+        {
+          title: "داشبورد",
+          url: "/dashboard",
+          icon: Home,
+        },
+        {
+          title: "پروژه‌ها",
+          url: "/projects/list",
+          icon: Building,
+        },
+        {
+          title: "آگهی‌ها",
+          url: "/sales/list",
+          icon: ChartBar,
+        },
+        {
+          title: "پشتیبانی",
+          url: "/tickets/list",
+          icon: Clipboard
+        }
+      ])
+    }
+  }, [isAdmin])
+
   return (
     <Sidebar side='right' collapsible="icon" variant='floating'>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>پنل مدیریت</SidebarGroupLabel>
+          <SidebarGroupLabel>{'خوش آمدید '}{userInfo ? `${userInfo?.name} گرامی` : ''}</SidebarGroupLabel>
           <SidebarGroupContent>
             {items.map((item) => {
               const isActive =
                 location.pathname === item.url ||
                 location.pathname.startsWith(`${item.url}/`);
-              if(item.title === 'داشبورد'){
+              if(!item.title_create){
                 return (
-                  <SidebarMenu>
+                  <SidebarMenu key={item.title}>
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild isActive={isActive}>
                         <NavLink to={item.url}>
