@@ -114,7 +114,7 @@ export function AppSidebar() {
     <Sidebar side='right' collapsible="icon" variant='floating'>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>{'خوش آمدید '}{userInfo ? `${userInfo?.name} گرامی` : ''}</SidebarGroupLabel>
+          <SidebarGroupLabel>{'خوش آمدید '}{userInfo?.name ? `${userInfo?.name} گرامی` : ''}</SidebarGroupLabel>
           <SidebarGroupContent>
             {items.map((item) => {
               const isActive =

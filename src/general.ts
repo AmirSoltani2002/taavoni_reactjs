@@ -290,11 +290,19 @@ export const deleteTableRow = async(tableName: string, id: number, onDeleted?: (
     return null
   }
 }
-export const updateTableRow = async(tableName: string, id: number, row: any, onUpdated?: (data: any) => void, verbose: boolean=true) => {
+export const updateTableRow = async(tableName: string, id: number | string, row: any, onUpdated?: (data: any) => void, verbose: boolean=true) => {
   const token =  getToken()
+  row = {
+    ...row,
+    id: undefined,
+    createdAt: undefined,
+    updatedAt: undefined,
+    exp: undefined,
+    iat: undefined,
+  }
   try{
     const resp = await fetch(`${api_base_url}/${tableName}/${id}`, {
-      method: 'PUT',
+      method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': token ? `Bearer ${token}`: ''
@@ -309,12 +317,6 @@ export const updateTableRow = async(tableName: string, id: number, row: any, onU
       } else {
         return data;
       }
-    } else if(resp.status === 401) {
-      toast.error(getFarsiError('401'));
-      // Go to login page
-      await sleep(3000);
-      window.location.href = '/';
-      return [];
     } else {
       if(verbose){
         const err = await resp.json();
