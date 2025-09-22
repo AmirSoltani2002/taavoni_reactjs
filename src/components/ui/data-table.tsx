@@ -35,6 +35,10 @@ interface DataTableProps<TData, TValue> {
   onRefresh?: () => void;
   editComponent?: React.ComponentType<{ initialValues: any; onSubmit: (values: any) => void; isEdit?: boolean }>;
   onClickRow?: (row: TData) => void;
+  options?: {
+    title: string;
+    onClick: (row: TData) => void;
+  }[]
 }
 
 
@@ -45,6 +49,7 @@ export function DataTable<TData extends { id?: number }, TValue>({
   onRefresh,
   editComponent: EditComponent,
   onClickRow,
+  options
 }: DataTableProps<TData, TValue>) {
   // Add actions column if tableName and id are present
   const hasId = data.length > 0 && data[0].id !== undefined;
@@ -160,6 +165,11 @@ export function DataTable<TData extends { id?: number }, TValue>({
                   <ContextMenuItem style={{color: 'red'}} onClick={() => setDeleteRow(row.original)}>
                     حذف
                   </ContextMenuItem>
+                  {options && options.map((op) => (
+                    <ContextMenuItem onClick={() => op.onClick(row.original)}>
+                      {op.title}
+                    </ContextMenuItem>
+                  ))}
                 </ContextMenuContent>
               </ContextMenu>
             ))

@@ -1,5 +1,6 @@
 import { api_base_url } from "@/config";
 import { type ColumnDef } from "@tanstack/react-table"
+import { CircleCheckBig, Crown } from "lucide-react";
  
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
@@ -41,7 +42,13 @@ export const columns: ColumnDef<User>[] = [
         accessorKey: "name",
         header: "نام",
         cell: ({row}) => {
-            return row.original.name + ' ' + row.original.lastName
+            const u = row.original;
+            const Badge = (u.type === 'system' || u.type === 'admin') ? Crown : u.accepted ? CircleCheckBig : null;
+            const badgeColor = Badge === Crown ? 'purple' : 'green'
+            return <span>
+                {row.original.name + ' ' + row.original.lastName}
+                {Badge && <Badge className="m-1" size={15} style={{display: 'inline', color: `var(--color-${badgeColor}-500)`}} />}
+            </span>
         }
     },
     {
