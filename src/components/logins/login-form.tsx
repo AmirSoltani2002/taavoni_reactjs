@@ -1,6 +1,6 @@
 import { cn } from "../../lib/utils"
 import { Button } from "../ui/button"
-import { postData } from "../../general"
+import { postTable } from "../../general"
 import {
   Card,
   CardContent,
@@ -10,10 +10,8 @@ import {
 } from "../ui/card"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
-import type { LoginData } from "./interfaces"
 import { useNavigate } from "react-router-dom"
 import Cookies from "js-cookie"
-import { toast } from "sonner"
 
 export function LoginForm({
   className,
@@ -33,21 +31,15 @@ export function LoginForm({
         <CardContent>
           <form onSubmit={e => {
             e.preventDefault();
-            postData<LoginData>('/auth/email/', {
+            postTable('auth/email/', {
               email: (e.target as HTMLFormElement).email.value,
               password: (e.target as HTMLFormElement).password.value
-            }).then(response => {
-              if(response.token) {
-                Cookies.set('token', response.token);
+            }, (d) => {
+              if(d.token) {
+                Cookies.set('token', d.token);
                 navigate('/dashboard', { replace: true});
-              } else if(response.message) {
-                toast.error(response.message);
-              } else {
-                toast.error('خطا در ورود به سیستم، لطفا دوباره تلاش کنید');
               }
-            }).catch(err => {
-              toast.error(err?.message ?? "دسترسی به اینترنت متصل نیست.")
-            });
+            }, false)
           }}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-3">

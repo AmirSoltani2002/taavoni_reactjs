@@ -1,9 +1,10 @@
 import { Building, ChartBar, ChevronDown, Home, User } from "lucide-react"
-import { NavLink, useLocation } from "react-router-dom"
+import { NavLink, useLocation, useNavigate } from "react-router-dom"
 
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -14,10 +15,12 @@ import {
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "./ui/collapsible";
+import { Button } from "./ui/button";
+import Cookies from "js-cookie";
 
 export function AppSidebar() {
   const location = useLocation();
-
+  const navigate = useNavigate();
   const items = [
     {
       title: "داشبورد",
@@ -106,6 +109,22 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter>
+          <SidebarMenu className="flex">
+            <SidebarMenuItem className="flex gap-4">
+              <SidebarMenuButton asChild>
+                <Button variant={'destructive'} onClick={() => {
+                  Cookies.remove('token');
+                  navigate('/')
+                }}
+                className="flex-1 rotate-0 transition-all dark:scale-0 dark:-rotate-90"
+                size={'icon'}>
+                  خروج
+                </Button>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
     </Sidebar>
   )
 }
