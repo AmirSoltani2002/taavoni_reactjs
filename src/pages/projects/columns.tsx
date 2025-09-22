@@ -1,4 +1,5 @@
 import { type ColumnDef } from "@tanstack/react-table"
+import { ImageStorage } from "@/lib/imageStorage"
  
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
@@ -23,13 +24,25 @@ export const columns: ColumnDef<Project>[] = [
     {
         accessorKey: "image",
         header: "تصویر",
-        cell: ({ cell }) => {
-            const value = cell.getValue() as string;
-            return value ? (
+        cell: ({ row }) => {
+            const project = row.original;
+            const apiImage = project.image as string;
+            const localImage = ImageStorage.getProjectImage(project.id);
+            const imageToShow = localImage || apiImage;
+            
+            return imageToShow ? (
                 <img 
-                    src={value} 
+                    src={imageToShow} 
                     alt="تصویر پروژه" 
                     className="w-12 h-12 object-cover rounded-lg border"
+                    onError={(e) => {
+                        console.error('Table image load error for project:', project.id, 'Image:', imageToShow);
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                    }}
+                    onLoad={() => {
+                        console.log('Table image loaded successfully for project:', project.id);
+                    }}
                 />
             ) : (
                 <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
