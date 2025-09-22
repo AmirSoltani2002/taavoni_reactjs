@@ -66,9 +66,10 @@ export function DataTable<TData extends { id?: number }, TValue>({
               initialValues={editRow}
               isEdit
               onSubmit={async (values: any) => {
-                // updateTableRow must be imported in the parent or here
                 if (tableName && editRow.id) {
-                  await updateTableRow(tableName, editRow.id, values, () => {
+                  console.log('DataTable updating:', tableName, editRow.id, values);
+                  await updateTableRow(tableName, editRow.id, values, (updatedData) => {
+                    console.log('DataTable update success:', updatedData);
                     if (onRefresh) onRefresh();
                     setEditRow(null);
                   });

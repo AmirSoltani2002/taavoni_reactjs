@@ -6,6 +6,7 @@ import Layout, {SimpleLayout} from "./components/app/layout";
 import LockedPage from "./components/app/locked-page";
 import ErrorBoundary from "./components/app/ErrorBoundry";
 import ProjectCreate from "./pages/projects/create";
+import ProjectsList from "./pages/projects/list";
 import UsersList from "./pages/users/userList";
 import UserCreate from "./pages/users/create";
 import { Suspense } from "react";
@@ -26,6 +27,7 @@ function App() {
               <Layout>
                 <Routes>
                   <Route path="/projects/create" element={<ProjectCreate />} />
+                  <Route path="/projects/list" element={<ProjectsList />} />
                   <Route path="/users/list" element={<UsersList />} />
                   <Route path="/tickets/list" element={<TicketsList />} />
                   <Route path="/tickets/:ticketType/:ticketId" element={<ChatPage />} />
