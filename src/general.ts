@@ -232,9 +232,15 @@ export const deleteTableRow = async(tableName: string, id: number, onDeleted?: (
 }
 export const updateTableRow = async(tableName: string, id: number, row: any, onUpdated?: (data: any) => void, verbose: boolean=true) => {
   const token =  getToken()
+  row = {
+    ...row,
+    id: undefined,
+    createdAt: undefined,
+    updatedAt: undefined
+  }
   try{
     const resp = await fetch(`${api_base_url}/${tableName}/${id}`, {
-      method: 'PUT',
+      method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': token ? `Bearer ${token}`: ''

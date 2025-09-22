@@ -22,7 +22,7 @@ export type User = {
     shahedFamilyNumber: null | number
     shahedRelation: null | 'azade_wife' | 'azade_child' | 'jan_wife' | 'jan_child';
     subProjects: any[];
-    type: null | 'admin' | 'tehranUni' | 'otherUni' | 'free' | 'employee';
+    type: null | 'system' | 'admin' | 'tehranUni' | 'otherUni' | 'free' | 'employee';
     updatedAt: string;
     workPhone: string;
 }
