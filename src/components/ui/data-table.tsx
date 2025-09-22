@@ -67,9 +67,7 @@ export function DataTable<TData extends { id?: number }, TValue>({
               isEdit
               onSubmit={async (values: any) => {
                 if (tableName && editRow.id) {
-                  console.log('DataTable updating:', tableName, editRow.id, values);
-                  await updateTableRow(tableName, editRow.id, values, (updatedData) => {
-                    console.log('DataTable update success:', updatedData);
+                  await updateTableRow(tableName, editRow.id, values, () => {
                     if (onRefresh) onRefresh();
                     setEditRow(null);
                   });

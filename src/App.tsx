@@ -9,6 +9,8 @@ import ProjectCreate from "./pages/projects/create";
 import ProjectsList from "./pages/projects/list";
 import UsersList from "./pages/users/userList";
 import UserCreate from "./pages/users/create";
+import ChatPage from "./pages/tickets/chat";
+import TicketsList from "./pages/tickets/ticketList";
 import { Suspense } from "react";
 import { PageLoader } from "./components/ui/loader";
 
@@ -26,6 +28,8 @@ function App() {
                 <Routes>
                   <Route path="/projects/create" element={<ProjectCreate />} />
                   <Route path="/projects/list" element={<ProjectsList />} />
+                  <Route path="/tickets/list" element={<TicketsList />} />
+                  <Route path="/tickets/:ticketType/:ticketId" element={<ChatPage />} />
                   <Route path="/users/list" element={<UsersList />} />
                   <Route path="/users/create" element={<UserCreate />} />
                   <Route path="/*" element={<LockedPage />} />
