@@ -2,7 +2,6 @@ import React, { useState, useRef } from 'react';
 import { Button } from './button';
 import { Card, CardContent } from './card';
 import { Upload, X, Camera, Image as ImageIcon } from 'lucide-react';
-import { uploadFile } from '@/general';
 
 interface ImageUploadProps {
   value?: string;

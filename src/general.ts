@@ -88,8 +88,8 @@ export const uploadMultipleFiles = async (files: File[], endpoint: string = 'upl
   
   try {
     const formData = new FormData();
-    files.forEach((file, index) => {
-      formData.append(`files`, file); // or `files[${index}]`
+  files.forEach((file) => {
+      formData.append(`files`, file);
     });
     
     const response = await fetch(`${api_base_url}/${endpoint}`, {

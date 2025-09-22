@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Plus, Trash, Building, MapPin, Calendar, Users, Home, Square, FileText, Camera, CheckCircle, ArrowLeft, Sparkles, Upload, PaperclipIcon, FolderOpen } from "lucide-react";
 import { Calendar22 } from "@/components/calendars/calendar";
-import { postTable, uploadMultipleFiles } from "@/general";
+import { postTable } from "@/general";
 import { PageLoader } from "@/components/ui/loader";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { ImageStorage } from "@/lib/imageStorage";
@@ -230,35 +230,7 @@ export default function ProjectCreate({ initialValues, onSubmit, isEdit = false,
     handleProjectChange('documents', updatedDocuments);
   };
 
-  // Function to upload all local files when server endpoint becomes available
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const uploadAllLocalFiles = async () => {
-    const documentsWithLocalFiles = project.documents.filter(doc => doc.localFile && !doc.url);
-    
-    if (documentsWithLocalFiles.length === 0) {
-      console.log('No local files to upload');
-      return;
-    }
-
-    try {
-      const files = documentsWithLocalFiles.map(doc => doc.localFile!);
-      const uploadedUrls = await uploadMultipleFiles(files, 'upload/documents');
-      
-      const updatedDocuments = project.documents.map(doc => {
-        const index = documentsWithLocalFiles.findIndex(d => d.id === doc.id);
-        if (index !== -1 && uploadedUrls[index]) {
-          return { ...doc, url: uploadedUrls[index], localFile: undefined };
-        }
-        return doc;
-      });
-      
-      handleProjectChange('documents', updatedDocuments);
-      console.log('All files uploaded successfully');
-      
-    } catch (error) {
-      console.error('Failed to upload files:', error);
-    }
-  };
+  // Upload-all helper removed as not used currently
 
 
   const handleSubmit = async(e: React.FormEvent) => {
