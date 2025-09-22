@@ -12,7 +12,6 @@ const getFarsiError = (err: string) => {
   } = {
     '401': 'توکن شما منقضی شده است. لطفا دوباره وارد شوید',
     '409': 'اطلاعات تکراری است و قابل ثبت نمی‌باشد',
-    'forbidden resource': 'شما مجوز دسترسی به این بخش را ندارید.',
     'homephone must be a valid phone number': 'شماره منزل باید شماره درست باشد.',
     'mobile must be a valid phone number': 'شماره موبایل باید شماره درست باشد.',
     'workphone must be a valid phone number': 'شماره محل کار باید شماره درست باشد.',
@@ -97,7 +96,7 @@ export const getTable = async(tableName: string, onGot?: (data: any) => void, ve
             });
             return;
           }
-          toast.error(getFarsiError(err.message));
+          toast.error(err.message);
         }
         else {
           toast.error('خطایی رخ داده است');
@@ -156,7 +155,7 @@ export const postTable = async(tableName: string, row: any, onPosted?: (data: an
             });
             return;
           }
-          toast.error(getFarsiError(err.message));
+          toast.error(err.message);
         }
         else {
           toast.error('خطایی رخ داده است');
@@ -212,7 +211,7 @@ export const deleteTableRow = async(tableName: string, id: number, onDeleted?: (
             });
             return;
           }
-          toast.error(getFarsiError(err.message));
+          toast.error(err.message);
         }
         else {
           toast.error('خطایی رخ داده است');
@@ -232,15 +231,9 @@ export const deleteTableRow = async(tableName: string, id: number, onDeleted?: (
 }
 export const updateTableRow = async(tableName: string, id: number, row: any, onUpdated?: (data: any) => void, verbose: boolean=true) => {
   const token =  getToken()
-  row = {
-    ...row,
-    id: undefined,
-    createdAt: undefined,
-    updatedAt: undefined
-  }
   try{
     const resp = await fetch(`${api_base_url}/${tableName}/${id}`, {
-      method: 'PATCH',
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': token ? `Bearer ${token}`: ''
@@ -274,7 +267,7 @@ export const updateTableRow = async(tableName: string, id: number, row: any, onU
             });
             return;
           }
-          toast.error(getFarsiError(err.message));
+          toast.error(err.message);
         }
         else {
           toast.error('خطایی رخ داده است');
