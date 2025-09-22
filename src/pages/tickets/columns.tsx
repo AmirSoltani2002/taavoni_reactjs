@@ -34,6 +34,16 @@ export const columns: ColumnDef<SubProjectTicket | OtherTicket>[] = [
     {
         accessorKey: 'type',
         header: 'موضوع'
+    },
+    {
+        accessorFn: (row) => {
+            if(!row.createdAt){
+                return 'نامشخص'
+            }
+            const d = new Date(row.createdAt);
+            return d.toLocaleDateString('fa-IR')
+        },
+        header: 'تاریخ ایجاد'
     }
 ]
 

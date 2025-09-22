@@ -23,8 +23,8 @@ export default function TicketsList() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        getTable('other-tickets', setOtherTickets);
-        getTable('sub-project-tickets', setSubProjectsTickets);
+        getTable('other-tickets/profile', setOtherTickets);
+        getTable('sub-project-tickets/profile', setSubProjectsTickets);
     }, []);
     useEffect(() => {
         setData([
@@ -33,7 +33,7 @@ export default function TicketsList() {
         ])
     }, [otherTickets, subProjectsTickets])
     return (
-        <div className="container mx-auto py-10">
+        <div className="container mx-auto py-10 px-4">
             <Dialog>
                 <DialogTrigger>
                     <Button 
@@ -72,7 +72,13 @@ export default function TicketsList() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-            <DataTable columns={columns} data={data} />
+            <DataTable columns={columns} data={data} onClickRow={(row) => {
+                if(row.id){
+                    navigate(`/tickets/${
+                        row.type === 'buy' || row.type === 'sell' ? 'subproject' : 'other'
+                    }/${row.id}`)
+                }
+            }} />
         </div>
     )
 }

@@ -5,6 +5,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table"
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -33,6 +34,7 @@ interface DataTableProps<TData, TValue> {
   tableName?: string;
   onRefresh?: () => void;
   editComponent?: React.ComponentType<{ initialValues: any; onSubmit: (values: any) => void; isEdit?: boolean }>;
+  onClickRow?: (row: TData) => void;
 }
 
 
@@ -42,6 +44,7 @@ export function DataTable<TData extends { id?: number }, TValue>({
   tableName,
   onRefresh,
   editComponent: EditComponent,
+  onClickRow,
 }: DataTableProps<TData, TValue>) {
   // Add actions column if tableName and id are present
   const hasId = data.length > 0 && data[0].id !== undefined;
@@ -102,7 +105,7 @@ export function DataTable<TData extends { id?: number }, TValue>({
     columns: allColumns,
     getCoreRowModel: getCoreRowModel(),
   });
-
+  const HEADER_COLOR = 'slate';
   return (
     <div className="overflow-hidden rounded-md border">
       <Table>
@@ -132,6 +135,16 @@ export function DataTable<TData extends { id?: number }, TValue>({
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
+                    className={cn(
+                      `bg-${HEADER_COLOR}-100 hover:bg-${HEADER_COLOR}-200`,
+                      onClickRow ? 'cursor-pointer' : '',
+                    )}
+                    aria-label="مشاهده"
+                    onClick={() => {
+                      if(onClickRow){
+                        onClickRow(row.original)
+                      }
+                    }}
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id}>

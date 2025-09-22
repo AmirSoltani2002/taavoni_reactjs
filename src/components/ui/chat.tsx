@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 // Root wrapper
 export function Chat({ children }: { children: ReactNode }) {
   return (
-    <Card className="flex flex-col h-[600px] w-full">{children}</Card>
+    <Card className="flex flex-col h-[600px] mx-4">{children}</Card>
   )
 }
 

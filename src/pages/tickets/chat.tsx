@@ -32,7 +32,7 @@ export default function ChatPage() {
   }, []);
 
   useEffect(() => {
-    getTable(`/users/profile`, setSelf);
+    getTable(`users/profile`, setSelf);
   }, []);
 
   useEffect(() => {
@@ -40,7 +40,7 @@ export default function ChatPage() {
       return;
     }
     if(self.type === 'admin') {
-      getTable(`/users/${ticket.userId}`, setOtherGuy);
+      getTable(`users/${ticket.userId}`, setOtherGuy);
     }
   }, [self, ticket])
   
@@ -74,15 +74,19 @@ export default function ChatPage() {
     <Chat>
       <ChatHeader title={ticket?.type} />
       <ChatContent>
-        {chat.map((msg, i) => (
-          <ChatMessage key={i} 
-            sender={otherGuy ? otherGuy.name : 'Admin'}
-            content={msg.message || ''}
-            dateString={msg.updatedAt || ''}
-            isSelf={msg.senderId === self?.id}
-            selfName={self?.name || ''}
-          />
-        ))}
+        {chat.length === 0 ? (
+          <div className="text-center text-muted-foreground py-8">پیام یا سوال خود را بنویسید</div>
+        ) : (
+          chat.map((msg, i) => (
+            <ChatMessage key={i} 
+              sender={otherGuy ? otherGuy.name : 'Admin'}
+              content={msg.message || ''}
+              dateString={msg.updatedAt || ''}
+              isSelf={msg.senderId === self?.id}
+              selfName={self?.name || ''}
+            />
+          ))
+        )}
       </ChatContent>
       <ChatInput onSend={handleSend} />
     </Chat>
