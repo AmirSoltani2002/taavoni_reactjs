@@ -43,6 +43,78 @@ const getFarsiError = (err: string) => {
 }
 
 export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// File upload function
+export const uploadFile = async (file: File, endpoint: string = 'upload'): Promise<string | null> => {
+  const token = getToken();
+  
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await fetch(`${api_base_url}/${endpoint}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : ''
+        // Note: Don't set Content-Type header for FormData, browser will set it automatically with boundary
+      },
+      body: formData
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      // Usually backend returns { url: 'path/to/uploaded/file.jpg' } or { filename: 'uuid.jpg' }
+      return data.url || data.filename || data.path;
+    } else if (response.status === 401) {
+      toast.error(getFarsiError('401'));
+      await sleep(3000);
+      window.location.href = '/';
+      return null;
+    } else {
+      const err = await response.json();
+      toast.error(err.message || 'خطا در آپلود فایل');
+      return null;
+    }
+  } catch (error: any) {
+    console.error('Upload error:', error);
+    toast.error('خطا در آپلود فایل');
+    return null;
+  }
+};
+
+// Multiple files upload
+export const uploadMultipleFiles = async (files: File[], endpoint: string = 'upload/multiple'): Promise<string[]> => {
+  const token = getToken();
+  
+  try {
+    const formData = new FormData();
+    files.forEach((file, index) => {
+      formData.append(`files`, file); // or `files[${index}]`
+    });
+    
+    const response = await fetch(`${api_base_url}/${endpoint}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : ''
+      },
+      body: formData
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      // Usually returns { files: [{ url: '...' }, { url: '...' }] }
+      return data.files?.map((f: any) => f.url || f.filename || f.path) || [];
+    } else {
+      const err = await response.json();
+      toast.error(err.message || 'خطا در آپلود فایل‌ها');
+      return [];
+    }
+  } catch (error: any) {
+    console.error('Upload error:', error);
+    toast.error('خطا در آپلود فایل‌ها');
+    return [];
+  }
+};
 export function postData<Type>(endpoint: string, data: Type, tokenRequired: boolean = true) {
   // Default options are marked with *
   const token = getToken();

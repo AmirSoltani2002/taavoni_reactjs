@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Button } from './button';
 import { Card, CardContent } from './card';
 import { Upload, X, Camera, Image as ImageIcon } from 'lucide-react';
+import { uploadFile } from '@/general';
 
 interface ImageUploadProps {
   value?: string;
@@ -14,7 +15,7 @@ export function ImageUpload({ value, onChange, disabled, className }: ImageUploa
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -32,14 +33,35 @@ export function ImageUpload({ value, onChange, disabled, className }: ImageUploa
 
     setIsUploading(true);
 
-    // Convert to base64 for now (in real app, upload to server)
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      onChange(result);
+    // Temporarily use base64 until server endpoint is ready
+    // TODO: Enable server upload when /api/upload/images endpoint is implemented
+    
+    try {
+      // Method 1: Try server upload (commented out until endpoint exists)
+      // const uploadedUrl = await uploadFile(file, 'upload/images');
+      // if (uploadedUrl) {
+      //   onChange(uploadedUrl);
+      //   setIsUploading(false);
+      //   return;
+      // }
+      
+      // Method 2: Use base64 for now
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        onChange(result);
+        setIsUploading(false);
+      };
+      reader.onerror = () => {
+        console.error('Error reading file');
+        setIsUploading(false);
+      };
+      reader.readAsDataURL(file);
+      
+    } catch (error) {
+      console.error('Upload error:', error);
       setIsUploading(false);
-    };
-    reader.readAsDataURL(file);
+    }
   };
 
   const handleRemove = () => {

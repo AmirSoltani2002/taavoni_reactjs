@@ -10,6 +10,7 @@ import { ImageModal } from "@/components/ui/image-modal"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { deleteTableRow, updateTableRow } from "@/general"
+import { ImageStorage } from "@/lib/imageStorage"
 
 export default function ProjectsList() {
     const [data, setData] = useState<Project[]>([])
@@ -20,16 +21,55 @@ export default function ProjectsList() {
     const [showCreateModal, setShowCreateModal] = useState(false)
 
     useEffect(() => {
-        getTable('projects/all', setData);
+        getTable('projects/all', (data) => {
+            console.log('Projects data received:', data);
+            
+            // Enhance projects with locally stored images
+            const enhancedData = data.map((project: any) => {
+                const localImage = ImageStorage.getProjectImage(project.id);
+                return {
+                    ...project,
+                    image: localImage || project.image || '' // Use local image if available
+                };
+            });
+            
+            // Debug: Check image field in each project
+            enhancedData.forEach((project: any, index: number) => {
+                console.log(`Project ${index + 1} (${project.name}):`, {
+                    hasImage: !!project.image,
+                    imageType: typeof project.image,
+                    imageLength: project.image?.length || 0,
+                    imagePrefix: project.image?.substring(0, 50) || 'No image',
+                    source: ImageStorage.getProjectImage(project.id) ? 'localStorage' : 'API'
+                });
+            });
+            
+            setData(enhancedData);
+        });
     }, [])
 
     const refreshData = () => {
-        getTable('projects/all', setData);
+        getTable('projects/all', (data) => {
+            // Enhance projects with locally stored images
+            const enhancedData = data.map((project: any) => {
+                const localImage = ImageStorage.getProjectImage(project.id);
+                return {
+                    ...project,
+                    image: localImage || project.image || ''
+                };
+            });
+            setData(enhancedData);
+        });
     }
 
     const handleDelete = async (project: Project) => {
         try {
             await deleteTableRow('projects', project.id);
+            
+            // Also remove locally stored image
+            ImageStorage.removeProjectImage(project.id);
+            console.log('Locally stored image removed for project:', project.id);
+            
             refreshData();
             setDeletingProject(null);
         } catch (error) {
@@ -205,6 +245,13 @@ export default function ProjectsList() {
                                                         src={project.image} 
                                                         alt={project.name}
                                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                        onError={(e) => {
+                                                            console.error('Image load error for project:', project.name, 'Image URL:', project.image);
+                                                            e.currentTarget.style.display = 'none';
+                                                        }}
+                                                        onLoad={() => {
+                                                            console.log('Image loaded successfully for project:', project.name);
+                                                        }}
                                                     />
                                                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
                                                         <div className="bg-white/90 rounded-full p-2">
@@ -216,7 +263,11 @@ export default function ProjectsList() {
                                                 <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
                                                     <div className="text-center">
                                                         <Building className="w-16 h-16 text-slate-400 mx-auto mb-2" />
-                                                        <p className="text-slate-500 text-sm">تصویر پروژه</p>
+                                                        <p className="text-slate-500 text-sm">بدون تصویر</p>
+                                                        {/* Debug info */}
+                                                        <p className="text-xs text-slate-400 mt-1">
+                                                            Debug: {project.image ? `Has: ${project.image.substring(0, 20)}...` : 'No image data'}
+                                                        </p>
                                                     </div>
                                                 </div>
                                             )}
@@ -436,15 +487,18 @@ export default function ProjectsList() {
                             {/* Content */}
                             <div className="h-[calc(100vh-80px)] overflow-y-auto">
                                 <div className="container mx-auto py-6 px-4">
-                                    <ProjectCreate 
-                                        onSubmit={async (values) => {
-                                            console.log('Creating new project:', values);
-                                            // The ProjectCreate component handles the API call
-                                            // After successful creation, refresh data and close modal
-                                            refreshData();
-                                            setShowCreateModal(false);
-                                        }}
-                                    />
+                               <ProjectCreate 
+                                   onSubmit={async (values) => {
+                                       console.log('Creating new project:', values);
+                                       // The ProjectCreate component handles the API call
+                                       // After successful creation, refresh data and close modal
+                                       refreshData();
+                                       setShowCreateModal(false);
+                                   }}
+                                   onBack={() => {
+                                       setShowCreateModal(false);
+                                   }}
+                               />
                                 </div>
                             </div>
                         </div>

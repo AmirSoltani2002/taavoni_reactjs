@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,9 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Plus, Trash, Building, MapPin, Calendar, Users, Home, Square, FileText, Camera, CheckCircle, ArrowLeft, Sparkles, Upload, PaperclipIcon, FolderOpen } from "lucide-react";
 import { Calendar22 } from "@/components/calendars/calendar";
-import { postTable } from "@/general";
+import { postTable, uploadMultipleFiles } from "@/general";
 import { PageLoader } from "@/components/ui/loader";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { ImageStorage } from "@/lib/imageStorage";
 
 interface UnitType {
   id: number;
@@ -28,6 +30,8 @@ interface DocumentFile {
   size: number;
   type: string;
   uploadDate: string;
+  url?: string; // Server URL after upload
+  localFile?: File; // Local file object for future upload
 }
 
 interface Unit {
@@ -45,9 +49,11 @@ interface ProjectCreateProps {
   initialValues?: any;
   onSubmit?: (values: any) => void;
   isEdit?: boolean;
+  onBack?: () => void;
 }
 
-export default function ProjectCreate({ initialValues, onSubmit, isEdit = false }: ProjectCreateProps = {}) {
+export default function ProjectCreate({ initialValues, onSubmit, isEdit = false, onBack }: ProjectCreateProps = {}) {
+  const navigate = useNavigate();
   const [loading, setLoading] =  useState(false);
   const [project, setProject] = useState<{
     name: string;
@@ -156,43 +162,54 @@ export default function ProjectCreate({ initialValues, onSubmit, isEdit = false 
   };
 
   // File upload handler
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files) return;
 
-    const newDocuments: DocumentFile[] = [];
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      
+    const fileArray = Array.from(files);
+    
+    // Validate files first
+    for (const file of fileArray) {
       // Check file size (10MB limit)
       if (file.size > 10 * 1024 * 1024) {
         alert(`فایل ${file.name} بیش از 10 مگابایت است`);
-        continue;
+        event.target.value = '';
+        return;
       }
 
       // Check file type
       const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/png', 'image/jpg'];
       if (!allowedTypes.includes(file.type)) {
         alert(`نوع فایل ${file.name} پشتیبانی نمی‌شود`);
-        continue;
+        event.target.value = '';
+        return;
       }
-
-      // Create document object with default values
-      const documentFile: DocumentFile = {
-        id: Date.now() + i,
-        originalName: file.name,
-        customName: file.name, // Keep original name
-        category: 'عمومی', // Default category
-        size: file.size,
-        type: file.type,
-        uploadDate: new Date().toISOString()
-      };
-
-      newDocuments.push(documentFile);
     }
 
-    if (newDocuments.length > 0) {
+    // Temporarily store file info locally until server endpoint is ready
+    // TODO: Enable server upload when /api/upload/documents endpoint is implemented
+    
+    try {
+      // Method 1: Try server upload (commented out until endpoint exists)
+      // const uploadedUrls = await uploadMultipleFiles(fileArray, 'upload/documents');
+      
+      // Method 2: Store file info locally for now
+      const newDocuments: DocumentFile[] = fileArray.map((file, i) => ({
+        id: Date.now() + i,
+        originalName: file.name,
+        customName: file.name,
+        category: '',
+        size: file.size,
+        type: file.type,
+        uploadDate: new Date().toISOString(),
+        url: '', // No server URL - files stored locally in browser
+        localFile: file, // Store file object for future upload
+      }));
+
       handleProjectChange('documents', [...project.documents, ...newDocuments]);
+      
+    } catch (error) {
+      console.error('File processing error:', error);
     }
     
     // Reset input
@@ -211,6 +228,36 @@ export default function ProjectCreate({ initialValues, onSubmit, isEdit = false 
   const removeDocument = (id: number) => {
     const updatedDocuments = project.documents.filter(doc => doc.id !== id);
     handleProjectChange('documents', updatedDocuments);
+  };
+
+  // Function to upload all local files when server endpoint becomes available
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const uploadAllLocalFiles = async () => {
+    const documentsWithLocalFiles = project.documents.filter(doc => doc.localFile && !doc.url);
+    
+    if (documentsWithLocalFiles.length === 0) {
+      console.log('No local files to upload');
+      return;
+    }
+
+    try {
+      const files = documentsWithLocalFiles.map(doc => doc.localFile!);
+      const uploadedUrls = await uploadMultipleFiles(files, 'upload/documents');
+      
+      const updatedDocuments = project.documents.map(doc => {
+        const index = documentsWithLocalFiles.findIndex(d => d.id === doc.id);
+        if (index !== -1 && uploadedUrls[index]) {
+          return { ...doc, url: uploadedUrls[index], localFile: undefined };
+        }
+        return doc;
+      });
+      
+      handleProjectChange('documents', updatedDocuments);
+      console.log('All files uploaded successfully');
+      
+    } catch (error) {
+      console.error('Failed to upload files:', error);
+    }
   };
 
 
@@ -232,8 +279,9 @@ export default function ProjectCreate({ initialValues, onSubmit, isEdit = false 
         sharedArea: Number(project.sharedArea) || 0,
         buildingArea: Number(project.landArea) + Number(project.sharedArea), // Calculate buildingArea
         options: project.options,
+        // Remove image field - API doesn't accept it
+        // image: project.image || '', // API validation error: Property image should not exist
         // Remove fields that API doesn't expect
-        // image: project.image, // Remove - API doesn't expect this
         // documents: project.documents, // Handle separately if needed
         // contractType: project.contractType, // Handle separately if needed  
         // ownershipType: project.ownershipType, // Handle separately if needed
@@ -245,9 +293,22 @@ export default function ProjectCreate({ initialValues, onSubmit, isEdit = false 
       
       if (isEdit && onSubmit) {
         await onSubmit(projectData);
+        
+        // Save image locally for edited project
+        if (project.image && initialValues?.id) {
+          ImageStorage.saveProjectImage(initialValues.id, project.image);
+        }
       } else {
         const result = await postTable('projects', projectData);
         if (result) {
+          console.log('Project created successfully:', result);
+          
+          // Save image locally using project ID from response
+          if (project.image && result.id) {
+            ImageStorage.saveProjectImage(result.id, project.image);
+            console.log('Image saved locally for project ID:', result.id);
+          }
+          
           // Reset form on successful creation
           setProject({
             name: "",
@@ -307,7 +368,19 @@ export default function ProjectCreate({ initialValues, onSubmit, isEdit = false 
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-8">
-            <Button variant="ghost" size="sm" className="gap-2 hover:bg-white/60 backdrop-blur-sm">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="gap-2 hover:bg-white/60 backdrop-blur-sm"
+              onClick={() => {
+                if (onBack) {
+                  onBack();
+                } else {
+                  // Default behavior: go to projects list
+                  navigate('/projects/list');
+                }
+              }}
+            >
               <ArrowLeft className="w-4 h-4" />
               بازگشت
             </Button>
@@ -756,83 +829,9 @@ export default function ProjectCreate({ initialValues, onSubmit, isEdit = false 
                   )}
                 </div>
 
-                {/* Contract and Legal Info */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-3">
-                      <div className="p-1 bg-blue-100 rounded-md">
-                        <FileText className="w-4 h-4 text-blue-600" />
-                      </div>
-                      نوع قرارداد
-                    </Label>
-                    <select
-                      value={project.contractType}
-                      onChange={(e) => handleProjectChange('contractType', e.target.value)}
-                      className="w-full h-12 px-4 bg-white/50 border border-slate-200 rounded-lg focus:bg-white focus:border-blue-400 focus:ring-blue-400/20 transition-all duration-200"
-                    >
-                      <option value="">انتخاب کنید...</option>
-                      <option value="مشارکت_در_ساخت">مشارکت در ساخت</option>
-                      <option value="پیمانکاری">پیمانکاری</option>
-                      <option value="سرمایه_گذاری">سرمایه گذاری</option>
-                      <option value="خرید_زمین">خرید زمین</option>
-                      <option value="سایر">سایر</option>
-                    </select>
-                  </div>
+                {/* Contract, Ownership, and Building Permit fields removed per request */}
 
-                  <div>
-                    <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-3">
-                      <div className="p-1 bg-green-100 rounded-md">
-                        <Home className="w-4 h-4 text-green-600" />
-                      </div>
-                      نوع مالکیت
-                    </Label>
-                    <select
-                      value={project.ownershipType}
-                      onChange={(e) => handleProjectChange('ownershipType', e.target.value)}
-                      className="w-full h-12 px-4 bg-white/50 border border-slate-200 rounded-lg focus:bg-white focus:border-green-400 focus:ring-green-400/20 transition-all duration-200"
-                    >
-                      <option value="">انتخاب کنید...</option>
-                      <option value="تک_برگ">تک برگ</option>
-                      <option value="شش_دانگ">شش دانگ</option>
-                      <option value="مشاع">مشاع</option>
-                      <option value="اجاره_ای">اجاره‌ای</option>
-                      <option value="وقفی">وقفی</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Building Permit */}
-                <div>
-                  <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-3">
-                    <div className="p-1 bg-purple-100 rounded-md">
-                      <CheckCircle className="w-4 h-4 text-purple-600" />
-                    </div>
-                    شماره پروانه ساختمان
-                  </Label>
-                  <Input
-                    value={project.buildingPermit}
-                    onChange={(e) => handleProjectChange('buildingPermit', e.target.value)}
-                    placeholder="مثال: 1402/12345"
-                    className="h-12 bg-white/50 border-slate-200 focus:bg-white focus:border-purple-400 focus:ring-purple-400/20 transition-all duration-200"
-                  />
-                </div>
-
-                {/* Additional Notes */}
-                <div>
-                  <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-3">
-                    <div className="p-1 bg-indigo-100 rounded-md">
-                      <FileText className="w-4 h-4 text-indigo-600" />
-                    </div>
-                    یادداشت‌های اضافی
-                  </Label>
-                  <textarea
-                    value={project.notes}
-                    onChange={(e) => handleProjectChange('notes', e.target.value)}
-                    placeholder="توضیحات اضافی، نکات مهم، یادداشت‌ها..."
-                    rows={4}
-                    className="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-lg focus:bg-white focus:border-indigo-400 focus:ring-indigo-400/20 transition-all duration-200 resize-none"
-                  />
-                </div>
+                {/* Additional Notes removed as requested - only top notes remain */}
               </div>
             </CardContent>
           </Card>
