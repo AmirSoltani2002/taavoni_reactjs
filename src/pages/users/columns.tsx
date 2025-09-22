@@ -26,6 +26,7 @@ export type User = {
     type: null | 'system' | 'admin' | 'tehranUni' | 'otherUni' | 'free' | 'employee';
     updatedAt: string;
     workPhone: string;
+    accepted: boolean;
 }
 export type UserDoc = {
     id?: number;

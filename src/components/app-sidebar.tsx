@@ -20,6 +20,7 @@ import {
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "./ui/collapsible";
 import { Button } from "./ui/button";
 import Cookies from "js-cookie";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 export function AppSidebar() {
   const location = useLocation();
@@ -30,6 +31,7 @@ export function AppSidebar() {
     title_list?: string;
     url: string;
     icon: typeof Home
+    disabled?: boolean;
   }[]>([
     {
       title: "داشبورد",
@@ -95,16 +97,18 @@ export function AppSidebar() {
           title: "پروژه‌ها",
           url: "/projects/list",
           icon: Building,
+          disabled: !userInfo?.accepted,
         },
         {
           title: "آگهی‌ها",
           url: "/sales/list",
           icon: ChartBar,
+          disabled: !userInfo?.accepted,
         },
         {
           title: "پشتیبانی",
           url: "/tickets/list",
-          icon: Clipboard
+          icon: Clipboard,
         }
       ])
     }
@@ -120,16 +124,40 @@ export function AppSidebar() {
               const isActive =
                 location.pathname === item.url ||
                 location.pathname.startsWith(`${item.url}/`);
-              if(!item.title_create){
+              if (!item.title_create) {
                 return (
                   <SidebarMenu key={item.title}>
                     <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild isActive={isActive}>
-                        <NavLink to={item.url}>
-                          <item.icon />
-                          <span>{item.title}</span>
-                        </NavLink>
-                      </SidebarMenuButton>
+                      {item.disabled ? (
+                        <HoverCard openDelay={100} closeDelay={100}>
+                          <HoverCardTrigger asChild>
+                            <div style={{ width: '100%' }}>
+                              <SidebarMenuButton
+                                asChild
+                                isActive={isActive}
+                                disabled={item.disabled}
+                              >
+                                <div style={{ pointerEvents: 'none', opacity: 0.5, width: '100%' }}>
+                                  <item.icon />
+                                  <span>{item.title}</span>
+                                </div>
+                              </SidebarMenuButton>
+                            </div>
+                          </HoverCardTrigger>
+                          <HoverCardContent className="max-w-xs text-xs text-center">
+                            حساب شما هنوز تایید نشده است.<br />
+                            لطفا با پشتیبانی تماس بگیرید.<br />
+                            <a href="/tickets/list" className="text-blue-600 underline">ارسال تیکت</a>
+                          </HoverCardContent>
+                        </HoverCard>
+                      ) : (
+                        <SidebarMenuButton asChild isActive={isActive}>
+                          <NavLink to={item.url}>
+                            <item.icon />
+                            <span>{item.title}</span>
+                          </NavLink>
+                        </SidebarMenuButton>
+                      )}
                     </SidebarMenuItem>
                   </SidebarMenu>
                 );
