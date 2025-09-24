@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
-import { Building, Users, FileText, CheckCircle, ArrowLeft } from "lucide-react";
+import { Building, Users, FileText, CheckCircle, ArrowLeft, ArrowRight } from "lucide-react";
 import { getTable, postTable } from "@/general";
 import { PageLoader } from "@/components/ui/loader";
 import type { Project, SubProject, UnitType } from "./columns";
@@ -84,6 +84,7 @@ export default function ProjectCreate({ initialValues, onSubmit, isEdit = false,
   const navigate = useNavigate();
   const [loading, setLoading] =  useState(false);
   const [user, setUser] = useState<User>()
+  const [floorCounts, setFloorCounts] = useState<number[]>([]);
   const [project, setProject] = useState<Project>(() => {
     if (initialValues) {
       return {
@@ -115,7 +116,6 @@ export default function ProjectCreate({ initialValues, onSubmit, isEdit = false,
 
   const [unitTypes, setUnitTypes] = useState<UnitType[]>([]);
   const [units, setUnits] = useState<SubProject[]>([]);
-  const [nextId, setNextId] = useState(1);
   const [step, setStep] = useState(0)
 
   useEffect(() => {
@@ -128,16 +128,22 @@ export default function ProjectCreate({ initialValues, onSubmit, isEdit = false,
     }
   }, [initialValues, isEdit]);
   useEffect(() => {
+    setProject({
+      ...project,
+      floorCount: floorCounts.reduce((acc, cur) => acc + cur, 0)
+    })
+  }, [floorCounts])
+  useEffect(() => {
     const generatedUnits: SubProject[] = [];
     unitTypes.forEach((type) => {
       for (let i = 0; i < type.count; i++) {
         generatedUnits.push({
           userId: user?.id,
           unitNumber: generatedUnits.length + 1,
-          floor: 0,
+          floor: type.floor,
           block: type.block,
           area: type.area,
-          roomCount: type.bedrooms,
+          roomCount: type.roomCount,
           point: 0,
         });
       }
@@ -164,9 +170,11 @@ export default function ProjectCreate({ initialValues, onSubmit, isEdit = false,
         
       } else {
         const result = await postTable('projects', project);
-        if (result) {
-          console.log('Project created successfully:', result);
-          
+        if (result && result.id) {
+          await postTable('subprojects/multiple', units.map(x => {
+            x['projectId'] = result.id;
+            return x;
+          }))
           // Reset form on successful creation
           setProject({
             name: "",
@@ -177,6 +185,7 @@ export default function ProjectCreate({ initialValues, onSubmit, isEdit = false,
             unitCount: 0,
             blockNumber: 1,
             landArea: 0,
+            buildingArea: 0,
             sharedArea: 0,
             options: "",
           });
@@ -249,7 +258,7 @@ export default function ProjectCreate({ initialValues, onSubmit, isEdit = false,
               {/* Project Basic Info */}
               <GeneralInfo project={project} handleProjectChange={handleProjectChange} />
               {/* Project Specifications */}
-              <ProjectSpecs project={project} handleProjectChange={handleProjectChange} />
+              <ProjectSpecs project={project} handleProjectChange={handleProjectChange} floorCounts={floorCounts} setFloorCounts={setFloorCounts} />
               </>
             ) : step === 1 ? (
               <>
@@ -257,42 +266,58 @@ export default function ProjectCreate({ initialValues, onSubmit, isEdit = false,
               <UnitTypes 
                 unitTypes={unitTypes} 
                 setUnitTypes={setUnitTypes}
-                nextId={nextId}
-                setNextId={setNextId} 
+                floorCounts={floorCounts} 
               />
               </>
             ) : undefined
           }
           {/* Submit Button */}
-          {step == 2 && <div className="flex flex-col sm:flex-row gap-4 pt-6">
-            <Button 
-              type="button" 
-              variant="outline" 
-              className="flex-1 h-14 text-lg gap-2"
-              disabled={loading}
-            >
-              <ArrowLeft className="w-5 h-5" />
-              ذخیره پیش‌نویس
-            </Button>
-            
-            <Button 
-              type="submit" 
-              className="flex-1 h-14 text-lg gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg"
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  در حال ذخیره...
-                </>
+          <div className="flex flex-col sm:flex-row gap-4 pt-6">
+            {
+              step === 2 ? (
+                <Button 
+                  type="submit" 
+                  className="flex-1 h-14 text-lg gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      در حال ذخیره...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-5 h-5" />
+                      {isEdit ? 'بروزرسانی پروژه' : 'ایجاد پروژه'}
+                    </>
+                  )}
+                </Button>
               ) : (
                 <>
-                  <CheckCircle className="w-5 h-5" />
-                  {isEdit ? 'بروزرسانی پروژه' : 'ایجاد پروژه'}
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="flex-1 h-14 text-lg gap-2"
+                  onClick={() => setStep(Math.max(0, step - 1))}
+                  disabled={step <= 0}
+                >
+                  <ArrowRight className="w-5 h-5" />
+                  قبلی
+                </Button>
+                
+                <Button 
+                  type="button" 
+                  className="flex-1 h-14 text-lg gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg"
+                  onClick={() => setStep(Math.min(2, step + 1))}
+                  disabled={step >= 2}
+                >
+                  مرحله بعد
+                  <ArrowLeft className="w-5 h-5" />
+                </Button>
                 </>
-              )}
-            </Button>
-          </div>}
+              )
+            }
+          </div>
         </form>
         
         {loading && <PageLoader />}

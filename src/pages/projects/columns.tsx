@@ -13,6 +13,7 @@ export type Project = {
     unitCount?: number;
     blockNumber?: number;
     landArea?: number;
+    buildingArea?: number;
     sharedArea?: number;
     options?: string;
     createdAt?: string;
@@ -24,7 +25,7 @@ export type SubProject = {
     area?: number;
     floor?: number;
     point?: number;
-    block?: string;
+    block?: number;
     roomCount?: number;
     options?: string;
     unitNumber?: number;
@@ -35,13 +36,17 @@ export type SubProject = {
 }
 
 export type UnitType = {
-  id: number;
-  count: number;
-  area: number;
-  bedrooms: number;
-  bathrooms: number;
-  block?: string;
-  options?: string;
+    id: number;
+    area?: number;
+    floor?: number;
+    point?: number;
+    block?: number;
+    roomCount?: number;
+    unitNumber?: number;
+    userId?: number;
+    projectId?: number;
+    
+    count: number;
 }
 
 export const columns: ColumnDef<Project>[] = [

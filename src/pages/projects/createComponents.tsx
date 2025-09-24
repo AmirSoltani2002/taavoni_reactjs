@@ -1,16 +1,18 @@
 import { Calendar22 } from "@/components/calendars/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash, Building, MapPin, Calendar, Users, Home, Square, FileText, Camera, Sparkles } from "lucide-react";
+import { Plus, Trash, Building, MapPin, Calendar, Users, Home, Square, FileText, Camera, Sparkle } from "lucide-react";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import type { Project, UnitType } from "./columns";
-interface Props {
+import { useEffect, useState } from "react";
+import { Slider } from "@/components/ui/slider";
+interface GeneralInfoProps {
     project: Project;
     handleProjectChange: (name: string, value?: string) => void;
 }
-export const GeneralInfo: React.FC<Props> = ({project, handleProjectChange}) => {
+export const GeneralInfo: React.FC<GeneralInfoProps> = ({project, handleProjectChange}) => {
     return <Card className="bg-white/70 backdrop-blur-sm shadow-xl border-0 ring-1 ring-white/20 hover:shadow-2xl transition-all duration-300">
     <CardHeader className="bg-gradient-to-r from-blue-50/50 to-purple-50/50 border-b border-blue-200/30 pb-6">
         <CardTitle className="flex items-center gap-4 text-xl">
@@ -119,7 +121,20 @@ export const GeneralInfo: React.FC<Props> = ({project, handleProjectChange}) => 
 </Card>
 }
 
-export const ProjectSpecs: React.FC<Props> = ({ project, handleProjectChange }) => {
+interface ProjectSpecsProps {
+    project: Project;
+    handleProjectChange: (name: string, value?: string) => void;
+    floorCounts: number[];
+    setFloorCounts: (fc: number[]) => void;
+}
+
+export const ProjectSpecs: React.FC<ProjectSpecsProps> = ({ project, handleProjectChange, floorCounts, setFloorCounts }) => {
+    useEffect(() => {
+      if(!project.blockNumber){return};
+      setFloorCounts(
+        Array.from({length: project.blockNumber}).map(_ => 0)
+      )
+    }, [project.blockNumber]);
     return <Card className="bg-white/70 backdrop-blur-sm shadow-xl border-0 ring-1 ring-white/20 hover:shadow-2xl transition-all duration-300">
         <CardHeader className="bg-gradient-to-r from-green-50/50 to-emerald-50/50 border-b border-green-200/30 pb-6">
             <CardTitle className="flex items-center gap-4 text-xl">
@@ -157,24 +172,29 @@ export const ProjectSpecs: React.FC<Props> = ({ project, handleProjectChange }) 
                 />
             </div>
 
-            <div className="space-y-2">
+            {project.blockNumber && Array.from({length: project.blockNumber}).map((_, bn) => (
+              <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-slate-700 font-medium">
                 <Building className="w-4 h-4" />
-                تعداد طبقات *
+                {`تعداد طبقات بلوک ${bn + 1}`}
                 </Label>
                 <Input 
                 required 
                 type='number' 
                 name="floorCount" 
-                value={project.floorCount} 
-                onChange={(e) => handleProjectChange(e.target.name, e.target.value)}
+                value={floorCounts[bn]} 
+                onChange={(e) => {
+                  const fc = [...floorCounts];
+                  fc[bn] = Number(e.currentTarget.value);
+                  setFloorCounts(fc);
+                }}
                 className="h-12"
                 min="1"
                 />
                 {(project.blockNumber && project.blockNumber > 1) && (
                 <p className="text-xs text-slate-500">مجموع طبقات همه بلوک‌ها</p>
                 )}
-            </div>
+            </div>))}
 
             <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-slate-700 font-medium">
@@ -202,6 +222,22 @@ export const ProjectSpecs: React.FC<Props> = ({ project, handleProjectChange }) 
                 type='number' 
                 name="landArea" 
                 value={project.landArea} 
+                onChange={(e) => handleProjectChange(e.target.name, e.target.value)}
+                className="h-12"
+                min="1"
+                />
+            </div>
+            
+            <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-slate-700 font-medium">
+                <Square className="w-4 h-4" />
+                مساحت زیربنا (متر مربع) *
+                </Label>
+                <Input 
+                required 
+                type='number' 
+                name='buildingArea'
+                value={project.buildingArea} 
                 onChange={(e) => handleProjectChange(e.target.name, e.target.value)}
                 className="h-12"
                 min="1"
@@ -247,12 +283,12 @@ export const ProjectSpecs: React.FC<Props> = ({ project, handleProjectChange }) 
 interface UnitProps {
     unitTypes: UnitType[];
     setUnitTypes: (newTypes: UnitType[]) => void;
-    nextId: number;
-    setNextId: (i: number) => void
+    floorCounts?: number[];
 }
-export const UnitTypes: React.FC<UnitProps> = ({unitTypes, setUnitTypes, nextId, setNextId}) => {
-    const addUnitType = () => {
-        const newUnitType = { id: nextId, count: 1, area: 50, bedrooms: 1, bathrooms: 1 };
+export const UnitTypes: React.FC<UnitProps> = ({unitTypes, setUnitTypes, floorCounts}) => {
+    const [nextId, setNextId] = useState(1);
+    const addUnitType = (block: number, floor: number) => {
+        const newUnitType: UnitType = { id: nextId, count: 1, area: 50, roomCount: 1, point: 7, floor, block };
         setUnitTypes([...unitTypes, newUnitType]);
         setNextId(nextId + 1);
     };
@@ -284,143 +320,123 @@ export const UnitTypes: React.FC<UnitProps> = ({unitTypes, setUnitTypes, nextId,
                      </p>
                    </div>
                  </CardTitle>
-                 <Button 
-                   type="button" 
-                   onClick={addUnitType}
-                   className="gap-2 h-12 px-6 bg-purple-500 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-                 >
-                   <Plus className="h-5 w-5" /> 
-                   افزودن تیپ جدید
-                 </Button>
                </div>
              </CardHeader>
             <CardContent className="p-6">
-              {unitTypes.length === 0 ? (
-                <div className="text-center py-16">
-                  <div className="relative w-20 h-20 mx-auto mb-6">
-                    <div className="absolute inset-0 bg-purple-400 rounded-full blur-lg opacity-30"></div>
-                    <div className="relative w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center">
-                      <Users className="w-10 h-10 text-purple-600" />
-                    </div>
-                  </div>
-                  <h3 className="text-xl font-bold text-slate-900 mb-3">هیچ تیپ واحدی تعریف نشده</h3>
-                  <p className="text-slate-600 mb-8 max-w-md mx-auto leading-relaxed">
-                    برای ایجاد پروژه کامل، ابتدا انواع واحدهای مسکونی و مشخصات آن‌ها را تعریف کنید
-                  </p>
-                  <Button 
-                    type="button" 
-                    onClick={addUnitType}
-                    className="gap-3 h-12 px-8 bg-purple-500 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-                  >
-                    <Sparkles className="h-5 w-5" /> 
-                    افزودن اولین تیپ واحد
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {unitTypes.map((u, index) => (
-                    <Card key={u.id} className="bg-gradient-to-br from-white/80 to-purple-50/30 border-0 ring-1 ring-purple-200/50 hover:ring-purple-300/70 shadow-lg hover:shadow-xl transition-all duration-300">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between mb-6">
-                          <h4 className="font-bold text-slate-900 flex items-center gap-3 text-lg">
-                            <div className="p-2 bg-purple-500 rounded-lg">
-                              <Home className="w-5 h-5 text-white" />
-                            </div>
-                            <span className="bg-purple-600 bg-clip-text text-transparent">
-                              تیپ واحد #{index + 1}
-                            </span>
-                          </h4>
-                          <Button 
-                            type="button" 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => removeUnitType(u.id)}
-                            className="h-10 w-10 p-0 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 transition-colors"
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
+              {!floorCounts ? (
+                <div className="space-y-4">لطفا ابتدا تعداد طبقات را مشخص کنید</div>
+              ) : (<div>
+                {floorCounts.map((floors, blockIndex) => (
+                  <Card key={blockIndex} className="mb-8 border-2 border-blue-200/40 bg-blue-50/30 shadow-md">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-blue-700 text-lg">بلوک {blockIndex + 1}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      {floors === 0 && "ابتدا تعداد طبقات این بلوک را در مرحله قبل مشخص کنید"}
+                      {Array.from({length: floors}).map((_, floorIndex) => {
+                        const this_floor_unitYpes = unitTypes.filter(u => u.block === blockIndex && u.floor === floorIndex)
+                        return <div className="space-y-4" key={floorIndex}>
+                          <div className="font-bold text-slate-700 mb-2">طبقه {floorIndex + 1}</div>
+                            <Card key={`${blockIndex}_${floorIndex}`} className="bg-gradient-to-br from-white/80 to-purple-50/30 border-0 ring-1 ring-purple-200/50 hover:ring-purple-300/70 shadow-lg hover:shadow-xl transition-all duration-300">
+                              <CardContent className="p-6">
+                                {this_floor_unitYpes.map((u, index) => (
+                                  <div className="my-4 py-4 border-b border-purple-500">
+                                    <div className="flex items-center justify-between mb-6">
+                                      <h4 className="font-bold text-slate-900 flex items-center gap-3 text-lg">
+                                        <div className="p-2 bg-purple-500 rounded-lg">
+                                          <Home className="w-5 h-5 text-white" />
+                                        </div>
+                                        <span className="bg-purple-600 bg-clip-text text-transparent">
+                                          تیپ واحد #{index + 1}
+                                        </span>
+                                      </h4>
+                                      <Button 
+                                        type="button" 
+                                        variant="outline" 
+                                        size="sm"
+                                        onClick={() => removeUnitType(u.id)}
+                                        className="h-10 w-10 p-0 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 transition-colors"
+                                      >
+                                        <Trash className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                                      <div>
+                                        <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-2">
+                                          <div className="p-1 rounded-md">
+                                            <Users className="w-3 h-3 text-blue-600" />
+                                          </div>
+                                          تعداد واحد
+                                        </Label>
+                                        <Input
+                                          type="number"
+                                          value={u.count}
+                                          onChange={(e) => updateUnitType(u.id, "count", Number(e.target.value) || 0)}
+                                          className="h-11 bg-white/60 border-slate-200 focus:bg-white focus:border-blue-400 focus:ring-blue-400/20 transition-all duration-200"
+                                          min="1"
+                                          placeholder="1"
+                                        />
+                                      </div>
+                                      <div>
+                                        <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-2">
+                                          <div className="p-1 rounded-md">
+                                            <Square className="w-3 h-3 text-green-600" />
+                                          </div>
+                                          متراژ (متر)
+                                        </Label>
+                                        <Input
+                                          type="number"
+                                          value={u.area}
+                                          onChange={(e) => updateUnitType(u.id, "area", Number(e.target.value) || 0)}
+                                          className="h-11 bg-white/60 border-slate-200 focus:bg-white focus:border-green-400 focus:ring-green-400/20 transition-all duration-200"
+                                          min="1"
+                                          placeholder="80"
+                                        />
+                                      </div>
+                                      <div>
+                                        <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-2">
+                                          <div className="p-1 rounded-md">
+                                            <Home className="w-3 h-3 text-purple-600" />
+                                          </div>
+                                          تعداد خواب
+                                        </Label>
+                                        <Input
+                                          type="number"
+                                          value={u.roomCount}
+                                          onChange={(e) => updateUnitType(u.id, 'roomCount', Number(e.target.value) || 0)}
+                                          className="h-11 bg-white/60 border-slate-200 focus:bg-white focus:border-purple-400 focus:ring-purple-400/20 transition-all duration-200"
+                                          min="0"
+                                          placeholder="2"
+                                        />
+                                      </div>
+                                      <div>
+                                        <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-2">
+                                          <div className="p-1 rounded-md">
+                                            <Sparkle className="w-3 h-3 text-purple-600" />
+                                          </div>
+                                          {`امتیاز: ${u.point}`}
+                                        </Label>
+                                        <Slider
+                                          value={[u.point || 7]}
+                                          onValueChange={(val: number[]) => updateUnitType(u.id, 'point', val[0])}
+                                          className="h-11 bg-white/60 border-slate-200 focus:bg-white focus:border-purple-400 focus:ring-purple-400/20 transition-all duration-200"
+                                          min={0}
+                                          max={10}
+                                          defaultValue={[7]}
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>))}
+                                <Button className="mt-4" type="button" variant={'secondary'} onClick={() => addUnitType(blockIndex, floorIndex)}>افزودن تیپ واحد <Plus /></Button>
+                              </CardContent>
+                            </Card>
                         </div>
-                        
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                          <div>
-                            <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-2">
-                              <div className="p-1 rounded-md">
-                                <Users className="w-3 h-3 text-blue-600" />
-                              </div>
-                              تعداد واحد
-                            </Label>
-                            <Input
-                              type="number"
-                              value={u.count}
-                              onChange={(e) => updateUnitType(u.id, "count", Number(e.target.value) || 0)}
-                              className="h-11 bg-white/60 border-slate-200 focus:bg-white focus:border-blue-400 focus:ring-blue-400/20 transition-all duration-200"
-                              min="1"
-                              placeholder="1"
-                            />
-                          </div>
-                          <div>
-                            <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-2">
-                              <div className="p-1 rounded-md">
-                                <Square className="w-3 h-3 text-green-600" />
-                              </div>
-                              متراژ (متر)
-                            </Label>
-                            <Input
-                              type="number"
-                              value={u.area}
-                              onChange={(e) => updateUnitType(u.id, "area", Number(e.target.value) || 0)}
-                              className="h-11 bg-white/60 border-slate-200 focus:bg-white focus:border-green-400 focus:ring-green-400/20 transition-all duration-200"
-                              min="1"
-                              placeholder="80"
-                            />
-                          </div>
-                          <div>
-                            <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-2">
-                              <div className="p-1 rounded-md">
-                                <Home className="w-3 h-3 text-purple-600" />
-                              </div>
-                              تعداد خواب
-                            </Label>
-                            <Input
-                              type="number"
-                              value={u.bedrooms}
-                              onChange={(e) => updateUnitType(u.id, "bedrooms", Number(e.target.value) || 0)}
-                              className="h-11 bg-white/60 border-slate-200 focus:bg-white focus:border-purple-400 focus:ring-purple-400/20 transition-all duration-200"
-                              min="0"
-                              placeholder="2"
-                            />
-                          </div>
-                          <div>
-                            <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-2">
-                              <div className="p-1 rounded-md">
-                                <Building className="w-3 h-3 text-pink-600" />
-                              </div>
-                              بلوک
-                            </Label>
-                            <Input
-                              value={u.block || ""}
-                              onChange={(e) => updateUnitType(u.id, "block", e.target.value)}
-                              className="h-11 bg-white/60 border-slate-200 focus:bg-white focus:border-pink-400 focus:ring-pink-400/20 transition-all duration-200"
-                              placeholder="A"
-                            />
-                          </div>
-                        </div>
-                        
-                        {(u.count > 0 && u.area > 0) && (
-                          <div className="mt-3 p-3 bg-slate-50 rounded-lg">
-                            <p className="text-sm text-slate-600">
-                              <span className="font-medium">{u.count} واحد</span> با متراژ <span className="font-medium">{u.area} متر</span>
-                              {u.bedrooms > 0 && <>, <span className="font-medium">{u.bedrooms} خواب</span></>}
-                              {u.bathrooms > 0 && <>, <span className="font-medium">{u.bathrooms} حمام</span></>}
-                              {u.block && <> در بلوک <span className="font-medium">{u.block}</span></>}
-                            </p>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
+                      })}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>)}
             </CardContent>
           </Card>
           

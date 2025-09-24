@@ -10,6 +10,7 @@ import { ImageModal } from "@/components/ui/image-modal"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { deleteTableRow, updateTableRow } from "@/general"
 import { ImageStorage } from "@/lib/imageStorage"
+import { useNavigate } from "react-router-dom"
 
 export default function ProjectsList() {
     const [data, setData] = useState<Project[]>([])
@@ -17,7 +18,7 @@ export default function ProjectsList() {
     const [editingProject, setEditingProject] = useState<Project>()
     const [deletingProject, setDeletingProject] = useState<Project>()
     const [showCreateModal, setShowCreateModal] = useState(false)
-
+    const navigate = useNavigate();
     useEffect(() => {
         getTable('projects/all', (data) => {
             console.log('Projects data received:', data);
@@ -93,7 +94,7 @@ export default function ProjectsList() {
                         <div className="flex flex-col sm:flex-row gap-3">
                             <Button 
                                 className="gap-2 shadow-md"
-                                onClick={() => setShowCreateModal(true)}
+                                onClick={() => navigate('/projects/create')}
                             >
                                 <Plus className="w-4 h-4" />
                                 پروژه جدید
