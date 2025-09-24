@@ -36,7 +36,7 @@ export const GeneralInfo: React.FC<Props> = ({project, handleProjectChange}) => 
             <div className="lg:col-span-2 space-y-6">
                 <div>
                 <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-3">
-                    <div className="p-1 bg-blue-100 rounded-md">
+                    <div className="p-1 rounded-md">
                     <Building className="w-4 h-4 text-blue-600" />
                     </div>
                     نام پروژه *
@@ -54,7 +54,7 @@ export const GeneralInfo: React.FC<Props> = ({project, handleProjectChange}) => 
                 
                 <div>
                 <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-3">
-                    <div className="p-1 bg-green-100 rounded-md">
+                    <div className="p-1 rounded-md">
                     <MapPin className="w-4 h-4 text-green-600" />
                     </div>
                     آدرس پروژه *
@@ -73,7 +73,7 @@ export const GeneralInfo: React.FC<Props> = ({project, handleProjectChange}) => 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-3">
-                    <div className="p-1 bg-purple-100 rounded-md">
+                    <div className="p-1 rounded-md">
                         <Calendar className="w-4 h-4 text-purple-600" />
                     </div>
                     تاریخ شروع
@@ -84,7 +84,7 @@ export const GeneralInfo: React.FC<Props> = ({project, handleProjectChange}) => 
                 </div>
                 <div>
                     <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-3">
-                    <div className="p-1 bg-orange-100 rounded-md">
+                    <div className="p-1 rounded-md">
                         <Calendar className="w-4 h-4 text-orange-600" />
                     </div>
                     تاریخ پایان
@@ -99,12 +99,12 @@ export const GeneralInfo: React.FC<Props> = ({project, handleProjectChange}) => 
             {/* Project Image */}
             <div className="space-y-4">
                 <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-3">
-                <div className="p-1 bg-pink-100 rounded-md">
+                <div className="p-1 rounded-md">
                     <Camera className="w-4 h-4 text-pink-600" />
                 </div>
                 تصویر پروژه
                 </Label>
-                <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-xl p-4 border-2 border-dashed border-pink-200 hover:border-pink-300 transition-colors">
+                <div className="bg-purple-50 rounded-xl p-4 border-2 border-dashed border-pink-200 hover:border-pink-300 transition-colors">
                 <ImageUpload 
                     value={project?.docs?.[0]}
                     onChange={(value) => handleProjectChange('image', value)}
@@ -266,17 +266,17 @@ export const UnitTypes: React.FC<UnitProps> = ({unitTypes, setUnitTypes, nextId,
     };
 
     return <Card className="bg-white/70 backdrop-blur-sm shadow-xl border-0 ring-1 ring-white/20 hover:shadow-2xl transition-all duration-300">
-             <CardHeader className="bg-gradient-to-r from-purple-50/50 to-pink-50/50 border-b border-purple-200/30 pb-6">
+             <CardHeader className="border-b border-purple-200/30 pb-6">
                <div className="flex items-center justify-between">
                  <CardTitle className="flex items-center gap-4 text-xl">
                    <div className="relative">
-                     <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl blur-sm opacity-30"></div>
-                     <div className="relative p-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl">
+                     <div className="absolute inset-0 rounded-xl blur-sm opacity-30"></div>
+                     <div className="relative p-3 bg-purple-500 rounded-xl">
                        <Users className="w-6 h-6 text-white" />
                      </div>
                    </div>
                    <div>
-                     <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent font-bold">
+                     <span className="bg-purple-600 bg-clip-text text-transparent font-bold">
                        تیپ واحدهای پروژه
                      </span>
                      <p className="text-sm text-slate-500 font-normal mt-1">
@@ -287,7 +287,7 @@ export const UnitTypes: React.FC<UnitProps> = ({unitTypes, setUnitTypes, nextId,
                  <Button 
                    type="button" 
                    onClick={addUnitType}
-                   className="gap-2 h-12 px-6 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                   className="gap-2 h-12 px-6 bg-purple-500 text-white shadow-lg hover:shadow-xl transition-all duration-200"
                  >
                    <Plus className="h-5 w-5" /> 
                    افزودن تیپ جدید
@@ -298,8 +298,8 @@ export const UnitTypes: React.FC<UnitProps> = ({unitTypes, setUnitTypes, nextId,
               {unitTypes.length === 0 ? (
                 <div className="text-center py-16">
                   <div className="relative w-20 h-20 mx-auto mb-6">
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full blur-lg opacity-30"></div>
-                    <div className="relative w-20 h-20 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full flex items-center justify-center">
+                    <div className="absolute inset-0 bg-purple-400 rounded-full blur-lg opacity-30"></div>
+                    <div className="relative w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center">
                       <Users className="w-10 h-10 text-purple-600" />
                     </div>
                   </div>
@@ -310,7 +310,7 @@ export const UnitTypes: React.FC<UnitProps> = ({unitTypes, setUnitTypes, nextId,
                   <Button 
                     type="button" 
                     onClick={addUnitType}
-                    className="gap-3 h-12 px-8 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                    className="gap-3 h-12 px-8 bg-purple-500 text-white shadow-lg hover:shadow-xl transition-all duration-200"
                   >
                     <Sparkles className="h-5 w-5" /> 
                     افزودن اولین تیپ واحد
@@ -323,10 +323,10 @@ export const UnitTypes: React.FC<UnitProps> = ({unitTypes, setUnitTypes, nextId,
                       <CardContent className="p-6">
                         <div className="flex items-center justify-between mb-6">
                           <h4 className="font-bold text-slate-900 flex items-center gap-3 text-lg">
-                            <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg">
+                            <div className="p-2 bg-purple-500 rounded-lg">
                               <Home className="w-5 h-5 text-white" />
                             </div>
-                            <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                            <span className="bg-purple-600 bg-clip-text text-transparent">
                               تیپ واحد #{index + 1}
                             </span>
                           </h4>
@@ -344,7 +344,7 @@ export const UnitTypes: React.FC<UnitProps> = ({unitTypes, setUnitTypes, nextId,
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                           <div>
                             <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-2">
-                              <div className="p-1 bg-blue-100 rounded-md">
+                              <div className="p-1 rounded-md">
                                 <Users className="w-3 h-3 text-blue-600" />
                               </div>
                               تعداد واحد
@@ -360,7 +360,7 @@ export const UnitTypes: React.FC<UnitProps> = ({unitTypes, setUnitTypes, nextId,
                           </div>
                           <div>
                             <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-2">
-                              <div className="p-1 bg-green-100 rounded-md">
+                              <div className="p-1 rounded-md">
                                 <Square className="w-3 h-3 text-green-600" />
                               </div>
                               متراژ (متر)
@@ -376,7 +376,7 @@ export const UnitTypes: React.FC<UnitProps> = ({unitTypes, setUnitTypes, nextId,
                           </div>
                           <div>
                             <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-2">
-                              <div className="p-1 bg-purple-100 rounded-md">
+                              <div className="p-1 rounded-md">
                                 <Home className="w-3 h-3 text-purple-600" />
                               </div>
                               تعداد خواب
@@ -392,23 +392,7 @@ export const UnitTypes: React.FC<UnitProps> = ({unitTypes, setUnitTypes, nextId,
                           </div>
                           <div>
                             <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-2">
-                              <div className="p-1 bg-orange-100 rounded-md">
-                                <Square className="w-3 h-3 text-orange-600" />
-                              </div>
-                              تعداد حمام
-                            </Label>
-                            <Input
-                              type="number"
-                              value={u.bathrooms}
-                              onChange={(e) => updateUnitType(u.id, "bathrooms", Number(e.target.value) || 0)}
-                              className="h-11 bg-white/60 border-slate-200 focus:bg-white focus:border-orange-400 focus:ring-orange-400/20 transition-all duration-200"
-                              min="1"
-                              placeholder="1"
-                            />
-                          </div>
-                          <div>
-                            <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-2">
-                              <div className="p-1 bg-pink-100 rounded-md">
+                              <div className="p-1 rounded-md">
                                 <Building className="w-3 h-3 text-pink-600" />
                               </div>
                               بلوک

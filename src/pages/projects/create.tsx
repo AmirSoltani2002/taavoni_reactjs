@@ -16,56 +16,70 @@ interface ProjectCreateProps {
   isEdit?: boolean;
   onBack?: () => void;
 }
-const Stepper = <div className="flex items-center justify-center mb-10">
+
+interface StepperProps {
+  step: number;
+  setStep: (s: number) => void;
+}
+const Stepper: React.FC<StepperProps> = ({ step, setStep }) => {
+  const steps = [
+    {
+      title: "مرحله ۱",
+      desc: "اطلاعات پایه پروژه",
+      icon: Building,
+      bgColor: 'blue',
+      
+    },
+    {
+      title: "مرحله ۲",
+      desc: "واحدهای مسکونی",
+      icon: Users,
+      bgColor: 'purple',
+      
+    },
+    {
+      title: "مرحله ۳",
+      desc: "بررسی و تایید نهایی",
+      icon: FileText,
+      bgColor: 'green',
+      
+    },
+    
+  ];
+  const [stepActive, setStepActive] = useState([false, false, false]);
+  useEffect(() => {
+    setStepActive(prev => {
+      prev = [false, false, false];
+      prev[step] = true;
+      return prev;
+    })
+  }, [step])
+  return <div className="flex items-center justify-center mb-10">
       <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg">
         <div className="flex items-center gap-8">
-          {/* Step 1 */}
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 text-white rounded-full flex items-center justify-center text-sm font-bold shadow-lg bg-gradient-to-r from-blue-500 to-blue-600">
-              <Building className="w-5 h-5" />
+          {steps.map((step, index) => {
+            const Icon = step.icon;
+            return <>
+            <div className="flex items-center gap-3 cursor-pointer" onClick={() => setStep(index)}>
+              <div className={`w-12 h-12 text-white rounded-full flex items-center justify-center text-sm font-bold shadow-lg`}
+              style={{background: `var(--color-${step.bgColor}-${stepActive[index] ? 500: 200})`}}
+              >
+                <Icon className="w-5 h-5" />
+              </div>
+              <div>
+                <span className={`text-sm font-bold text-${step.bgColor}-600`}>
+                  {step.title}
+                </span>
+                <p className="text-xs text-slate-600">{step.desc}</p>
+              </div>
             </div>
-            <div>
-              <span className="text-sm font-bold text-blue-600">
-                مرحله ۱
-              </span>
-              <p className="text-xs text-slate-600">اطلاعات پایه پروژه</p>
-            </div>
-          </div>
-          
-          {/* Connector 1-2 */}
-          <div className="w-16 h-px bg-gradient-to-r from-blue-300 to-purple-300"></div>
-          
-          {/* Step 2 */}
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 text-white rounded-full flex items-center justify-center text-sm font-bold shadow-lg bg-gradient-to-r from-purple-400 to-purple-500">
-              <Users className="w-5 h-5" />
-            </div>
-            <div>
-              <span className="text-sm font-bold text-purple-600">
-                مرحله ۲
-              </span>
-              <p className="text-xs text-slate-600">واحدهای مسکونی</p>
-            </div>
-          </div>
-          
-          {/* Connector 2-3 */}
-          <div className="w-16 h-px bg-gradient-to-r from-purple-300 to-orange-300"></div>
-          
-          {/* Step 3 */}
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 text-white rounded-full flex items-center justify-center text-sm font-bold shadow-lg bg-gradient-to-r from-orange-500 to-red-500">
-              <FileText className="w-5 h-5" />
-            </div>
-            <div>
-              <span className="text-sm font-bold text-orange-600">
-                مرحله ۳
-              </span>
-              <p className="text-xs text-slate-600">اطلاعات تکمیلی و اسناد</p>
-            </div>
-          </div>
+            {index < 2 && <div className={`w-16 h-px bg-${step.bgColor}-500`}></div>}
+            </>
+          })}
         </div>
       </div>
     </div>
+}
 export default function ProjectCreate({ initialValues, onSubmit, isEdit = false, onBack }: ProjectCreateProps = {}) {
   const navigate = useNavigate();
   const [loading, setLoading] =  useState(false);
@@ -102,6 +116,7 @@ export default function ProjectCreate({ initialValues, onSubmit, isEdit = false,
   const [unitTypes, setUnitTypes] = useState<UnitType[]>([]);
   const [units, setUnits] = useState<SubProject[]>([]);
   const [nextId, setNextId] = useState(1);
+  const [step, setStep] = useState(0)
 
   useEffect(() => {
     getTable('users/profile', setUser);
@@ -224,23 +239,32 @@ export default function ProjectCreate({ initialValues, onSubmit, isEdit = false,
 
 
           {/* Static Progress Steps */}
-          {!isEdit && Stepper}
+          {!isEdit && <Stepper step={step} setStep={setStep}  />}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Project Basic Info */}
-          <GeneralInfo project={project} handleProjectChange={handleProjectChange} />
-          {/* Project Specifications */}
-          <ProjectSpecs project={project} handleProjectChange={handleProjectChange} />
-          {/* Unit Types */}
-          <UnitTypes 
-            unitTypes={unitTypes} 
-            setUnitTypes={setUnitTypes}
-            nextId={nextId}
-            setNextId={setNextId} 
-          />
+          {
+            step === 0 ? (
+              <>
+              {/* Project Basic Info */}
+              <GeneralInfo project={project} handleProjectChange={handleProjectChange} />
+              {/* Project Specifications */}
+              <ProjectSpecs project={project} handleProjectChange={handleProjectChange} />
+              </>
+            ) : step === 1 ? (
+              <>
+              {/* Unit Types */}
+              <UnitTypes 
+                unitTypes={unitTypes} 
+                setUnitTypes={setUnitTypes}
+                nextId={nextId}
+                setNextId={setNextId} 
+              />
+              </>
+            ) : undefined
+          }
           {/* Submit Button */}
-          <div className="flex flex-col sm:flex-row gap-4 pt-6">
+          {step == 2 && <div className="flex flex-col sm:flex-row gap-4 pt-6">
             <Button 
               type="button" 
               variant="outline" 
@@ -268,7 +292,7 @@ export default function ProjectCreate({ initialValues, onSubmit, isEdit = false,
                 </>
               )}
             </Button>
-          </div>
+          </div>}
         </form>
         
         {loading && <PageLoader />}
