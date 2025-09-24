@@ -4,31 +4,54 @@ import { ImageStorage } from "@/lib/imageStorage"
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
 export type Project = {
-    id: number;
-    name: string;
-    address: string;
-    startDate: string;
-    endDate: string;
-    floorCount: number;
-    unitCount: number;
-    blockNumber: number;
-    landArea: number;
-    sharedArea: number;
-    options: string;
-    image?: string;
-    createdAt: string;
-    updatedAt: string;
+    id?: number;
+    name?: string;
+    address?: string;
+    startDate?: string;
+    endDate?: string;
+    floorCount?: number;
+    unitCount?: number;
+    blockNumber?: number;
+    landArea?: number;
+    sharedArea?: number;
+    options?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    docs?: string[]
 }
- 
+export type SubProject = {
+    id?: number;
+    area?: number;
+    floor?: number;
+    point?: number;
+    block?: string;
+    roomCount?: number;
+    options?: string;
+    unitNumber?: number;
+    userId?: number;
+    projectId?: number;
+    createdAt?: string;
+    updatedAt?: string;
+}
+
+export type UnitType = {
+  id: number;
+  count: number;
+  area: number;
+  bedrooms: number;
+  bathrooms: number;
+  block?: string;
+  options?: string;
+}
+
 export const columns: ColumnDef<Project>[] = [
     {
         accessorKey: "image",
         header: "تصویر",
         cell: ({ row }) => {
             const project = row.original;
-            const apiImage = project.image as string;
-            const localImage = ImageStorage.getProjectImage(project.id);
-            const imageToShow = localImage || apiImage;
+            const localImage = project.id ? ImageStorage.getProjectImage(project.id) : undefined;
+            const imageToShow = localImage;
             
             return imageToShow ? (
                 <img 
