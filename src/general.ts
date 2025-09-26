@@ -3,7 +3,7 @@ import { api_base_url } from "./config";
 import { toast } from "sonner";
 
 export const getToken = () => {
-  return Cookies.get('token') || '';
+  return Cookies.get('tokenut') || '';
 }
 
 const getFarsiError = (err: string) => {

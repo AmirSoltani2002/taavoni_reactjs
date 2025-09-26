@@ -36,7 +36,7 @@ export function LoginForm({
               password: (e.target as HTMLFormElement).password.value
             }, (d) => {
               if(d.token) {
-                Cookies.set('token', d.token);
+                Cookies.set('tokenut', d.token);
                 navigate('/dashboard', { replace: true});
               }
             }, false)

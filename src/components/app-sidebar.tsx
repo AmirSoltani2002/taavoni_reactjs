@@ -113,9 +113,8 @@ export function AppSidebar() {
       ])
     }
   }, [isAdmin])
-
   return (
-    <Sidebar side='right' collapsible="icon" variant='floating'>
+    <Sidebar side='right' variant='floating'>
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>{'خوش آمدید '}{userInfo?.name ? `${userInfo?.name} گرامی` : ''}</SidebarGroupLabel>
@@ -203,7 +202,7 @@ export function AppSidebar() {
             <SidebarMenuItem className="flex gap-4">
               <SidebarMenuButton asChild>
                 <Button variant={'destructive'} onClick={() => {
-                  Cookies.remove('token');
+                  Cookies.remove('tokenut');
                   navigate('/')
                 }}
                 className="flex-1 rotate-0 transition-all dark:scale-0 dark:-rotate-90"
