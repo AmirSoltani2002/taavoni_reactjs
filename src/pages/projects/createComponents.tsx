@@ -1,13 +1,13 @@
 import { Calendar22 } from "@/components/calendars/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash, Building, MapPin, Calendar, Users, Home, Square, FileText, Camera, Sparkle } from "lucide-react";
+import { Plus, Trash, Building, MapPin, Calendar, Users, Home, Square, FileText, Camera } from "lucide-react";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import type { Project, UnitType } from "./columns";
-import { useEffect, useState } from "react";
-import { Slider } from "@/components/ui/slider";
+import type { Project, SubProject } from "./columns";
+import { useEffect, useState, type HTMLInputTypeAttribute } from "react";
+import FInput from "@/components/ui/functional-input";
 interface GeneralInfoProps {
     project: Project;
     handleProjectChange: (name: string, value?: string) => void;
@@ -281,26 +281,73 @@ export const ProjectSpecs: React.FC<ProjectSpecsProps> = ({ project, handleProje
 }
 
 interface UnitProps {
-    unitTypes: UnitType[];
-    setUnitTypes: (newTypes: UnitType[]) => void;
+    units: SubProject[];
+    setUnits: (newTypes: SubProject[]) => void;
     floorCounts?: number[];
+    userId?: number;
 }
-export const UnitTypes: React.FC<UnitProps> = ({unitTypes, setUnitTypes, floorCounts}) => {
-    const [nextId, setNextId] = useState(1);
-    const addUnitType = (block: number, floor: number) => {
-        const newUnitType: UnitType = { id: nextId, count: 1, area: 50, roomCount: 1, point: 7, floor, block };
-        setUnitTypes([...unitTypes, newUnitType]);
-        setNextId(nextId + 1);
+export const UnitTypes: React.FC<UnitProps> = ({units, setUnits, floorCounts}) => {
+    const [nextId, setNextId] = useState(0); 
+    const addUnit = (block: number, floor: number) => {
+      const newUnit: SubProject = { id: nextId + 1, unitNumber: nextId + 1, area: 50, roomCount: 1, point: 7, view: 'north', options: '', floor, block };
+      setUnits([...units, newUnit]);
+      setNextId(nextId + 1)
     };
 
-    const updateUnitType = (id: number, field: keyof UnitType, value: string | number) => {
-        setUnitTypes(unitTypes.map(u => u.id === id ? { ...u, [field]: value } : u));
+    const updateUnit = (id: number, field: keyof SubProject, value: string | number) => {
+        setUnits(units.map(u => u.id === id ? { ...u, [field]: value } : u));
     };
 
-    const removeUnitType = (id: number) => {
-        setUnitTypes(unitTypes.filter(u => u.id !== id));
+    const removeUnit = (id: number) => {
+        setUnits(units.filter(u => u.id !== id));
     };
-
+    const FIELDS: {
+      title?: string;
+      icon?: typeof Square;
+      name: keyof SubProject;
+      type?: HTMLInputTypeAttribute | 'select' | 'slider';
+      options?: { label: string; value: string }[];
+      min?: number;
+      max?: number;
+    }[] = [
+      {
+        title: 'متراژ (متر)',
+        icon: Square,
+        name: 'area',
+        type: 'number'
+      },
+      {
+        title: 'تعداد خواب',
+        name: 'roomCount',
+        type: 'number',
+      },
+      {
+        title: 'جهت',
+        name: 'view',
+        type: 'select',
+        options: [
+          { label: 'شمال', value: 'north' },
+          { label: 'شمال‑شرق', value: 'north-east' },
+          { label: 'شرق', value: 'east' },
+          { label: 'جنوب‑شرق', value: 'south-east' },
+          { label: 'جنوب', value: 'south' },
+          { label: 'جنوب‑غرب', value: 'south-west' },
+          { label: 'غرب', value: 'west' },
+          { label: 'شمال‑غرب', value: 'north-west' }
+        ]
+      },
+      {
+        title: 'امتیاز',
+        name: 'point',
+        type: 'slider',
+        min: 0,
+        max: 10,
+      },
+      
+    ];
+    useEffect(() => {
+      console.info({units})
+    }, [units])
     return <Card className="bg-white/70 backdrop-blur-sm shadow-xl border-0 ring-1 ring-white/20 hover:shadow-2xl transition-all duration-300">
              <CardHeader className="border-b border-purple-200/30 pb-6">
                <div className="flex items-center justify-between">
@@ -334,12 +381,12 @@ export const UnitTypes: React.FC<UnitProps> = ({unitTypes, setUnitTypes, floorCo
                     <CardContent className="space-y-6">
                       {floors === 0 && "ابتدا تعداد طبقات این بلوک را در مرحله قبل مشخص کنید"}
                       {Array.from({length: floors}).map((_, floorIndex) => {
-                        const this_floor_unitYpes = unitTypes.filter(u => u.block === blockIndex && u.floor === floorIndex)
+                        const this_floor_units = units.filter(u => u.block === blockIndex && u.floor === floorIndex)
                         return <div className="space-y-4" key={floorIndex}>
                           <div className="font-bold text-slate-700 mb-2">طبقه {floorIndex + 1}</div>
                             <Card key={`${blockIndex}_${floorIndex}`} className="bg-gradient-to-br from-white/80 to-purple-50/30 border-0 ring-1 ring-purple-200/50 hover:ring-purple-300/70 shadow-lg hover:shadow-xl transition-all duration-300">
                               <CardContent className="p-6">
-                                {this_floor_unitYpes.map((u, index) => (
+                                {this_floor_units.map((u, index) => (
                                   <div className="my-4 py-4 border-b border-purple-500">
                                     <div className="flex items-center justify-between mb-6">
                                       <h4 className="font-bold text-slate-900 flex items-center gap-3 text-lg">
@@ -347,14 +394,14 @@ export const UnitTypes: React.FC<UnitProps> = ({unitTypes, setUnitTypes, floorCo
                                           <Home className="w-5 h-5 text-white" />
                                         </div>
                                         <span className="bg-purple-600 bg-clip-text text-transparent">
-                                          تیپ واحد #{index + 1}
+                                          واحد #{index + 1}
                                         </span>
                                       </h4>
                                       <Button 
                                         type="button" 
                                         variant="outline" 
                                         size="sm"
-                                        onClick={() => removeUnitType(u.id)}
+                                        onClick={() => u?.id && removeUnit(u.id)}
                                         className="h-10 w-10 p-0 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 transition-colors"
                                       >
                                         <Trash className="h-4 w-4" />
@@ -362,73 +409,19 @@ export const UnitTypes: React.FC<UnitProps> = ({unitTypes, setUnitTypes, floorCo
                                     </div>
                                     
                                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                                      <div>
-                                        <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-2">
-                                          <div className="p-1 rounded-md">
-                                            <Users className="w-3 h-3 text-blue-600" />
-                                          </div>
-                                          تعداد واحد
-                                        </Label>
-                                        <Input
-                                          type="number"
-                                          value={u.count}
-                                          onChange={(e) => updateUnitType(u.id, "count", Number(e.target.value) || 0)}
-                                          className="h-11 bg-white/60 border-slate-200 focus:bg-white focus:border-blue-400 focus:ring-blue-400/20 transition-all duration-200"
-                                          min="1"
-                                          placeholder="1"
-                                        />
-                                      </div>
-                                      <div>
-                                        <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-2">
-                                          <div className="p-1 rounded-md">
-                                            <Square className="w-3 h-3 text-green-600" />
-                                          </div>
-                                          متراژ (متر)
-                                        </Label>
-                                        <Input
-                                          type="number"
-                                          value={u.area}
-                                          onChange={(e) => updateUnitType(u.id, "area", Number(e.target.value) || 0)}
-                                          className="h-11 bg-white/60 border-slate-200 focus:bg-white focus:border-green-400 focus:ring-green-400/20 transition-all duration-200"
-                                          min="1"
-                                          placeholder="80"
-                                        />
-                                      </div>
-                                      <div>
-                                        <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-2">
-                                          <div className="p-1 rounded-md">
-                                            <Home className="w-3 h-3 text-purple-600" />
-                                          </div>
-                                          تعداد خواب
-                                        </Label>
-                                        <Input
-                                          type="number"
-                                          value={u.roomCount}
-                                          onChange={(e) => updateUnitType(u.id, 'roomCount', Number(e.target.value) || 0)}
-                                          className="h-11 bg-white/60 border-slate-200 focus:bg-white focus:border-purple-400 focus:ring-purple-400/20 transition-all duration-200"
-                                          min="0"
-                                          placeholder="2"
-                                        />
-                                      </div>
-                                      <div>
-                                        <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-2">
-                                          <div className="p-1 rounded-md">
-                                            <Sparkle className="w-3 h-3 text-purple-600" />
-                                          </div>
-                                          {`امتیاز: ${u.point}`}
-                                        </Label>
-                                        <Slider
-                                          value={[u.point || 7]}
-                                          onValueChange={(val: number[]) => updateUnitType(u.id, 'point', val[0])}
-                                          className="h-11 bg-white/60 border-slate-200 focus:bg-white focus:border-purple-400 focus:ring-purple-400/20 transition-all duration-200"
-                                          min={0}
-                                          max={10}
-                                          defaultValue={[7]}
-                                        />
-                                      </div>
+                                      {FIELDS.map(field => {
+                                        return (
+                                          <FInput<SubProject>
+                                          item={field}
+                                          values={u}
+                                          handleChange={(e) => u?.id && updateUnit(u.id, e.target.name as keyof SubProject, Number(e.target.value) || 0)}
+                                          handleSelect={(n, v) => u?.id && updateUnit(u.id, n, v)} 
+                                          />
+                                        )
+                                      })}
                                     </div>
                                   </div>))}
-                                <Button className="mt-4" type="button" variant={'secondary'} onClick={() => addUnitType(blockIndex, floorIndex)}>افزودن تیپ واحد <Plus /></Button>
+                                <Button className="mt-4" type="button" variant={'secondary'} onClick={() => addUnit(blockIndex, floorIndex)}>افزودن واحد <Plus /></Button>
                               </CardContent>
                             </Card>
                         </div>

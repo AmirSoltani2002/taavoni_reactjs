@@ -1,18 +1,10 @@
 import { useEffect, useState, type HTMLInputTypeAttribute } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Calendar22 } from "@/components/calendars/calendar";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { postTable } from "@/general";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
 import type { User } from "./columns";
+import FInput from "@/components/ui/functional-input";
 
 // User type based on columns.tsx
 
@@ -55,55 +47,66 @@ export default function UserCreate({ initialValues, onSubmit, isEdit }: UserCrea
     options?: { label: string; value: string }[];
     className?: string;
     hideWhenEdit?: boolean;
-    showWhenNotAdmin?: boolean;
+    hideWhenNotAdmin?: boolean;
     
   }[] = [
     {
       title: 'نام',
       name: 'name',
       isRequired: true,
+      hideWhenNotAdmin: true,
     },
     {
       title: 'نام خانوادگی',
       name: 'lastName',
       isRequired: true,
+      hideWhenNotAdmin: true,
+
     },
     {
       title: 'کد ملی',
       name: 'nationalNumber',
       isRequired: true,
-      showWhenNotAdmin: true
+      hideWhenNotAdmin: false
     },
     {
       title: 'ایمیل',
       name: 'email',
       isRequired: true,
-      type: 'email'
+      type: 'email',
+      hideWhenNotAdmin: true,
+
     },
     {
       title: 'رمز عبور',
       name: 'password',
       isRequired: true,
       hideWhenEdit: true,
-      showWhenNotAdmin: true,
+      hideWhenNotAdmin: false,
       type: 'password'
     },
     {
       title: 'موبایل',
       name: 'mobile',
       isRequired: true,
+      hideWhenNotAdmin: true,
+
     },
     {
       title: 'آدرس',
       name: 'address',
       isRequired: true,
-      className: "col-span-2"
+      className: "col-span-2",
+      hideWhenNotAdmin: true,
+
     },
     {
       title: 'تاریخ تولد',
       name: 'birthDay',
       type: 'date',
       isRequired: true,
+      hideWhenNotAdmin: true,
+
     },
     
   ]
@@ -118,7 +121,7 @@ export default function UserCreate({ initialValues, onSubmit, isEdit }: UserCrea
     setForm((prev: User) => ({ ...prev, [name]: value }));
   };
 
-  const handleSelect = (name: keyof User, value: string) => {
+  const handleSelect = (name: keyof User, value: string | number) => {
     setForm((prev: User) => ({ ...prev, [name]: value }));
   };
 
@@ -146,49 +149,16 @@ export default function UserCreate({ initialValues, onSubmit, isEdit }: UserCrea
     : `ایجاد ${NAME_TO_DISPLAY} جدید`}</h1>
   <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          {FIELDS.map(item => {
-            if(
-              (item.hideWhenEdit && isEdit) ||
-              (!item.showWhenNotAdmin && !(urlType == 'admin' || urlType == 'system'))
-            ){
-              return undefined;
-            } else if(item.type === 'select' && item.options) {
-              return <div>
-                <label>{item.title + (item.isRequired ? '*' : '')}</label>
-                <Select value={form[item.name]?.toString()} onValueChange={v => handleSelect(item.name, v)} required={item.isRequired}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="انتخاب کنید" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {item.options.map(sopt => (
-                      <SelectItem value={sopt.value}>{sopt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            } else if(item.type === 'date') {
-              return <div>
-                <Calendar22 
-                  title={item.title + (item.isRequired ? '*' : '')}
-                  date={form[item.name]?.toString()}
-                  setDate={(d) => {
-                    handleSelect(item.name, d ? d.toISOString() : '')
-                  }}
-                />
-              </div>
-            } else {
-              return <div>
-                <label>{item.title + (item.isRequired ? '*' : '')}</label>
-                <Input 
-                  name={item.name} 
-                  value={form[item.name]?.toString()}
-                  type={item.type || 'text'} 
-                  onChange={handleChange} 
-                  required={item.isRequired} 
-                />
-              </div>
-            }
-          })}
+          {FIELDS.map(item => (
+            <FInput<User> 
+              values={form} 
+              item={item} 
+              handleChange={handleChange} 
+              handleSelect={handleSelect}
+              isEdit={isEdit}
+              urlType={urlType} 
+            />
+          ))}
         </div>
         <Button type="submit" className="w-full mt-4">{`${isEdit ? 'تغییر' : 'افزودن'} کاربر`}</Button>
       </form>

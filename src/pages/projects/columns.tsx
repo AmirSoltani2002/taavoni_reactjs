@@ -29,24 +29,11 @@ export type SubProject = {
     roomCount?: number;
     options?: string;
     unitNumber?: number;
+    view?: 'north' | 'south' | 'east' | 'west' | 'north-east' | 'north-west' | 'south-east' | 'south-west'
     userId?: number;
     projectId?: number;
     createdAt?: string;
     updatedAt?: string;
-}
-
-export type UnitType = {
-    id: number;
-    area?: number;
-    floor?: number;
-    point?: number;
-    block?: number;
-    roomCount?: number;
-    unitNumber?: number;
-    userId?: number;
-    projectId?: number;
-    
-    count: number;
 }
 
 export const columns: ColumnDef<Project>[] = [

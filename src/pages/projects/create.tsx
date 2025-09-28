@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Building, Users, FileText, CheckCircle, ArrowLeft, ArrowRight } from "lucide-react";
 import { getTable, postTable } from "@/general";
 import { PageLoader } from "@/components/ui/loader";
-import type { Project, SubProject, UnitType } from "./columns";
+import type { Project, SubProject } from "./columns";
 import type { User } from "../users/columns";
 import { GeneralInfo, ProjectSpecs, UnitTypes } from "./createComponents";
 
@@ -114,7 +114,6 @@ export default function ProjectCreate({ initialValues, onSubmit, isEdit = false,
     } as Project;
   });
 
-  const [unitTypes, setUnitTypes] = useState<UnitType[]>([]);
   const [units, setUnits] = useState<SubProject[]>([]);
   const [step, setStep] = useState(0)
 
@@ -133,23 +132,6 @@ export default function ProjectCreate({ initialValues, onSubmit, isEdit = false,
       floorCount: floorCounts.reduce((acc, cur) => acc + cur, 0)
     })
   }, [floorCounts])
-  useEffect(() => {
-    const generatedUnits: SubProject[] = [];
-    unitTypes.forEach((type) => {
-      for (let i = 0; i < type.count; i++) {
-        generatedUnits.push({
-          userId: user?.id,
-          unitNumber: generatedUnits.length + 1,
-          floor: type.floor,
-          block: type.block,
-          area: type.area,
-          roomCount: type.roomCount,
-          point: 0,
-        });
-      }
-    });
-    setUnits(generatedUnits);
-  }, [unitTypes]);
   
 
   const handleProjectChange = (name: string, value: any) => {
@@ -264,9 +246,10 @@ export default function ProjectCreate({ initialValues, onSubmit, isEdit = false,
               <>
               {/* Unit Types */}
               <UnitTypes 
-                unitTypes={unitTypes} 
-                setUnitTypes={setUnitTypes}
+                units={units} 
+                setUnits={setUnits}
                 floorCounts={floorCounts} 
+                userId={user?.id}
               />
               </>
             ) : undefined
