@@ -27,8 +27,10 @@ export function AppSidebar() {
   const navigate = useNavigate();
     const [items, setItems] = useState<{
     title: string;
-    title_create?: string;
-    title_list?: string;
+    options?: {
+      title?: string;
+      url?: string;
+    }[]
     url: string;
     icon: typeof Home
     disabled?: boolean;
@@ -61,22 +63,53 @@ export function AppSidebar() {
         },
         {
           title: "کاربران",
-          title_create: "ایجاد کاربر جدید",
-          title_list: "مشاهده همه کاربران",
+          options: [
+            {
+              title: "ایجاد ادمین جدید",
+              url: '/users/create?type=admin',
+            },
+            {
+              title: "ایجاد کاربر جدید",
+              url: '/users/create?type=other',
+            },
+            {
+              title: "مشاهده همه کاربران",
+              url: '/users/list',
+            },
+            
+          ],
           url: "/users",
           icon: User,
         },
         {
           title: "پروژه‌ها",
-          title_create: "ایجاد پروژه جدید",
-          title_list: "مشاهده همه پروژه‌ها",
+          options: [
+            {
+              title: "ایجاد پروژه جدید",
+              url: '/projects/create',
+            },
+            {
+              title: "مشاهده همه پروژه‌ها",
+              url: '/projects/list',
+            },
+            
+          ],
           url: "/projects",
           icon: Building,
         },
         {
           title: "آگهی‌ها",
-          title_create: "ایجاد آگهی جدید",
-          title_list: "مشاهده همه آگهی‌ها",
+          options: [
+            {
+              title: "ایجاد آگهی جدید",
+              url: '/sales/create',
+            },
+            {
+              title: "مشاهده همه آگهی‌ها",
+              url: '/sales/list',
+            },
+            
+          ],
           url: "/sales",
           icon: ChartBar,
         },
@@ -123,7 +156,7 @@ export function AppSidebar() {
               const isActive =
                 location.pathname === item.url ||
                 location.pathname.startsWith(`${item.url}/`);
-              if (!item.title_create) {
+              if (!item.options) {
                 return (
                   <SidebarMenu key={item.title}>
                     <SidebarMenuItem key={item.title}>
@@ -161,8 +194,6 @@ export function AppSidebar() {
                   </SidebarMenu>
                 );
               } else {
-                const isNew = location.pathname.startsWith(item.url) && location.pathname.endsWith('create');
-                const isList = location.pathname.startsWith(item.url) && location.pathname.endsWith('list');
                 return (
                   <Collapsible key={item.title} defaultOpen={isActive}>
                     <CollapsibleTrigger asChild>
@@ -177,16 +208,13 @@ export function AppSidebar() {
                     <CollapsibleContent>
                       <SidebarMenu>
                         <SidebarMenuSub>
-                          <SidebarMenuSubItem>
-                            <NavLink to={`${item.url}/list`} className={isList ? 'font-bold' : ''}>
-                              {item.title_list}
-                            </NavLink>
-                          </SidebarMenuSubItem>
-                          <SidebarMenuSubItem>
-                            <NavLink to={`${item.url}/create`} className={isNew ? 'font-bold' : ''}>
-                              {item.title_create}
-                            </NavLink>
-                          </SidebarMenuSubItem>
+                          {item.options.map(opt => (
+                            <SidebarMenuSubItem>
+                              <NavLink to={opt.url || '#'} className={(opt.url && location.pathname.startsWith(opt.url)) ? 'font-bold' : ''}>
+                                {opt.title}
+                              </NavLink>
+                            </SidebarMenuSubItem>
+                          ))}
                         </SidebarMenuSub>
                       </SidebarMenu>
                     </CollapsibleContent>

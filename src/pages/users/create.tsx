@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState, type HTMLInputTypeAttribute } from "react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Calendar22 } from "@/components/calendars/calendar";
 import {
@@ -12,29 +11,12 @@ import {
 } from "@/components/ui/select";
 import { postTable } from "@/general";
 import { toast } from "sonner";
+import { useSearchParams } from "react-router-dom";
+import type { User } from "./columns";
 
 // User type based on columns.tsx
-export type UserForm = {
-  name: string;
-  lastName: string;
-  email: string;
-  password: string;
-  mobile: string;
-  homePhone: string;
-  workPhone: string;
-  nationalNumber: string;
-  address: string;
-  sex: "male" | "female" | "";
-  birthDay: string;
-  type: "admin" | "tehranUni" | "otherUni" | "free" | "employee" | "";
-  isargaryPercent: string | undefined;
-  azadeEsaratMonths: number | null;
-  azadeMonths: number | null;
-  shahedFamilyNumber: number | null;
-  shahedRelation: null | "azade_wife" | "azade_child" | "jan_wife" | "jan_child";
-};
 
-export const initialState: UserForm = {
+const initialState: User = {
   name: "",
   lastName: "",
   email: "",
@@ -46,8 +28,8 @@ export const initialState: UserForm = {
   address: "",
   sex: "",
   birthDay: "",
-  type: "",
-  isargaryPercent: undefined,
+  type: null,
+  isargaryPercent: null,
   azadeEsaratMonths: 0,
   azadeMonths: 0,
   shahedFamilyNumber: 0,
@@ -56,29 +38,88 @@ export const initialState: UserForm = {
 
 
 type UserCreateProps = {
-  initialValues?: UserForm;
-  onSubmit?: (values: UserForm) => void;
+  initialValues?: User;
+  onSubmit?: (values: User) => void;
   isEdit?: boolean;
 };
 
 export default function UserCreate({ initialValues, onSubmit, isEdit }: UserCreateProps) {
-  const [form, setForm] = useState<UserForm>(initialValues || initialState);
-  const [birthDate, setBirthDate] = useState<Date | undefined>(
-    initialValues?.birthDay ? new Date(initialValues.birthDay) : undefined
-  );
+  const [form, setForm] = useState<User>(initialValues || initialState);
+  const [searchParams] = useSearchParams();
+  const urlType = searchParams.get("type") as User["type"] | null;
+  const FIELDS: {
+    title?: string;
+    name: keyof User;
+    isRequired?: boolean;
+    type?: HTMLInputTypeAttribute | 'select';
+    options?: { label: string; value: string }[];
+    className?: string;
+    hideWhenEdit?: boolean;
+    showWhenNotAdmin?: boolean;
+    
+  }[] = [
+    {
+      title: 'نام',
+      name: 'name',
+      isRequired: true,
+    },
+    {
+      title: 'نام خانوادگی',
+      name: 'lastName',
+      isRequired: true,
+    },
+    {
+      title: 'کد ملی',
+      name: 'nationalNumber',
+      isRequired: true,
+      showWhenNotAdmin: true
+    },
+    {
+      title: 'ایمیل',
+      name: 'email',
+      isRequired: true,
+      type: 'email'
+    },
+    {
+      title: 'رمز عبور',
+      name: 'password',
+      isRequired: true,
+      hideWhenEdit: true,
+      showWhenNotAdmin: true,
+      type: 'password'
+    },
+    {
+      title: 'موبایل',
+      name: 'mobile',
+      isRequired: true,
+    },
+    {
+      title: 'آدرس',
+      name: 'address',
+      isRequired: true,
+      className: "col-span-2"
+    },
+    {
+      title: 'تاریخ تولد',
+      name: 'birthDay',
+      type: 'date',
+      isRequired: true,
+    },
+    
+  ]
+  useEffect(() => {
+    if (urlType && !form.type) {
+      setForm((prev) => ({ ...prev, type: urlType }));
+    }
+  }, [urlType]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setForm((prev: UserForm) => ({ ...prev, [name]: value }));
+    setForm((prev: User) => ({ ...prev, [name]: value }));
   };
 
-  const handleSelect = (name: keyof UserForm, value: string) => {
-    setForm((prev: UserForm) => ({ ...prev, [name]: value }));
-  };
-
-  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setForm((prev: UserForm) => ({ ...prev, [name]: value ? Number(value) : null }));
+  const handleSelect = (name: keyof User, value: string) => {
+    setForm((prev: User) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -93,128 +134,61 @@ export default function UserCreate({ initialValues, onSubmit, isEdit }: UserCrea
       postTable('users', form, (_data) => {
         toast.success('کاربر با موفقیت ایجاد شد');
         setForm(initialState);
-        setBirthDate(undefined);
       });
     }
   };
-
+  const NAME_TO_DISPLAY = (urlType === 'admin') ? 'ادمین' : 'کاربر'
   return (
     <div className="container mx-auto max-w-xl py-10">
-  <h1 className="text-2xl font-bold mb-6">{isEdit ? "ویرایش کاربر" : "ایجاد کاربر جدید"}</h1>
+  <h1 className="text-2xl font-bold mb-6">{
+    isEdit 
+    ? `ویرایش ${NAME_TO_DISPLAY}` 
+    : `ایجاد ${NAME_TO_DISPLAY} جدید`}</h1>
   <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label>نام*</Label>
-            <Input name="name" value={form.name} onChange={handleChange} required />
-          </div>
-          <div>
-            <Label>نام خانوادگی*</Label>
-            <Input name="lastName" value={form.lastName} onChange={handleChange} required />
-          </div>
-          <div>
-            <Label>ایمیل*</Label>
-            <Input name="email" value={form.email} onChange={handleChange} type="email" required />
-          </div>
-          {!isEdit && <div>
-            <Label>رمز عبور*</Label>
-            <Input name="password" value={form.password} onChange={handleChange} type="password" required />
-          </div>}
-          <div>
-            <Label>موبایل*</Label>
-            <Input name="mobile" value={form.mobile} onChange={handleChange} required />
-          </div>
-          <div>
-            <Label>تلفن منزل*</Label>
-            <Input name="homePhone" value={form.homePhone} onChange={handleChange} required />
-          </div>
-          <div>
-            <Label>تلفن محل کار*</Label>
-            <Input name="workPhone" value={form.workPhone} onChange={handleChange} required />
-          </div>
-          <div>
-            <Label>کد ملی*</Label>
-            <Input name="nationalNumber" value={form.nationalNumber} onChange={handleChange} required />
-          </div>
-          <div className="col-span-2">
-            <Label>آدرس*</Label>
-            <Input name="address" value={form.address} onChange={handleChange} required />
-          </div>
-          <div>
-            <Label>جنسیت*</Label>
-            <Select value={form.sex} onValueChange={v => handleSelect("sex", v)} required>
-              <SelectTrigger>
-                <SelectValue placeholder="انتخاب کنید" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="male">مرد</SelectItem>
-                <SelectItem value="female">زن</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Calendar22
-              title="تاریخ تولد*"
-              date={birthDate}
-              setDate={(d) => {
-                setBirthDate(d);
-                setForm((prev) => ({ ...prev, birthDay: d ? d.toISOString().split("T")[0] : "" }));
-              }}
-            />
-          </div>
-          <div>
-            <Label>نوع اکانت*</Label>
-            <Select value={form.type} onValueChange={v => handleSelect("type", v)} required>
-              <SelectTrigger>
-                <SelectValue placeholder="انتخاب کنید" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="admin">ادمین</SelectItem>
-                <SelectItem value="tehranUni">عضو دانشگاه تهران</SelectItem>
-                <SelectItem value="otherUni">عضو سایر دانشگاه ها</SelectItem>
-                <SelectItem value="free">عضو آزاد</SelectItem>
-                <SelectItem value="employee">کارمند</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>درصد ایثارگری</Label>
-            <Select value={form.isargaryPercent} onValueChange={v => handleSelect("isargaryPercent", v)}>
-              <SelectTrigger>
-                <SelectValue placeholder="انتخاب کنید" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="10-15">۱۰-۱۵٪</SelectItem>
-                <SelectItem value="15-20">۱۵-۲۰٪</SelectItem>
-                <SelectItem value="+20">بیش از ۲۰٪</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>ماه های اسارت</Label>
-            <Input name="azadeEsaratMonths" value={form.azadeEsaratMonths ?? ""} onChange={handleNumberChange} type="number" min="0" />
-          </div>
-          <div>
-            <Label>ماه های آزادگی</Label>
-            <Input name="azadeMonths" value={form.azadeMonths ?? ""} onChange={handleNumberChange} type="number" min="0" />
-          </div>
-          <div>
-            <Label>تعداد اعضای خانواده شاهد</Label>
-            <Input name="shahedFamilyNumber" value={form.shahedFamilyNumber ?? ""} onChange={handleNumberChange} type="number" min="0" />
-          </div>
-          <div>
-            <Label>ارتباط با ایثارگر</Label>
-            <Select value={form.shahedRelation ?? ""} onValueChange={v => handleSelect("shahedRelation", v)} required>
-              <SelectTrigger>
-                <SelectValue placeholder="انتخاب کنید" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="azade_wife">همسر آزاده</SelectItem>
-                <SelectItem value="azade_child">فرزند آزاده</SelectItem>
-                <SelectItem value="jan_wife">همسر جانباز</SelectItem>
-                <SelectItem value="jan_child">فرزند جانباز</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {FIELDS.map(item => {
+            if(
+              (item.hideWhenEdit && isEdit) ||
+              (!item.showWhenNotAdmin && !(urlType == 'admin' || urlType == 'system'))
+            ){
+              return undefined;
+            } else if(item.type === 'select' && item.options) {
+              return <div>
+                <label>{item.title + (item.isRequired ? '*' : '')}</label>
+                <Select value={form[item.name]?.toString()} onValueChange={v => handleSelect(item.name, v)} required={item.isRequired}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="انتخاب کنید" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {item.options.map(sopt => (
+                      <SelectItem value={sopt.value}>{sopt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            } else if(item.type === 'date') {
+              return <div>
+                <Calendar22 
+                  title={item.title + (item.isRequired ? '*' : '')}
+                  date={form[item.name]?.toString()}
+                  setDate={(d) => {
+                    handleSelect(item.name, d ? d.toISOString() : '')
+                  }}
+                />
+              </div>
+            } else {
+              return <div>
+                <label>{item.title + (item.isRequired ? '*' : '')}</label>
+                <Input 
+                  name={item.name} 
+                  value={form[item.name]?.toString()}
+                  type={item.type || 'text'} 
+                  onChange={handleChange} 
+                  required={item.isRequired} 
+                />
+              </div>
+            }
+          })}
         </div>
         <Button type="submit" className="w-full mt-4">{`${isEdit ? 'تغییر' : 'افزودن'} کاربر`}</Button>
       </form>

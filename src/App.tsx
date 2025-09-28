@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Welcome from "./pages/welcome";
 import {Signin} from "./pages/signin";
-import {Signup} from "./pages/signup";
+import {Signup} from "./pages/_signup";
 import Layout, {SimpleLayout} from "./components/app/layout";
 import LockedPage from "./components/app/locked-page";
 import ErrorBoundary from "./components/app/ErrorBoundry";

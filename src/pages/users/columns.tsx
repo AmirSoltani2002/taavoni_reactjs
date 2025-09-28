@@ -5,29 +5,29 @@ import { CircleCheckBig, Crown } from "lucide-react";
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
 export type User = {
-    address: string;
-    azadeEsaratMonths: null | number
-    azadeMonths: null | number
-    birthDay: string;
-    createdAt: string;
-    email: string;
-    homePhone: string;
-    id: number
-    isargaryPercent: null | number
-    lastName: string
-    mobile: string;
-    name: string;
-    nationalCard: string;
-    nationalNumber: string;
-    password: string;
-    sex: 'male' | 'female' | string;
-    shahedFamilyNumber: null | number
-    shahedRelation: null | 'azade_wife' | 'azade_child' | 'jan_wife' | 'jan_child';
-    subProjects: any[];
-    type: null | 'system' | 'admin' | 'tehranUni' | 'otherUni' | 'free' | 'employee';
-    updatedAt: string;
-    workPhone: string;
-    accepted: boolean;
+    id?: number
+    updatedAt?: string;
+    createdAt?: string;
+    address?: string;
+    azadeEsaratMonths?: null | number
+    azadeMonths?: null | number
+    birthDay?: string;
+    email?: string;
+    homePhone?: string;
+    isargaryPercent?: null | number
+    lastName?: string
+    mobile?: string;
+    name?: string;
+    nationalCard?: string;
+    nationalNumber?: string;
+    password?: string;
+    sex?: 'male' | 'female' | string;
+    shahedFamilyNumber?: null | number
+    shahedRelation?: null | 'azade_wife' | 'azade_child' | 'jan_wife' | 'jan_child';
+    subProjects?: any[];
+    type?: null | 'system' | 'admin' | 'tehranUni' | 'otherUni' | 'free' | 'employee';
+    workPhone?: string;
+    accepted?: boolean;
 }
 export type UserDoc = {
     id?: number;

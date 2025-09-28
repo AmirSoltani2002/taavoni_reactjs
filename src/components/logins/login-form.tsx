@@ -70,12 +70,6 @@ export function LoginForm({
                 </Button>
               </div>
             </div>
-            {type !== 'admin' && <div className="mt-4 text-center text-sm">
-              حساب کاربری ندارید؟
-              <a href="/signup" className="underline underline-offset-4">
-                {"ثبت‌نام"}
-              </a>
-            </div>}
           </form>
         </CardContent>
       </Card>
