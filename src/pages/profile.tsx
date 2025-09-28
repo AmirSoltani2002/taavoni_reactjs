@@ -107,7 +107,7 @@ export default function ProfilePage() {
                 <div><Label>کد ملی</Label><div>{user.nationalNumber}</div></div>
                 <div className="col-span-2"><Label>آدرس</Label><div>{user.address}</div></div>
                 <div><Label>جنسیت</Label><div>{user.sex === "male" ? "مرد" : "زن"}</div></div>
-                <div><Label>تاریخ تولد</Label><div>{(new Date(user.birthDay)).toLocaleDateString('fa-IR')}</div></div>
+                <div><Label>تاریخ تولد</Label><div>{(new Date(user.birthDay || '')).toLocaleDateString('fa-IR')}</div></div>
                 <div><Label>درصد ایثارگری</Label><div>{user.isargaryPercent ?? "-"}</div></div>
                 <div><Label>ماه های اسارت</Label><div>{user.azadeEsaratMonths ?? "-"}</div></div>
                 <div><Label>ماه های آزادگی</Label><div>{user.azadeMonths ?? "-"}</div></div>

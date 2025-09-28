@@ -27,9 +27,11 @@ export default function UsersList() {
                     title: 'تایید کاربر',
                     onClick: async(row) => {
                         setIsLoading(true);
-                        await updateTableRow(`users`, row.id, {accepted: true}, () => {
-                            getTable('users', setData);
-                        })
+                        if(row.id){
+                            await updateTableRow(`users`, row.id, {accepted: true}, () => {
+                                getTable('users', setData);
+                            })
+                        }
                         setIsLoading(false)
                     }
                 }

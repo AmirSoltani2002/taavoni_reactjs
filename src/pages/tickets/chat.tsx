@@ -79,7 +79,7 @@ export default function ChatPage() {
         ) : (
           chat.map((msg, i) => (
             <ChatMessage key={i} 
-              sender={otherGuy ? otherGuy.name : 'Admin'}
+              sender={otherGuy?.name ? otherGuy.name : 'Admin'}
               content={msg.message || ''}
               dateString={msg.updatedAt || ''}
               isSelf={msg.senderId === self?.id}
