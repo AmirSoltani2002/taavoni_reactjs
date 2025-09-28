@@ -34,6 +34,7 @@ export function SignupForm({
   const [date, setDate] = useState<Date | undefined>(undefined)
   const [isIsargar, setIsIsargar] = useState<boolean>(false)
   const [idcardFile, setIdcardFile] = useState<File>()
+  const [showPasswordHint, setShowPasswordHint] = useState(false);
   const placeholders: {
     [k: string]: string
   } = {
@@ -68,7 +69,7 @@ export function SignupForm({
               name: formData.get('name') as string,
               lastName: formData.get('lastName') as string,
               nationalNumber: formData.get('nationalNumber') as string,
-              birthDay: date ? date.toISOString().split('T')[0] : '',
+              birthDay: date ? date.toISOString() : '',
               email: formData.get('email') as string,
               mobile: formData.get('mobile') as string,
               homePhone: formData.get('homePhone') as string,
@@ -237,10 +238,17 @@ export function SignupForm({
               }
               <div>
                 <Label htmlFor="password" className="ml-auto">رمز عبور</Label>
+                <Label htmlFor="password" className="text-xs p-4 text-red-400 transition-all">
+                  {showPasswordHint && <span>
+                    رمز عبور باید حداقل ۸ کارکتر و شامل حروف انگلیسی، عدد و حداقل یک کارکتر خاص (!@#$%^&*) باشد
+                  </span>}
+                </Label>
                 <Input
                   name="password"
                   id="password"
                   type="password"
+                  onFocus={() => setShowPasswordHint(true)}
+                  onBlur={() => setShowPasswordHint(false)}
                   required
                 />
               </div>
