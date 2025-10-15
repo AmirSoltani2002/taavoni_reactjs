@@ -9,17 +9,17 @@ import FInput from "@/components/ui/functional-input";
 // User type based on columns.tsx
 
 const initialState: User = {
-  name: "",
-  lastName: "",
-  email: "",
-  password: "",
-  mobile: "",
-  homePhone: "",
-  workPhone: "",
-  nationalNumber: "",
-  address: "",
-  sex: "",
-  birthDay: "",
+  name: undefined,
+  lastName: undefined,
+  email: undefined,
+  password: undefined,
+  mobile: undefined,
+  homePhone: undefined,
+  workPhone: undefined,
+  nationalNumber: undefined,
+  address: undefined,
+  sex: undefined,
+  birthDay: undefined,
   type: null,
   isargaryPercent: null,
   azadeEsaratMonths: 0,
@@ -127,10 +127,6 @@ export default function UserCreate({ initialValues, onSubmit, isEdit }: UserCrea
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.birthDay) {
-      toast.error('تاریخ تولد الزامی است');
-      return;
-    }
     if (onSubmit) {
       onSubmit(form);
     } else {

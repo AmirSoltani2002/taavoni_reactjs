@@ -25,13 +25,13 @@ export function LoginForm({
         <CardHeader>
           <CardTitle className="ml-auto">به اکانت خود وارد شوید</CardTitle>
           <CardDescription className="ml-auto">
-            ایمیل خود را در زیر وارد کنید تا به حساب خود وارد شوید
+            کد ملی خود را در زیر وارد کنید تا به حساب خود وارد شوید
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={e => {
             e.preventDefault();
-            postTable('auth/email/', {
+            postTable('auth/national/', {
               email: (e.target as HTMLFormElement).email.value,
               password: (e.target as HTMLFormElement).password.value
             }, (d) => {
@@ -43,12 +43,12 @@ export function LoginForm({
           }}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-3">
-                <Label htmlFor="email" className="ml-auto">ایمیل</Label>
+                <Label htmlFor="email" className="ml-auto">کد ملی</Label>
                 <Input
                   name="email"
                   id="email"
-                  type="email"
-                  placeholder="m@example.com"
+                  type="text"
+                  placeholder="0123456789"
                   required
                 />
               </div>
