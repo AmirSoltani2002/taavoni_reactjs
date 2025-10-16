@@ -54,14 +54,57 @@ export default function UserCreate({ initialValues, onSubmit, isEdit }: UserCrea
       title: 'نام',
       name: 'name',
       isRequired: true,
-      hideWhenNotAdmin: true,
+      hideWhenNotAdmin: false,
     },
     {
       title: 'نام خانوادگی',
       name: 'lastName',
       isRequired: true,
-      hideWhenNotAdmin: true,
+      hideWhenNotAdmin: false,
 
+    },
+    {
+      title: 'جنسیت',
+      name: 'sex',
+      isRequired: true,
+      hideWhenNotAdmin: false,
+      type: 'select',
+      options: [
+        {
+          label: 'مرد',
+          value: 'male',
+        },
+        {
+          label: 'خانم',
+          value: 'female',
+        },
+      ]
+    },
+    {
+      title: 'نوع عضویت',
+      name: 'type',
+      isRequired: true,
+      hideWhenNotAdmin: false,
+      type: 'select',
+      options: [
+        {
+          label: 'کارمند دانشگاه تهران',
+          value: 'tehranUni'
+        },
+        {
+          label: 'کارمند سایر دانشگاه‌ها',
+          value: 'otherUni'
+        },
+        {
+          label: 'کارمند غیردانشگاهی',
+          value: 'employee'
+        },
+        {
+          label: 'عضو آزاد',
+          value: 'free'
+        },
+        
+      ]
     },
     {
       title: 'کد ملی',

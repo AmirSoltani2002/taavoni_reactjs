@@ -4,10 +4,12 @@ import { getTable, updateTableRow } from "@/general"
 import { useEffect, useState } from "react"
 import UserCreate from "./create"
 import { PageLoader } from "@/components/ui/loader"
+import { useNavigate } from "react-router-dom"
 
 export default function UsersList() {
     const [data, setData] = useState<User[]>([])
     const [isLoading, setIsLoading] = useState(false)
+    const navigate = useNavigate();
     
     useEffect(() => {
         setIsLoading(true);
@@ -36,6 +38,7 @@ export default function UsersList() {
                     }
                 }
             ]}
+            onClickRow={(row) => row.id && navigate(`/users/${row.id}`)}
             />
             {isLoading && <PageLoader />}
         </div>

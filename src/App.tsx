@@ -34,6 +34,7 @@ function App() {
                   <Route path="/tickets/:ticketType/:ticketId" element={<ChatPage />} />
                   <Route path="/users/list" element={<UsersList />} />
                   <Route path="/users/create" element={<UserCreate />} />
+                  <Route path="/users/:userId" element={<ProfilePage />} />
                   <Route path="/*" element={<LockedPage />} />
                 </Routes>
               </Layout>

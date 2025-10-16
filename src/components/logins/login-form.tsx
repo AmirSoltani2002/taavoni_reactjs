@@ -32,7 +32,7 @@ export function LoginForm({
           <form onSubmit={e => {
             e.preventDefault();
             postTable('auth/national/', {
-              email: (e.target as HTMLFormElement).email.value,
+              nationalNumber: (e.target as HTMLFormElement).email.value,
               password: (e.target as HTMLFormElement).password.value
             }, (d) => {
               if(d.token) {

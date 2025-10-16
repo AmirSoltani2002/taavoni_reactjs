@@ -47,7 +47,7 @@ const FInput = <FieldType,>({
         return <div>
         <label>{item.title + (item.isRequired ? '*' : '')}</label>
         <Select value={values[item.name]?.toString()} onValueChange={v => handleSelect(item.name, v)} required={item.isRequired}>
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
             <SelectValue placeholder="انتخاب کنید" />
             </SelectTrigger>
             <SelectContent>
