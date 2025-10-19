@@ -161,7 +161,7 @@ function Sidebar({
   variant?: "sidebar" | "floating" | "inset"
   collapsible?: "offcanvas" | "icon" | "none"
 }) {
-  const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+  const { isMobile, openMobile, setOpenMobile } = useSidebar()
 
   if (collapsible === "none") {
     return (
@@ -207,7 +207,7 @@ function Sidebar({
     <div
       className="group peer text-sidebar-foreground hidden md:block"
       data-state={"expanded"}
-      data-collapsible={state === "collapsed" ? collapsible : ""}
+      data-collapsible={""}
       data-variant={variant}
       data-side={side}
       data-slot="sidebar"
