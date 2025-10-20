@@ -28,6 +28,7 @@ interface FInputProps<FieldType> {
 
     isEdit?: boolean;
     urlType?: string | null;
+    className?: string;
     
 }
 const FInput = <FieldType,>({
@@ -37,6 +38,7 @@ const FInput = <FieldType,>({
     handleChange,
     isEdit,
     urlType,
+    className,
 }: FInputProps<FieldType>) => {
     if(
         (item.hideWhenEdit && isEdit) ||
@@ -44,7 +46,7 @@ const FInput = <FieldType,>({
     ){
         return undefined;
     } else if(item.type === 'select' && item.options) {
-        return <div>
+        return <div className={className}>
         <label>{item.title + (item.isRequired ? '*' : '')}</label>
         <Select value={values[item.name]?.toString()} onValueChange={v => handleSelect(item.name, v)} required={item.isRequired}>
             <SelectTrigger className="w-full">
@@ -58,7 +60,7 @@ const FInput = <FieldType,>({
         </Select>
         </div>
     } else if(item.type === 'date') {
-        return <div>
+        return <div className={className}>
         <Calendar22 
             title={item.title + (item.isRequired ? '*' : '')}
             date={values[item.name]?.toString()}
@@ -68,7 +70,7 @@ const FInput = <FieldType,>({
         />
         </div>
     } else if(item.type === 'slider') {
-        return <div>
+        return <div className={className}>
             <label>{item.title + (item.isRequired ? '*' : '')}</label>
             <Slider
                 value={[Number(values[item.name]) || 7]}
@@ -80,7 +82,7 @@ const FInput = <FieldType,>({
             />
         </div>
     } else {
-        return <div>
+        return <div className={className}>
         <label>{item.title + (item.isRequired ? '*' : '')}</label>
         <Input 
             name={item.name.toString()} 

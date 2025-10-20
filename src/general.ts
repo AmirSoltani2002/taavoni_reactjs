@@ -2,6 +2,12 @@ import Cookies from "js-cookie";
 import { api_base_url } from "./config";
 import { toast } from "sonner";
 
+export function faToEn(input: string | number): string {
+  return String(input).replace(/[\u06F0-\u06F9]/g, d =>
+    String(d.charCodeAt(0) - 0x06F0)
+  );
+}
+
 export const getToken = () => {
   return Cookies.get('tokenut') || '';
 }

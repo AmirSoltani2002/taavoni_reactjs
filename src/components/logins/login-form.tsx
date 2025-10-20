@@ -1,6 +1,6 @@
 import { cn } from "../../lib/utils"
 import { Button } from "../ui/button"
-import { postTable } from "../../general"
+import { faToEn, postTable } from "../../general"
 import {
   Card,
   CardContent,
@@ -32,7 +32,7 @@ export function LoginForm({
           <form onSubmit={e => {
             e.preventDefault();
             postTable('auth/national/', {
-              nationalNumber: (e.target as HTMLFormElement).email.value,
+              nationalNumber: faToEn((e.target as HTMLFormElement).email.value),
               password: (e.target as HTMLFormElement).password.value
             }, (d) => {
               if(d.token) {

@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { DataTable } from "@/components/ui/data-table";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageLoader } from "@/components/ui/loader";
+import FInput from "@/components/ui/functional-input";
 
 // Document type for user-doc/profile
 const LABEL_CLASS = "font-bold text-blue-900"
@@ -18,6 +19,7 @@ const LABEL_CLASS = "font-bold text-blue-900"
 export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [user, setUser] = useState<User | null>(null);
+  const [viewer, setViewer] = useState<User | null>(null);
   const [edit, setEdit] = useState(false);
   const [form, setForm] = useState<Partial<User>>({});
   const [fullName, setFullName] = useState<string>("")
@@ -46,6 +48,9 @@ export default function ProfilePage() {
       setDocs(data);
     });
   }, []);
+  useEffect(() => {
+    getTable('users/profile', setViewer)
+  }, [])
 
   const handleAddDocument = async () => {
     if(!user){return}
@@ -76,7 +81,7 @@ export default function ProfilePage() {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
-  const handleSelect = (name: keyof User, value: string) => {
+  const handleSelect = (name: keyof User, value: string | number) => {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -85,11 +90,7 @@ export default function ProfilePage() {
   };
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.birthDay) {
-      toast.error("تاریخ تولد الزامی است");
-      return;
-    }
-    updateTableRow("users", 'profile', { ...form, type: undefined, accepted: undefined, birthDay: birthDate ? birthDate.toISOString().split("T")[0] : "" }, () => {
+    updateTableRow("users", userId ? userId : 'profile', { ...form, accepted: undefined, birthDay: birthDate ? birthDate.toISOString().split("T")[0] : undefined }, () => {
       toast.success("اطلاعات با موفقیت ویرایش شد");
       setEdit(false);
       setUser({ ...user, ...form } as User);
@@ -153,23 +154,23 @@ export default function ProfilePage() {
                 <div className="flex flex-row gap-2 items-center"><Label className={LABEL_CLASS}>تعداد اعضای خانواده شاهد:</Label><div>{user.shahedFamilyNumber ?? "-"}</div></div>
                 <div className="flex flex-row gap-2 items-center"><Label className={LABEL_CLASS}>ارتباط با ایثارگر:</Label><div>{user.shahedRelation ?? "-"}</div></div>
               </div>
-              {!userId &&
+              {(!userId || viewer?.type === 'system') &&
                 <Button onClick={() => setEdit(true)} className="w-full mt-4">ویرایش اطلاعات</Button>
               }
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div><Label className={LABEL_CLASS}>نام</Label><Input name="name" value={form.name ?? ""} onChange={handleChange} required /></div>
-                <div><Label className={LABEL_CLASS}>نام خانوادگی</Label><Input name="lastName" value={form.lastName ?? ""} onChange={handleChange} required /></div>
-                <div><Label className={LABEL_CLASS}>ایمیل</Label><Input name="email" value={form.email ?? ""} onChange={handleChange} type="email" required /></div>
-                <div><Label className={LABEL_CLASS}>موبایل</Label><Input name="mobile" value={form.mobile ?? ""} onChange={handleChange} required /></div>
-                <div><Label className={LABEL_CLASS}>تلفن منزل</Label><Input name="homePhone" value={form.homePhone ?? ""} onChange={handleChange} required /></div>
-                <div><Label className={LABEL_CLASS}>تلفن محل کار</Label><Input name="workPhone" value={form.workPhone ?? ""} onChange={handleChange} required /></div>
-                <div><Label className={LABEL_CLASS}>کد ملی</Label><Input name="nationalNumber" value={form.nationalNumber ?? ""} onChange={handleChange} required /></div>
-                <div className="col-span-2"><Label className={LABEL_CLASS}>آدرس</Label><Input name="address" value={form.address ?? ""} onChange={handleChange} required /></div>
+                <div><Label className={LABEL_CLASS}>نام</Label><Input name="name" value={form.name ?? ""} onChange={handleChange} /></div>
+                <div><Label className={LABEL_CLASS}>نام خانوادگی</Label><Input name="lastName" value={form.lastName ?? ""} onChange={handleChange} /></div>
+                <div><Label className={LABEL_CLASS}>ایمیل</Label><Input name="email" value={form.email ?? ""} onChange={handleChange} type="email" /></div>
+                <div><Label className={LABEL_CLASS}>موبایل</Label><Input name="mobile" value={form.mobile ?? ""} onChange={handleChange} /></div>
+                <div><Label className={LABEL_CLASS}>تلفن منزل</Label><Input name="homePhone" value={form.homePhone ?? ""} onChange={handleChange} /></div>
+                <div><Label className={LABEL_CLASS}>تلفن محل کار</Label><Input name="workPhone" value={form.workPhone ?? ""} onChange={handleChange} /></div>
+                <div><Label className={LABEL_CLASS}>کد ملی</Label><Input name="nationalNumber" value={form.nationalNumber ?? ""} onChange={handleChange} /></div>
+                <div className="col-span-2"><Label className={LABEL_CLASS}>آدرس</Label><Input name="address" value={form.address ?? ""} onChange={handleChange} /></div>
                 <div><Label className={LABEL_CLASS}>جنسیت</Label>
-                  <Select value={form.sex ?? ""} onValueChange={v => handleSelect("sex", v)} required>
+                  <Select value={form.sex ?? ""} onValueChange={v => handleSelect("sex", v)}>
                     <SelectTrigger><SelectValue placeholder="انتخاب کنید" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="male">مرد</SelectItem>
@@ -177,7 +178,7 @@ export default function ProfilePage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div><Calendar22 title="تاریخ تولد" date={birthDate} setDate={d => { setBirthDate(d); setForm(f => ({ ...f, birthDay: d ? d.toISOString().split("T")[0] : "" })); }} /></div>
+                <div><Calendar22 title="تاریخ تولد" date={birthDate} setDate={d => { setBirthDate(d); setForm(f => ({ ...f, birthDay: d ? d.toISOString().split("T")[0] : undefined })); }} /></div>
                 <div><Label className={LABEL_CLASS}>درصد ایثارگری</Label>
                   <Input name="isargaryPercent" value={form.isargaryPercent ?? ""} onChange={handleChange} type="number" min="0" />
                 </div>
@@ -191,7 +192,7 @@ export default function ProfilePage() {
                   <Input name="shahedFamilyNumber" value={form.shahedFamilyNumber ?? ""} onChange={handleNumberChange} type="number" min="0" />
                 </div>
                 <div><Label className={LABEL_CLASS}>ارتباط با ایثارگر</Label>
-                  <Select value={form.shahedRelation ?? ""} onValueChange={v => handleSelect("shahedRelation", v)} required>
+                  <Select value={form.shahedRelation ?? ""} onValueChange={v => handleSelect("shahedRelation", v)}>
                     <SelectTrigger><SelectValue placeholder="انتخاب کنید" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="azade_wife">همسر آزاده</SelectItem>
@@ -201,10 +202,48 @@ export default function ProfilePage() {
                     </SelectContent>
                   </Select>
                 </div>
+                {viewer?.type === 'system' && (
+                  <FInput<User>
+                    className="w-full"
+                    values={form}
+                    item={{
+                      title: 'نوع عضویت',
+                      name: 'type',
+                      isRequired: true,
+                      hideWhenNotAdmin: false,
+                      type: 'select',
+                      options: [
+                        {
+                          label: 'کارمند دانشگاه تهران',
+                          value: 'tehranUni'
+                        },
+                        {
+                          label: 'کارمند سایر دانشگاه‌ها',
+                          value: 'otherUni'
+                        },
+                        {
+                          label: 'کارمند غیردانشگاهی',
+                          value: 'employee'
+                        },
+                        {
+                          label: 'عضو آزاد',
+                          value: 'free'
+                        },
+                        {
+                          label: 'ادمین',
+                          value: 'admin'
+                        }
+                        
+                      ]
+                    }}
+                    handleChange={handleChange}
+                    handleSelect={handleSelect}
+                  />
+                )}
               </div>
-              <div className="flex gap-2">
-                <Button type="submit" className="w-full">ذخیره</Button>
-                <Button type="button" variant="secondary" onClick={() => { setEdit(false); setForm(user); setBirthDate(user.birthDay ? new Date(user.birthDay) : undefined); }}>انصراف</Button>
+              <div className="flex gap-2 w-full">
+                <Button type="submit" className="w-3/4">ذخیره</Button>
+                <Button type="button" className="w-1/4" variant="secondary" onClick={() => { setEdit(false); setForm(user); setBirthDate(user.birthDay ? new Date(user.birthDay) : undefined); }}>انصراف</Button>
               </div>
             </form>
           )}
