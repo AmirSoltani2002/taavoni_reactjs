@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Building, Users, Home, Plus, TrendingUp, Trash2 } from "lucide-react"
 import { ImageModal } from "@/components/ui/image-modal"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { deleteTableRow, updateTableRow } from "@/general"
+import { deleteTableRow } from "@/general"
 import { ImageStorage } from "@/lib/imageStorage"
 import { useNavigate } from "react-router-dom"
 
@@ -185,38 +185,33 @@ export default function ProjectsList() {
                 />
             )}
 
-            {/* Edit Modal */}
+            {/* Edit Modal - Navigate to edit route instead */}
             {editingProject && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-auto">
-                        <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-                            <h2 className="text-xl font-semibold text-slate-900">ویرایش پروژه</h2>
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+                        <h2 className="text-xl font-semibold text-slate-900 mb-4">ویرایش پروژه</h2>
+                        <p className="text-slate-600 mb-6">
+                            آیا می‌خواهید پروژه "{editingProject.name}" را ویرایش کنید؟
+                        </p>
+                        <div className="flex gap-3">
                             <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setEditingProject(undefined)}
-                                className="h-8 w-8 p-0"
-                            >
-                                ✕
-                            </Button>
-                        </div>
-                        <div className="p-6">
-                            <ProjectCreate
-                                initialValues={editingProject}
-                                isEdit={true}
-                                onSubmit={async (values) => {
-                                    try {
-                                        if(!editingProject?.id){return}
-                                        await updateTableRow('projects', editingProject.id, values, (updatedData) => {
-                                            console.log('Project updated successfully:', updatedData);
-                                            refreshData();
-                                            setEditingProject(undefined);
-                                        });
-                                    } catch (error) {
-                                        console.error('Error updating project:', error);
+                                onClick={() => {
+                                    if (editingProject.id) {
+                                        navigate(`/projects/edit/${editingProject.id}`);
                                     }
+                                    setEditingProject(undefined);
                                 }}
-                            />
+                                className="flex-1"
+                            >
+                                بله، ویرایش کن
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={() => setEditingProject(undefined)}
+                                className="flex-1"
+                            >
+                                انصراف
+                            </Button>
                         </div>
                     </div>
                 </div>

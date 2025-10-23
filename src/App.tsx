@@ -29,6 +29,7 @@ function App() {
                 <Routes>
                   <Route path="/dashboard" element={<ProfilePage />} />
                   <Route path="/projects/create" element={<ProjectCreate />} />
+                  <Route path="/projects/edit/:projectId" element={<ProjectCreate />} />
                   <Route path="/projects/list" element={<ProjectsList />} />
                   <Route path="/tickets/list" element={<TicketsList />} />
                   <Route path="/tickets/:ticketType/:ticketId" element={<ChatPage />} />

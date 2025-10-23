@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, CheckCircle } from "lucide-react";
-import { getTable, postTable } from "@/general";
+import { getTable, postTable, updateTableRow } from "@/general";
 import { PageLoader } from "@/components/ui/loader";
 import type { Project, Block, SubProject } from "./columns";
 import type { User } from "../users/columns";
@@ -26,9 +26,11 @@ export default function ProjectCreate({
   onBack 
 }: ProjectCreateProps = {}) {
   const navigate = useNavigate();
+  const { projectId } = useParams();
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User>();
   const [step, setStep] = useState(0);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   // Project state
   const [project, setProject] = useState<Project>(() => {
@@ -56,7 +58,43 @@ export default function ProjectCreate({
 
   useEffect(() => {
     getTable('users/profile', setUser);
-  }, []);
+    
+    // Check if we're in edit mode
+    if (projectId) {
+      setIsEditMode(true);
+      loadProjectData(projectId);
+    }
+  }, [projectId]);
+
+  const loadProjectData = async (id: string) => {
+    setLoading(true);
+    try {
+      // Load project data
+      const projectData = await getTable(`projects/${id}`);
+      if (projectData) {
+        setProject(projectData);
+        
+        // Load blocks for this project
+        const blocksData = await getTable(`projects/${id}/blocks`);
+        if (blocksData) {
+          setBlocks(blocksData);
+          
+          // Load units for all blocks
+          const allUnits: SubProject[] = [];
+          for (const block of blocksData) {
+            const unitsData = await getTable(`blocks/${block.id}/subprojects`);
+            if (unitsData) {
+              allUnits.push(...unitsData);
+            }
+          }
+          setUnits(allUnits);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading project data:', error);
+    }
+    setLoading(false);
+  };
 
   // Update project state when initialValues change (for editing)
   useEffect(() => {
@@ -78,33 +116,69 @@ export default function ProjectCreate({
     
     try {
       console.log('Submitting project data:', { project, blocks, units });
-      if (isEdit && onSubmit) {
+      if (isEditMode) {
+        // Update existing project (remove ID from project data)
+        const { id: _, ...projectData } = project;
+        await updateTableRow('projects', projectId!, projectData);
+        
+        // Update blocks
+        for (const block of blocks) {
+          if (block.id) {
+            // Update existing block (remove ID from block data)
+            const { id: blockId, ...blockData } = block;
+            await updateTableRow('blocks', block.id, { ...blockData, projectId: projectId });
+          } else {
+            // Create new block (remove ID from block data)
+            const { id: blockId, ...blockData } = block;
+            await postTable('blocks', { ...blockData, projectId: projectId });
+          }
+        }
+        
+        // Update units
+        for (const unit of units) {
+          if (unit.id) {
+            // Update existing unit (remove ID from unit data)
+            const { id: unitId, ...unitData } = unit;
+            await updateTableRow('subprojects', unit.id, { ...unitData, userId: user?.id });
+          } else {
+            // Create new unit (remove ID from unit data)
+            const { id: unitId, ...unitData } = unit;
+            await postTable('subprojects', { ...unitData, userId: user?.id });
+          }
+        }
+        
+        // Navigate back to projects list
+        navigate('/projects/list');
+      } else if (isEdit && onSubmit) {
         onSubmit?.({ project, blocks, units });
       } else {
-        // Create project first
-        const projectResult = await postTable('projects', project);
+        // Create project first (remove ID from project data)
+        const { id: _, ...projectData } = project;
+        const projectResult = await postTable('projects', projectData);
         if (projectResult && projectResult.id) {
-          // Create blocks one by one
+          // Create blocks one by one (remove ID from block data)
           const createdBlocks: Block[] = [];
           for (const block of blocks) {
-            const blockData = {
-              ...block,
+            const { id: blockId, ...blockData } = block;
+            const blockPayload = {
+              ...blockData,
               projectId: projectResult.id
             };
-            const createdBlock = await postTable('blocks', blockData);
+            const createdBlock = await postTable('blocks', blockPayload);
             if (createdBlock && createdBlock.id) {
               createdBlocks.push(createdBlock);
             }
           }
           
           if (createdBlocks.length > 0) {
-            // Create units with block IDs
+            // Create units with block IDs (remove ID from unit data)
             const unitsWithBlockIds = units.map(unit => {
+              const { id: unitId, ...unitData } = unit;
               const correspondingBlock = createdBlocks.find((block: any) => 
                 block.name === blocks.find(b => b.id === unit.blockId)?.name
               );
               return {
-                ...unit,
+                ...unitData,
                 blockId: correspondingBlock?.id,
                 userId: user?.id
               };
@@ -225,7 +299,7 @@ export default function ProjectCreate({
                 </div>
                 <div>
                   <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    {isEdit ? 'ویرایش پروژه' : 'ایجاد پروژه جدید'}
+                    {isEditMode ? 'ویرایش پروژه' : 'ایجاد پروژه جدید'}
                   </h1>
                 </div>
               </div>
@@ -233,7 +307,7 @@ export default function ProjectCreate({
           </div>
 
           {/* Progress Steps */}
-          {!isEdit && <Stepper step={step} setStep={setStep} />}
+          {!isEditMode && <Stepper step={step} setStep={setStep} />}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -255,7 +329,7 @@ export default function ProjectCreate({
                 ) : (
                   <>
                     <CheckCircle className="w-5 h-5" />
-                    {isEdit ? 'بروزرسانی پروژه' : 'ایجاد پروژه'}
+                    {isEditMode ? 'بروزرسانی پروژه' : 'ایجاد پروژه'}
                   </>
                 )}
               </Button>
