@@ -15,7 +15,7 @@ export const Signin: React.FC = () => {
             <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md -mb-5">
                 <StepBack className="size-4" />
             </div>
-            <span className="text-sm font-medium bg-white rounded-sm -mb-5">{project_name}</span>
+            <span className="text-sm font-medium rounded-sm -mb-5">{project_name}</span>
             </a>
             <div className="left">
             <LoginForm type={type} />
