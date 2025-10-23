@@ -1,71 +1,67 @@
 import { type ColumnDef } from "@tanstack/react-table"
-import { ImageStorage } from "@/lib/imageStorage"
  
-// This type is used to define the shape of our data.
-// You can use a Zod schema here if you want.
+// Updated types to match new schema
 export type Project = {
     id?: number;
-    name?: string;
-    address?: string;
-    startDate?: string;
+    name: string;
+    address: string;
+    landArea: number;
+    startDate: string;
     endDate?: string;
-    floorCount?: number;
-    unitCount?: number;
-    blockNumber?: number;
-    landArea?: number;
-    buildingArea?: number;
-    sharedArea?: number;
-    options?: string;
     createdAt?: string;
     updatedAt?: string;
-    docs?: string[]
+    blocks?: Block[];
+    projectDocs?: ProjectDoc[];
 }
+
+export type Block = {
+    id?: number;
+    name: string;
+    floorCount: number;
+    shareArea: number;
+    buildingArea: number;
+    description?: string;
+    projectId?: number;
+    createdAt?: string;
+    updatedAt?: string;
+    subProjects?: SubProject[];
+}
+
 export type SubProject = {
     id?: number;
-    area?: number;
-    floor?: number;
-    point?: number;
-    block?: number;
-    roomCount?: number;
+    area: number;
+    floor: number;
+    point: number;
+    roomCount: number;
     options?: string;
-    unitNumber?: number;
-    view?: 'north' | 'south' | 'east' | 'west' | 'north-east' | 'north-west' | 'south-east' | 'south-west'
+    direction: string;
+    unitNumber: number;
     userId?: number;
-    projectId?: number;
+    blockId?: number;
+    createdAt?: string;
+    updatedAt?: string;
+    subProjectDocs?: SubProjectDoc[];
+}
+
+export type ProjectDoc = {
+    id?: number;
+    projectId: number;
+    document: string;
+    detail?: string;
+    createdAt?: string;
+    updatedAt?: string;
+}
+
+export type SubProjectDoc = {
+    id?: number;
+    subProjectId: number;
+    document: string;
+    detail?: string;
     createdAt?: string;
     updatedAt?: string;
 }
 
 export const columns: ColumnDef<Project>[] = [
-    {
-        accessorKey: "image",
-        header: "تصویر",
-        cell: ({ row }) => {
-            const project = row.original;
-            const localImage = project.id ? ImageStorage.getProjectImage(project.id) : undefined;
-            const imageToShow = localImage;
-            
-            return imageToShow ? (
-                <img 
-                    src={imageToShow} 
-                    alt="تصویر پروژه" 
-                    className="w-12 h-12 object-cover rounded-lg border"
-                    onError={(e) => {
-                        console.error('Table image load error for project:', project.id, 'Image:', imageToShow);
-                        e.currentTarget.style.display = 'none';
-                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                    }}
-                    onLoad={() => {
-                        console.log('Table image loaded successfully for project:', project.id);
-                    }}
-                />
-            ) : (
-                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <span className="text-gray-400 text-xs">بدون تصویر</span>
-                </div>
-            );
-        }
-    },
     {
         accessorKey: "name",
         header: "نام پروژه",
@@ -76,6 +72,14 @@ export const columns: ColumnDef<Project>[] = [
         cell: ({ cell }) => {
             const value = cell.getValue() as string;
             return value ? (value.length > 50 ? value.substring(0, 50) + "..." : value) : "-";
+        }
+    },
+    {
+        accessorKey: "landArea",
+        header: "مساحت زمین",
+        cell: ({ cell }) => {
+            const value = cell.getValue() as number;
+            return value ? `${value} متر مربع` : "0 متر مربع";
         }
     },
     {
@@ -105,51 +109,24 @@ export const columns: ColumnDef<Project>[] = [
         }
     },
     {
-        accessorKey: "unitCount",
-        header: "تعداد واحد",
-        cell: ({ cell }) => {
-            const value = cell.getValue() as number;
-            return value ? `${value} واحد` : "0 واحد";
-        }
-    },
-    {
-        accessorKey: "floorCount",
-        header: "تعداد طبقه",
-        cell: ({ cell }) => {
-            const value = cell.getValue() as number;
-            return value ? `${value} طبقه` : "0 طبقه";
-        }
-    },
-    {
-        accessorKey: "blockNumber",
+        accessorKey: "blocks",
         header: "تعداد بلوک",
-        cell: ({ cell }) => {
-            const value = cell.getValue() as number;
-            return value ? `${value} بلوک` : "1 بلوک";
+        cell: ({ row }) => {
+            const blocks = row.original.blocks;
+            return blocks ? `${blocks.length} بلوک` : "0 بلوک";
         }
     },
     {
-        accessorKey: "landArea",
-        header: "مساحت زمین",
-        cell: ({ cell }) => {
-            const value = cell.getValue() as number;
-            return value ? `${value} متر` : "0 متر";
-        }
-    },
-    {
-        accessorKey: "sharedArea",
-        header: "مشاعات",
-        cell: ({ cell }) => {
-            const value = cell.getValue() as number;
-            return value ? `${value} متر` : "0 متر";
-        }
-    },
-    {
-        accessorKey: "options",
-        header: "توضیحات",
+        accessorKey: "createdAt",
+        header: "تاریخ ایجاد",
         cell: ({ cell }) => {
             const value = cell.getValue() as string;
-            return value ? (value.length > 30 ? value.substring(0, 30) + "..." : value) : "-";
+            if (!value) return "-";
+            try {
+                return new Date(value).toLocaleDateString('fa-IR');
+            } catch {
+                return value;
+            }
         }
     },
 ]

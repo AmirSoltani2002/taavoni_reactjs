@@ -5,7 +5,7 @@ import {Signup} from "./pages/_signup";
 import Layout, {SimpleLayout} from "./components/app/layout";
 import LockedPage from "./components/app/locked-page";
 import ErrorBoundary from "./components/app/ErrorBoundry";
-import ProjectCreate from "./pages/projects/create";
+import ProjectCreate from "./pages/projects/newCreate";
 import ProjectsList from "./pages/projects/list";
 import UsersList from "./pages/users/userList";
 import UserCreate from "./pages/users/create";

@@ -2,7 +2,7 @@ import { columns, type Project } from "./columns"
 import { DataTable } from "@/components/ui/data-table"
 import { getTable } from "@/general"
 import { useEffect, useState } from "react"
-import ProjectCreate from "./create"
+import ProjectCreate from "./newCreate"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Building, Users, Home, Plus, TrendingUp, Trash2 } from "lucide-react"
@@ -127,7 +127,7 @@ export default function ProjectsList() {
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-sm font-medium text-emerald-700 mb-1">کل واحدها</p>
-                                        <p className="text-3xl font-bold text-emerald-900">{data.reduce((sum, project) => sum + (project.unitCount || 0), 0).toLocaleString()}</p>
+                                        <p className="text-3xl font-bold text-emerald-900">{data.reduce((sum, project) => sum + (project.blocks?.length || 0), 0).toLocaleString()}</p>
                                         <p className="text-xs text-emerald-600 mt-1">
                                             <TrendingUp className="w-3 h-3 inline ml-1" />
                                             واحد مسکونی
@@ -146,7 +146,7 @@ export default function ProjectsList() {
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-sm font-medium text-purple-700 mb-1">کل بلوک‌ها</p>
-                                        <p className="text-3xl font-bold text-purple-900">{data.reduce((sum, project) => sum + (project.blockNumber || 0), 0)}</p>
+                                        <p className="text-3xl font-bold text-purple-900">{data.reduce((sum, project) => sum + (project.blocks?.length || 0), 0)}</p>
                                         <p className="text-xs text-purple-600 mt-1">
                                             <Home className="w-3 h-3 inline ml-1" />
                                             بلوک ساختمانی
