@@ -169,7 +169,7 @@ export default function ProjectsList() {
                                 data={data} 
                                 tableName="projects" 
                                 onRefresh={refreshData}
-                                editComponent={ProjectCreate}
+                                onClickRow={(row) => row.id && navigate(`/projects/edit/${row.id}`)}
                             />
                         </div>
                 </div>
