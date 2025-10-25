@@ -18,19 +18,19 @@ const Stepper: React.FC<StepperProps> = ({ step, setStep }) => {
       title: "مرحله ۲", 
       desc: "اطلاعات بلوک ها",
       icon: Blocks,
-      bgColor: 'green',
+      bgColor: 'purple',
     },
     {
       title: "مرحله ۳",
       desc: "اطلاعات واحدهای مسکونی", 
       icon: Home,
-      bgColor: 'purple',
+      bgColor: 'red',
     },
     {
       title: "مرحله ۴",
       desc: "بررسی و تایید نهایی",
       icon: CheckCircle,
-      bgColor: 'orange',
+      bgColor: 'green',
     },
   ];
 

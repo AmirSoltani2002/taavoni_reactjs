@@ -41,6 +41,8 @@ export default function ProjectCreate({
         landArea: initialValues.landArea || 0,
         startDate: initialValues.startDate || "",
         endDate: initialValues.endDate || "",
+        longitude: initialValues.longitude || 0,
+        latitude: initialValues.latitude || 0,
       } as Project;
     }
     return {
@@ -69,24 +71,22 @@ export default function ProjectCreate({
   const loadProjectData = async (id: string) => {
     setLoading(true);
     try {
-      // Load project data
+      // Load project data with nested blocks and units
       const projectData = await getTable(`projects/${id}`);
       if (projectData) {
         setProject(projectData);
         
-        // Load blocks for this project
-        const blocksData = await getTable(`projects/${id}/blocks`);
-        if (blocksData) {
-          setBlocks(blocksData);
+        // Extract blocks from nested project data
+        if (projectData.blocks && Array.isArray(projectData.blocks)) {
+          setBlocks(projectData.blocks);
           
-          // Load units for all blocks
+          // Extract all units from nested blocks
           const allUnits: SubProject[] = [];
-          for (const block of blocksData) {
-            const unitsData = await getTable(`blocks/${block.id}/subprojects`);
-            if (unitsData) {
-              allUnits.push(...unitsData);
+          projectData.blocks.forEach((block: Block) => {
+            if (block.subProjects && Array.isArray(block.subProjects)) {
+              allUnits.push(...block.subProjects);
             }
-          }
+          });
           setUnits(allUnits);
         }
       }
@@ -102,6 +102,15 @@ export default function ProjectCreate({
       setProject(initialValues);
       if (initialValues.blocks) {
         setBlocks(initialValues.blocks);
+        
+        // Extract all units from nested blocks
+        const allUnits: SubProject[] = [];
+        initialValues.blocks.forEach((block: Block) => {
+          if (block.subProjects && Array.isArray(block.subProjects)) {
+            allUnits.push(...block.subProjects);
+          }
+        });
+        setUnits(allUnits);
       }
     }
   }, [initialValues, isEdit]);
@@ -119,31 +128,37 @@ export default function ProjectCreate({
       if (isEditMode) {
         // Update existing project (remove ID from project data)
         const { id: _, ...projectData } = project;
-        await updateTableRow('projects', projectId!, projectData);
+        await updateTableRow('projects', projectId!, {
+          ...projectData,
+          longitude: projectData.longitude || 0,
+          latitude: projectData.latitude || 0,
+          blocks: undefined,
+          projectDocs: undefined,
+        });
         
         // Update blocks
         for (const block of blocks) {
           if (block.id) {
             // Update existing block (remove ID from block data)
             const { id: blockId, ...blockData } = block;
-            await updateTableRow('blocks', block.id, { ...blockData, projectId: projectId });
+            await updateTableRow('blocks', block.id, { ...blockData, subProjects: undefined });
           } else {
             // Create new block (remove ID from block data)
             const { id: blockId, ...blockData } = block;
-            await postTable('blocks', { ...blockData, projectId: projectId });
+            await postTable('blocks', { ...blockData, subProjects: undefined });
           }
         }
         
         // Update units
         for (const unit of units) {
-          if (unit.id) {
-            // Update existing unit (remove ID from unit data)
+          if (unit.id && unit.id > 0) {
+            // Update existing unit (positive ID means it exists in database)
             const { id: unitId, ...unitData } = unit;
-            await updateTableRow('subprojects', unit.id, { ...unitData, userId: user?.id });
+            await updateTableRow('subprojects', unit.id, { ...unitData });
           } else {
-            // Create new unit (remove ID from unit data)
+            // Create new unit (negative ID or no ID means it's new)
             const { id: unitId, ...unitData } = unit;
-            await postTable('subprojects', { ...unitData, userId: user?.id });
+            await postTable('subprojects', { ...unitData });
           }
         }
         
@@ -154,7 +169,12 @@ export default function ProjectCreate({
       } else {
         // Create project first (remove ID from project data)
         const { id: _, ...projectData } = project;
-        const projectResult = await postTable('projects', projectData);
+        console.log('Project data:', projectData);
+        const projectResult = await postTable('projects', {
+          ...projectData,
+          longitude: projectData.longitude || 0,
+          latitude: projectData.latitude || 0,
+        });
         if (projectResult && projectResult.id) {
           // Create blocks one by one (remove ID from block data)
           const createdBlocks: Block[] = [];
@@ -187,17 +207,7 @@ export default function ProjectCreate({
             await postTable('subprojects/multiple', unitsWithBlockIds);
           }
           
-          // Reset form on successful creation
-          setProject({
-            name: "",
-            address: "",
-            landArea: 0,
-            startDate: "",
-            endDate: "",
-          });
-          setBlocks([]);
-          setUnits([]);
-          
+          navigate('/projects/list');
           // Call onSubmit callback for new projects too
           if (onSubmit) {
             onSubmit?.({ project, blocks, units });
@@ -307,7 +317,7 @@ export default function ProjectCreate({
           </div>
 
           {/* Progress Steps */}
-          {!isEditMode && <Stepper step={step} setStep={setStep} />}
+          <Stepper step={step} setStep={setStep} />
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">

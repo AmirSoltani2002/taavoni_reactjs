@@ -20,31 +20,33 @@ export default function ProjectsList() {
     const [showCreateModal, setShowCreateModal] = useState(false)
     const navigate = useNavigate();
     useEffect(() => {
-        getTable('projects/all', (data) => {
-            console.log('Projects data received:', data);
-            
-            // Enhance projects with locally stored images
-            const enhancedData = data.map((project: any) => {
-                const localImage = ImageStorage.getProjectImage(project.id);
-                return {
-                    ...project,
-                    image: localImage || project.image || '' // Use local image if available
-                };
-            });
-            
-            // Debug: Check image field in each project
-            enhancedData.forEach((project: any, index: number) => {
-                console.log(`Project ${index + 1} (${project.name}):`, {
-                    hasImage: !!project.image,
-                    imageType: typeof project.image,
-                    imageLength: project.image?.length || 0,
-                    imagePrefix: project.image?.substring(0, 50) || 'No image',
-                    source: ImageStorage.getProjectImage(project.id) ? 'localStorage' : 'API'
+        try{
+            getTable('projects/all', (data) => {
+                console.log('Projects data received:', data);
+                
+                // Enhance projects with locally stored images
+                const enhancedData = data.map((project: any) => {
+                    const localImage = ImageStorage.getProjectImage(project.id);
+                    return {
+                        ...project,
+                        image: localImage || project.image || '' // Use local image if available
+                    };
                 });
+                
+                // Debug: Check image field in each project
+                enhancedData.forEach((project: any, index: number) => {
+                    console.log(`Project ${index + 1} (${project.name}):`, {
+                        hasImage: !!project.image,
+                        imageType: typeof project.image,
+                        imageLength: project.image?.length || 0,
+                        imagePrefix: project.image?.substring(0, 50) || 'No image',
+                        source: ImageStorage.getProjectImage(project.id) ? 'localStorage' : 'API'
+                    });
+                });
+                
+                setData(enhancedData);
             });
-            
-            setData(enhancedData);
-        });
+        } catch (_) {}
     }, [])
 
     const refreshData = () => {

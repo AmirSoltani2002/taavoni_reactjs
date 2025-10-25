@@ -10,6 +10,8 @@ export type Project = {
     endDate?: string;
     createdAt?: string;
     updatedAt?: string;
+    longitude: number;
+    latitude: number;
     blocks?: Block[];
     projectDocs?: ProjectDoc[];
 }

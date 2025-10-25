@@ -23,7 +23,8 @@ export const Step3Units: React.FC<Step3UnitsProps> = ({
 
   const addUnit = (blockId: number, floor: number) => {
     const newUnit: SubProject = {
-      id: nextId,
+      // Use negative ID for new units to distinguish from database IDs
+      id: -nextId,
       area: 50,
       floor: floor,
       point: 7,
