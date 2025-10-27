@@ -102,7 +102,7 @@ export default function ProfilePage() {
 
   return (
     <div className="container mx-auto max-w-2xl py-10">
-      <Card>
+      <Card className="bg-cyan-50">
         <CardHeader className="flex flex-row justify-between">
           <div className="flex flex-col gap-4">
             <CardTitle>پروفایل کاربری</CardTitle>
@@ -247,26 +247,28 @@ export default function ProfilePage() {
               </div>
             </form>
           )}
-          <div className="mt-8">
-            <h2 className="font-bold mb-2">{`مدارک ${fullName}`}</h2>
-            {!userId && <div className="mt-4">
-              <h3 className="font-medium mb-2">افزودن مدرک</h3>
-              <div className="flex items-center gap-2">
-                <Input type='text' value={fileInputTitle} placeholder="موضوع فایل" 
-                  onChange={(e) => setFileInputTitle(e.target.value)} 
-                />
-                <Input ref={fileInputRef} type="file" accept="image/*,application/pdf" />
-                <Button onClick={handleAddDocument} disabled={uploading}>
-                  {uploading ? "در حال آپلود..." : "افزودن مدرک"}
-                </Button>
-              </div>
-            </div>}
-            {docs.length === 0 ? (
-              <div>مدرکی ثبت نشده است.</div>
-            ) : (
-              <DataTable columns={docs_columns} data={docs} tableName="user-doc" />
-            )}
-          </div>
+          <Card className="mt-8">
+            <CardContent>
+              <h2 className="font-bold mb-2">{`مدارک ${fullName}`}</h2>
+              {!userId && <div className="mt-4">
+                <h3 className="font-medium mb-2">افزودن مدرک</h3>
+                <div className="flex items-center gap-2">
+                  <Input type='text' value={fileInputTitle} placeholder="موضوع فایل" 
+                    onChange={(e) => setFileInputTitle(e.target.value)} 
+                  />
+                  <Input ref={fileInputRef} type="file" accept="image/*,application/pdf" />
+                  <Button onClick={handleAddDocument} disabled={uploading}>
+                    {uploading ? "در حال آپلود..." : "افزودن مدرک"}
+                  </Button>
+                </div>
+              </div>}
+              {docs.length === 0 ? (
+                <div>مدرکی ثبت نشده است.</div>
+              ) : (
+                <DataTable columns={docs_columns} data={docs} tableName="user-doc" />
+              )}
+            </CardContent>
+          </Card>
         </CardContent>
       </Card>
       {isLoading && <PageLoader />}

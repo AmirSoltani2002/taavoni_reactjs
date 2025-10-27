@@ -21,6 +21,7 @@ import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "./ui/collap
 import { Button } from "./ui/button";
 import Cookies from "js-cookie";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import logo from '@/assets/logo-nobg.png';
 
 export function AppSidebar() {
   const location = useLocation();
@@ -150,8 +151,11 @@ export function AppSidebar() {
     <Sidebar side='right' variant='floating'>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>{'خوش آمدید '}{userInfo?.name ? `${userInfo?.name} گرامی` : ''}</SidebarGroupLabel>
-          <SidebarGroupContent>
+          <SidebarGroupLabel className="h-16">
+            {'خوش آمدید '}{userInfo?.name ? `${userInfo?.name} گرامی` : ''}
+          </SidebarGroupLabel>
+          <SidebarGroupContent className="my-2">
+            <img src={logo} className="absolute size-16 top-2 left-2" />
             {items.map((item) => {
               const isActive =
                 location.pathname === item.url ||
@@ -159,7 +163,7 @@ export function AppSidebar() {
               if (!item.options) {
                 return (
                   <SidebarMenu key={item.title}>
-                    <SidebarMenuItem key={item.title}>
+                    <SidebarMenuItem key={item.title} className="shadow-sm rounded">
                       {item.disabled ? (
                         <HoverCard openDelay={100} closeDelay={100}>
                           <HoverCardTrigger asChild>
