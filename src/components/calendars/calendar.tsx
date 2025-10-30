@@ -9,8 +9,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "../ui/popover"
+import { cn } from "@/lib/utils";
 
-export const Calendar22 = ({title, date, setDate}: {title?: string, date: Date | string | undefined, setDate: (date: Date | undefined) => void}) => {
+export const Calendar22 = ({title, date, setDate, className}: {title?: string, date: Date | string | undefined, setDate: (date: Date | undefined) => void, className?: string}) => {
   const [open, setOpen] = React.useState(false)
   
   // Helper function to ensure we have a Date object
@@ -28,7 +29,7 @@ export const Calendar22 = ({title, date, setDate}: {title?: string, date: Date |
   const dateObj = ensureDate(date);
   
   return (
-    <div className="flex flex-col gap-3">
+    <div className={cn("flex flex-col gap-3", className)}>
       {title && <Label htmlFor="date" className="px-1 -mb-2.5">
         {title}
       </Label>}
@@ -37,20 +38,20 @@ export const Calendar22 = ({title, date, setDate}: {title?: string, date: Date |
           <Button
             variant="outline"
             id="date"
-            className="w-full justify-between font-normal"
+            className={cn("w-full justify-between font-normal text-gray-500")}
           >
             {dateObj ? dateObj.toLocaleDateString(timeFormat) : "تاریخ انتخابی"}
-            <ChevronDownIcon />
+            <ChevronDownIcon className={cn("text-gray-500", className)} />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+        <PopoverContent className={cn("w-auto overflow-hidden p-0", className)} align="start">
           <Calendar
             mode="single"
             defaultMonth={dateObj}
             selected={dateObj}
             onSelect={setDate}
             captionLayout="dropdown"
-            className="rounded-lg border shadow-sm"
+            className={cn("rounded-lg border shadow-sm", className)}
             endMonth={new Date((new Date()).getFullYear() + 10, 12)}
           />
         </PopoverContent>

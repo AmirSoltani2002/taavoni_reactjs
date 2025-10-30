@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Slider } from "./slider";
+import { cn } from "@/lib/utils";
 
 interface FInputProps<FieldType> {
     values: FieldType;
@@ -49,7 +50,7 @@ const FInput = <FieldType,>({
         return <div className={className}>
         <label>{item.title + (item.isRequired ? '*' : '')}</label>
         <Select value={values[item.name]?.toString()} onValueChange={v => handleSelect(item.name, v)} required={item.isRequired}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className={cn("w-full", className)}>
             <SelectValue placeholder="انتخاب کنید" />
             </SelectTrigger>
             <SelectContent>

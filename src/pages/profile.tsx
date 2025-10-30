@@ -12,6 +12,7 @@ import { DataTable } from "@/components/ui/data-table";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageLoader } from "@/components/ui/loader";
 import FInput from "@/components/ui/functional-input";
+import { cn } from "@/lib/utils";
 
 // Document type for user-doc/profile
 const LABEL_CLASS = "font-bold text-blue-900"
@@ -29,6 +30,11 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
   const { userId } = useParams();
   const navigate = useNavigate()
 
@@ -97,6 +103,41 @@ export default function ProfilePage() {
     });
   };
 
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setPasswordForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handlePasswordSubmit = async () => {
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast.error("رمز عبور جدید و تأیید آن مطابقت ندارند");
+      return;
+    }
+    
+    if (passwordForm.newPassword.length < 6) {
+      toast.error("رمز عبور جدید باید حداقل 6 کاراکتر باشد");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await updateTableRow("users", userId ? userId : 'profile', {
+        password: passwordForm.newPassword
+      }, () => {
+        toast.success("رمز عبور با موفقیت تغییر کرد");
+        setPasswordForm({
+          newPassword: '',
+          confirmPassword: ''
+        });
+        setShowPasswordChange(false);
+      });
+    } catch (error) {
+      toast.error("خطا در تغییر رمز عبور");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (loading) return <div>در حال بارگذاری...</div>;
   if (!user) return <div>کاربر یافت نشد</div>;
 
@@ -104,9 +145,9 @@ export default function ProfilePage() {
     <div className="container mx-auto max-w-2xl py-10">
       <Card className="bg-cyan-50">
         <CardHeader className="flex flex-row justify-between">
-          <div className="flex flex-col gap-4">
+          <div className={cn("flex flex-col gap-4", LABEL_CLASS)}>
             <CardTitle>پروفایل کاربری</CardTitle>
-            <CardDescription>
+            <CardDescription className={LABEL_CLASS}>
               {`اطلاعات و مدارک ${fullName}`}
             </CardDescription>
           </div>
@@ -161,39 +202,40 @@ export default function ProfilePage() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div><Label className={LABEL_CLASS}>نام</Label><Input name="name" value={form.name ?? ""} onChange={handleChange} /></div>
-                <div><Label className={LABEL_CLASS}>نام خانوادگی</Label><Input name="lastName" value={form.lastName ?? ""} onChange={handleChange} /></div>
-                <div><Label className={LABEL_CLASS}>ایمیل</Label><Input name="email" value={form.email ?? ""} onChange={handleChange} type="email" /></div>
-                <div><Label className={LABEL_CLASS}>موبایل</Label><Input name="mobile" value={form.mobile ?? ""} onChange={handleChange} /></div>
-                <div><Label className={LABEL_CLASS}>تلفن منزل</Label><Input name="homePhone" value={form.homePhone ?? ""} onChange={handleChange} /></div>
-                <div><Label className={LABEL_CLASS}>تلفن محل کار</Label><Input name="workPhone" value={form.workPhone ?? ""} onChange={handleChange} /></div>
-                <div><Label className={LABEL_CLASS}>کد ملی</Label><Input name="nationalNumber" value={form.nationalNumber ?? ""} onChange={handleChange} /></div>
-                <div className="col-span-2"><Label className={LABEL_CLASS}>آدرس</Label><Input name="address" value={form.address ?? ""} onChange={handleChange} /></div>
+                <div><Label className={LABEL_CLASS}>نام</Label><Input className="bg-secondary" name="name" value={form.name ?? ""} onChange={handleChange} /></div>
+                <div><Label className={LABEL_CLASS}>نام خانوادگی</Label><Input className="bg-secondary" name="lastName" value={form.lastName ?? ""} onChange={handleChange} /></div>
+                <div><Label className={LABEL_CLASS}>ایمیل</Label><Input className="bg-secondary" name="email" value={form.email ?? ""} onChange={handleChange} type="email" /></div>
+                <div><Label className={LABEL_CLASS}>موبایل</Label><Input className="bg-secondary" name="mobile" value={form.mobile ?? ""} onChange={handleChange} /></div>
+                <div><Label className={LABEL_CLASS}>تلفن منزل</Label><Input className="bg-secondary" name="homePhone" value={form.homePhone ?? ""} onChange={handleChange} /></div>
+                <div><Label className={LABEL_CLASS}>تلفن محل کار</Label><Input className="bg-secondary" name="workPhone" value={form.workPhone ?? ""} onChange={handleChange} /></div>
+                <div><Label className={LABEL_CLASS}>کد ملی</Label><Input className="bg-secondary" name="nationalNumber" value={form.nationalNumber ?? ""} onChange={handleChange} /></div>
+                <div className="col-span-2"><Label className={LABEL_CLASS}>آدرس</Label><Input className="bg-secondary" name="address" value={form.address ?? ""} onChange={handleChange} /></div>
                 <div><Label className={LABEL_CLASS}>جنسیت</Label>
                   <Select value={form.sex ?? ""} onValueChange={v => handleSelect("sex", v)}>
-                    <SelectTrigger><SelectValue placeholder="انتخاب کنید" /></SelectTrigger>
+                    <SelectTrigger className={LABEL_CLASS}><SelectValue placeholder="انتخاب کنید" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="male">مرد</SelectItem>
                       <SelectItem value="female">زن</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                <div><Calendar22 title="تاریخ تولد" date={birthDate} setDate={d => { setBirthDate(d); setForm(f => ({ ...f, birthDay: d ? d.toISOString().split("T")[0] : undefined })); }} /></div>
+                <div><Label className={LABEL_CLASS}>تاریخ تولد</Label>
+                  <Calendar22 date={birthDate} setDate={d => { setBirthDate(d); setForm(f => ({ ...f, birthDay: d ? d.toISOString().split("T")[0] : undefined })); }} /></div>
                 <div><Label className={LABEL_CLASS}>درصد ایثارگری</Label>
-                  <Input name="isargaryPercent" value={form.isargaryPercent ?? ""} onChange={handleChange} type="number" min="0" />
+                  <Input className="bg-secondary" name="isargaryPercent" value={form.isargaryPercent ?? ""} onChange={handleChange} type="number" min="0" />
                 </div>
                 <div><Label className={LABEL_CLASS}>ماه های اسارت</Label>
-                  <Input name="azadeEsaratMonths" value={form.azadeEsaratMonths ?? ""} onChange={handleNumberChange} type="number" min="0" />
+                  <Input className="bg-secondary" name="azadeEsaratMonths" value={form.azadeEsaratMonths ?? ""} onChange={handleNumberChange} type="number" min="0" />
                 </div>
                 <div><Label className={LABEL_CLASS}>ماه های آزادگی</Label>
-                  <Input name="azadeMonths" value={form.azadeMonths ?? ""} onChange={handleNumberChange} type="number" min="0" />
+                  <Input className="bg-secondary" name="azadeMonths" value={form.azadeMonths ?? ""} onChange={handleNumberChange} type="number" min="0" />
                 </div>
                 <div><Label className={LABEL_CLASS}>تعداد اعضای خانواده شاهد</Label>
-                  <Input name="shahedFamilyNumber" value={form.shahedFamilyNumber ?? ""} onChange={handleNumberChange} type="number" min="0" />
+                  <Input className="bg-secondary" name="shahedFamilyNumber" value={form.shahedFamilyNumber ?? ""} onChange={handleNumberChange} type="number" min="0" />
                 </div>
                 <div><Label className={LABEL_CLASS}>ارتباط با ایثارگر</Label>
                   <Select value={form.shahedRelation ?? ""} onValueChange={v => handleSelect("shahedRelation", v)}>
-                    <SelectTrigger><SelectValue placeholder="انتخاب کنید" /></SelectTrigger>
+                    <SelectTrigger className={LABEL_CLASS}><SelectValue placeholder="انتخاب کنید" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="azade_wife">همسر آزاده</SelectItem>
                       <SelectItem value="azade_child">فرزند آزاده</SelectItem>
@@ -204,7 +246,7 @@ export default function ProfilePage() {
                 </div>
                 {viewer?.type === 'system' && (
                   <FInput<User>
-                    className="w-full"
+                    className={cn("w-full", LABEL_CLASS)}
                     values={form}
                     item={{
                       title: 'نوع عضویت',
@@ -241,6 +283,72 @@ export default function ProfilePage() {
                   />
                 )}
               </div>
+              
+              {/* Password Change Section for System Users or Self */}
+              {(viewer?.type === 'system' || !userId) && (
+                <div className="mt-6 p-4 border rounded-lg bg-gray-50">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold text-gray-800">تغییر رمز عبور</h3>
+                    <Button 
+                      type="button" 
+                      variant="default" 
+                      size="sm"
+                      onClick={() => setShowPasswordChange(!showPasswordChange)}
+                    >
+                      {showPasswordChange ? 'بستن' : 'تغییر رمز عبور'}
+                    </Button>
+                  </div>
+                  
+                  {showPasswordChange && (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 gap-4">
+                        <div>
+                          <Label className={LABEL_CLASS}>رمز عبور جدید</Label>
+                          <Input 
+                            name="newPassword" 
+                            type="password" 
+                            value={passwordForm.newPassword} 
+                            onChange={handlePasswordChange}
+                            minLength={6}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label className={LABEL_CLASS}>تأیید رمز عبور جدید</Label>
+                          <Input 
+                            name="confirmPassword" 
+                            type="password" 
+                            value={passwordForm.confirmPassword} 
+                            onChange={handlePasswordChange}
+                            minLength={6}
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button type="button" onClick={handlePasswordSubmit} className="w-1/2" disabled={isLoading}>
+                          {isLoading ? "در حال تغییر..." : "تغییر رمز عبور"}
+                        </Button>
+                        <Button 
+                          type="button" 
+                          variant="secondary" 
+                          className="w-1/2"
+                          onClick={() => {
+                            setPasswordForm({
+                              newPassword: '',
+                              confirmPassword: ''
+                            });
+                            setShowPasswordChange(false);
+                          }}
+                        >
+                          انصراف
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              
               <div className="flex gap-2 w-full">
                 <Button type="submit" className="w-3/4">ذخیره</Button>
                 <Button type="button" className="w-1/4" variant="secondary" onClick={() => { setEdit(false); setForm(user); setBirthDate(user.birthDay ? new Date(user.birthDay) : undefined); }}>انصراف</Button>
