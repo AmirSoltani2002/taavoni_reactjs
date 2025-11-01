@@ -6,20 +6,89 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Home, Plus, Trash, Square, Users, Star, Navigation } from "lucide-react";
 import type { Block, SubProject } from "../columns";
-import { useState } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 
 interface Step3UnitsProps {
   blocks: Block[];
   units: SubProject[];
   setUnits: (units: SubProject[]) => void;
+  onDuplicateChange?: (hasDuplicates: boolean) => void;
 }
 
 export const Step3Units: React.FC<Step3UnitsProps> = ({ 
   blocks, 
   units, 
-  setUnits 
+  setUnits,
+  onDuplicateChange
 }) => {
   const [nextId, setNextId] = useState(1);
+  const firstInvalidUnitRef = useRef<HTMLDivElement | null>(null);
+
+  // Find duplicate unitNumbers within the same blockId
+  const duplicateUnits = useMemo(() => {
+    const duplicates = new Set<number>(); // Set of unit IDs that have duplicates
+    
+    // Group units by blockId
+    const unitsByBlock = new Map<number, SubProject[]>();
+    units.forEach(unit => {
+      if (!unit.blockId || !unit.unitNumber) return;
+      if (!unitsByBlock.has(unit.blockId)) {
+        unitsByBlock.set(unit.blockId, []);
+      }
+      unitsByBlock.get(unit.blockId)!.push(unit);
+    });
+
+    // Check for duplicates within each block
+    unitsByBlock.forEach((blockUnits) => {
+      const unitNumberCounts = new Map<number, number[]>();
+      blockUnits.forEach(unit => {
+        const unitNumber = unit.unitNumber!;
+        if (!unitNumberCounts.has(unitNumber)) {
+          unitNumberCounts.set(unitNumber, []);
+        }
+        unitNumberCounts.get(unitNumber)!.push(unit.id!);
+      });
+
+      // Mark all units with duplicate unitNumbers
+      unitNumberCounts.forEach((unitIds) => {
+        if (unitIds.length > 1) {
+          unitIds.forEach(id => duplicates.add(id));
+        }
+      });
+    });
+
+    return duplicates;
+  }, [units]);
+
+  const hasDuplicates = duplicateUnits.size > 0;
+
+  // Notify parent about duplicate status changes
+  useEffect(() => {
+    onDuplicateChange?.(hasDuplicates);
+  }, [hasDuplicates, onDuplicateChange]);
+
+  // Find the first invalid unit ID for scrolling
+  const firstInvalidUnitId = useMemo(() => {
+    if (!hasDuplicates) return null;
+    // Find the first unit (by order in units array) that has a duplicate
+    for (const unit of units) {
+      if (unit.id && duplicateUnits.has(unit.id)) {
+        return unit.id;
+      }
+    }
+    return null;
+  }, [units, duplicateUnits, hasDuplicates]);
+
+  const scrollToFirstInvalidUnit = () => {
+    if (firstInvalidUnitRef.current) {
+      firstInvalidUnitRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Highlight briefly
+      firstInvalidUnitRef.current.classList.add('animate-pulse');
+      setTimeout(() => {
+        firstInvalidUnitRef.current?.classList.remove('animate-pulse');
+      }, 2000);
+    }
+  };
 
   const addUnit = (blockId: number, floor: number) => {
     const newUnit: SubProject = {
@@ -80,6 +149,20 @@ export const Step3Units: React.FC<Step3UnitsProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6">
+        {hasDuplicates && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-600 font-medium mb-2">
+              *حداقل ۲ واحد مسکونی در یک بلوک دارای شماره واحدهای یکسان هستند. لطفا نسبت به اصلاح آنها اقدام فرمایید
+            </p>
+            <button
+              onClick={scrollToFirstInvalidUnit}
+              className="text-sm text-amber-700 hover:text-amber-800 italic cursor-pointer underline decoration-amber-600/50 hover:decoration-amber-700 transition-colors"
+              type="button"
+            >
+              برای شناسایی واحد مورد نظر اینجا کلیک کنید
+            </button>
+          </div>
+        )}
         <div className="space-y-8">
           {blocks.map((block, _blockIndex) => (
             <div key={block.id}>
@@ -106,8 +189,17 @@ export const Step3Units: React.FC<Step3UnitsProps> = ({
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      {floorUnits.map((unit, unitIndex) => (
-                        <Card key={unit.id} className="bg-gradient-to-br from-white/80 to-purple-50/30 border-0 ring-1 ring-purple-200/50">
+                      {floorUnits.map((unit, unitIndex) => {
+                        const isDuplicate = unit.id ? duplicateUnits.has(unit.id) : false;
+                        const isFirstInvalid = unit.id === firstInvalidUnitId;
+                        return (
+                        <div 
+                          key={unit.id}
+                          ref={isFirstInvalid ? (el) => { firstInvalidUnitRef.current = el; } : null}
+                        >
+                        <Card 
+                          className="bg-gradient-to-br from-white/80 to-purple-50/30 border-0 ring-1 ring-purple-200/50"
+                        >
                           <CardContent className="p-4">
                             <div className="flex items-center justify-between mb-4">
                               <h4 className="font-bold text-slate-900 flex items-center gap-3 text-base">
@@ -206,7 +298,7 @@ export const Step3Units: React.FC<Step3UnitsProps> = ({
                                    type='number' 
                                    value={unit.unitNumber || ""} 
                                    onChange={(e) => updateUnit(unit.id!, 'unitNumber', e.target.value ? Number(e.target.value) : "")}
-                                   className="h-9"
+                                   className={`h-9 ${isDuplicate ? 'border-red-500 bg-red-50 focus-visible:ring-red-500' : ''}`}
                                    min="1"
                                  />
                               </div>
@@ -226,7 +318,9 @@ export const Step3Units: React.FC<Step3UnitsProps> = ({
                             </div>
                           </CardContent>
                         </Card>
-                      ))}
+                        </div>
+                        );
+                      })}
 
                       <Button 
                         type="button" 

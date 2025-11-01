@@ -57,6 +57,7 @@ export default function ProjectCreate({
   // Blocks and units state
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [units, setUnits] = useState<SubProject[]>([]);
+  const [hasDuplicateUnits, setHasDuplicateUnits] = useState(false);
 
   useEffect(() => {
     getTable('users/profile', setUser);
@@ -121,6 +122,12 @@ export default function ProjectCreate({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent submission if there are duplicate units
+    if (hasDuplicateUnits) {
+      return;
+    }
+    
     setLoading(true);
     
     try {
@@ -232,9 +239,9 @@ export default function ProjectCreate({
       case 2:
         return units.length > 0 && units.every(unit => 
           unit.area > 0 && unit.roomCount > 0 && unit.direction
-        );
+        ) && !hasDuplicateUnits;
       case 3:
-        return true; // Review step is always valid
+        return !hasDuplicateUnits; // Review step requires no duplicates
       default:
         return false;
     }
@@ -261,7 +268,8 @@ export default function ProjectCreate({
           <Step3Units 
             blocks={blocks} 
             units={units} 
-            setUnits={setUnits} 
+            setUnits={setUnits}
+            onDuplicateChange={setHasDuplicateUnits}
           />
         );
       case 3:
@@ -295,8 +303,8 @@ export default function ProjectCreate({
                 }
               }}
             >
-              <ArrowLeft className="w-4 h-4" />
-              بازگشت
+              <ArrowRight className="w-4 h-4" />
+              بازگشت به لیست پروژه ها
             </Button>
             <div className="h-6 w-px bg-gradient-to-b from-blue-300 to-purple-300"></div>
             <div className="flex-1">
@@ -327,14 +335,30 @@ export default function ProjectCreate({
           <div className="flex flex-col sm:flex-row gap-4 pt-6">
             {step === 3 ? (
               <Button 
-                type="submit" 
-                className="flex-1 h-14 text-lg gap-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg"
+                type={hasDuplicateUnits ? "button" : "submit"}
+                onClick={hasDuplicateUnits ? (e) => {
+                  e.preventDefault();
+                  setStep(2);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                } : undefined}
+                className={`flex-1 h-14 text-lg gap-2 shadow-lg ${
+                  hasDuplicateUnits 
+                    ? 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 cursor-pointer' 
+                    : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'
+                }`}
                 disabled={loading}
               >
                 {loading ? (
                   <>
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                     در حال ذخیره...
+                  </>
+                ) : hasDuplicateUnits ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white rounded-full"></div>
+                    <span className="hover:underline">
+                      لطفاً شماره واحدهای تکراری را اصلاح کنید
+                    </span>
                   </>
                 ) : (
                   <>
