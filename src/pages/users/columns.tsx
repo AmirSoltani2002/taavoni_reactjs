@@ -1,6 +1,8 @@
-import { api_base_url } from "@/config";
 import { type ColumnDef } from "@tanstack/react-table"
-import { CircleCheckBig, Crown } from "lucide-react";
+import { CircleCheckBig, Crown, Download } from "lucide-react";
+import { getDocumentDownloadUrl, downloadDocument } from "@/general";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
  
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
@@ -178,12 +180,69 @@ export const docs_columns: ColumnDef<UserDoc>[] = [
         header: 'تصویر',
         accessorFn: row => row.document ?? row.document ?? '', // return string URL only
         // render JSX in `cell`
-        cell: ({cell}) => {
-            const src = cell.getValue() as string;
-            const parts = src?.split('-') ?? [];
-            const filename = parts.length ? parts[parts.length - 1] : 'img';
-            if (!src) return 'بدون تصویر';
-            return <img src={`${api_base_url.replace('/api', '')}${src}`} alt={filename} style={{ maxWidth: 120 }} />;
+        cell: ({row}) => {
+            const docId = row.original.id;
+            if (!docId) return 'بدون تصویر';
+            
+            // Component to handle async image loading
+            const ImageCell = () => {
+                const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
+                const [loading, setLoading] = useState(true);
+                
+                useEffect(() => {
+                    let isMounted = true;
+                    
+                    getDocumentDownloadUrl(docId, 'user-doc', false).then((url: string | undefined) => {
+                        if (isMounted) {
+                            setImageUrl(url);
+                            setLoading(false);
+                        }
+                    }).catch(() => {
+                        if (isMounted) {
+                            setLoading(false);
+                        }
+                    });
+                    
+                    return () => {
+                        isMounted = false;
+                    };
+                }, [docId]);
+                
+                if (loading) {
+                    return <div style={{ maxWidth: 120, height: 80, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>در حال بارگذاری...</div>;
+                }
+                
+                if (!imageUrl) {
+                    return 'بدون تصویر';
+                }
+                
+                const parts = imageUrl?.split('-') ?? [];
+                const filename = parts.length ? parts[parts.length - 1] : 'img';
+                return <img src={imageUrl} alt={filename} style={{ maxWidth: 120 }} />;
+            };
+            
+            return <ImageCell />;
+        }
+    },
+    {
+        header: 'دانلود',
+        accessorFn: row => row.id,
+        cell: ({row}) => {
+            const docId = row.original.id;
+            if (!docId) return null;
+            
+            return (
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => downloadDocument(docId, 'user-doc', row.original.detail || 'document', true)}
+                    className="h-8 w-8 p-0 text-blue-600 hover:bg-blue-50"
+                    title="دانلود فایل"
+                >
+                    <Download className="h-4 w-4" />
+                </Button>
+            );
         }
     }
 ]

@@ -60,7 +60,8 @@ export default function ProjectCreate({
   const [hasDuplicateUnits, setHasDuplicateUnits] = useState(false);
   
   // Project images and docs state
-  const [projectImages, setProjectImages] = useState<string[]>([]);
+  // Project images can be: string (base64 or old path) or {id: number, url?: string} (loaded from API)
+  const [projectImages, setProjectImages] = useState<Array<string | {id: number, url?: string}>>([]);
   const [projectDocs, setProjectDocs] = useState<Array<{ title: string; file: File | null; id?: number; uploaded?: boolean }>>([]);
 
   useEffect(() => {
@@ -99,20 +100,21 @@ export default function ProjectCreate({
         const projectDocsData = await getTable(`project-docs/project/${id}`);
         if (projectDocsData && Array.isArray(projectDocsData)) {
           // Separate images (detail starts with !!image) from regular docs
-          const images: string[] = [];
+          const images: Array<string | {id: number, url?: string}> = [];
           const docs: Array<{ title: string; file: File | null; id?: number; uploaded?: boolean }> = [];
           
           projectDocsData.forEach((doc: any) => {
             if (doc.detail && doc.detail.startsWith('!!image')) {
               // This is an image, extract index and add to images array
               const match = doc.detail.match(/!!image(\d+)/);
-              if (match && doc.document) {
+              if (match && doc.id) {
                 const imageIndex = parseInt(match[1]);
                 // Ensure array is large enough
                 while (images.length <= imageIndex) {
                   images.push('');
                 }
-                images[imageIndex] = doc.document;
+                // Store both id and url for using download endpoint
+                images[imageIndex] = { id: doc.id, url: doc.document };
               }
             } else {
               // This is a regular document
@@ -126,7 +128,7 @@ export default function ProjectCreate({
           });
           
           // Remove empty slots from images array (keep only actual images)
-          const filteredImages = images.filter(img => img);
+          const filteredImages = images.filter(img => img && (typeof img === 'string' || img.id));
           setProjectImages(filteredImages);
           setProjectDocs(docs);
         }
@@ -274,7 +276,11 @@ export default function ProjectCreate({
           // Only upload images that are base64 (not already uploaded URLs)
           for (let i = 0; i < projectImages.length; i++) {
             const imageData = projectImages[i];
-            if (imageData && !imageData.startsWith('http') && !imageData.startsWith('/uploads')) {
+            // Skip if it's an object (already uploaded) or if it's a URL
+            if (typeof imageData === 'object' || (typeof imageData === 'string' && (imageData.startsWith('http') || imageData.startsWith('/uploads')))) {
+              continue;
+            }
+            if (imageData && typeof imageData === 'string') {
               try {
                 // Convert base64 to File
                 const imageFile = base64ToFile(imageData, `project-image-${i + 1}.jpg`);

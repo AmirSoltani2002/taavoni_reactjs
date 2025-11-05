@@ -2,11 +2,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Building, MapPin, Calendar, Camera, Plus, Trash, FileText, CheckCircle } from "lucide-react";
+import { Building, MapPin, Calendar, Camera, Plus, Trash, FileText, CheckCircle, Download } from "lucide-react";
 import { Calendar22 } from "@/components/calendars/calendar";
 import { ImageUpload } from "@/components/ui/image-upload";
-import { useRef, useState } from "react";
-import { uploadProjectDoc } from "@/general";
+import { useRef, useState, useEffect } from "react";
+import { uploadProjectDoc, getDocumentDownloadUrl, downloadDocument } from "@/general";
 import { toast } from "sonner";
 import type { Project } from "../columns";
 
@@ -14,8 +14,8 @@ interface Step1BasicInfoProps {
   project: Project;
   handleProjectChange: (name: string, value: any) => void;
   projectId?: number | string; // For immediate upload in edit mode
-  projectImages?: string[];
-  setProjectImages?: (images: string[]) => void;
+  projectImages?: Array<string | {id: number, url?: string}>;
+  setProjectImages?: (images: Array<string | {id: number, url?: string}>) => void;
   projectDocs?: Array<{ title: string; file: File | null; id?: number; uploaded?: boolean }>;
   setProjectDocs?: (docs: Array<{ title: string; file: File | null; id?: number; uploaded?: boolean }>) => void;
 }
@@ -32,6 +32,7 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
   const docFileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
   const [uploadingImages, setUploadingImages] = useState<{ [key: number]: boolean }>({});
   const [uploadingDocs, setUploadingDocs] = useState<{ [key: number]: boolean }>({});
+  const [imageUrls, setImageUrls] = useState<{ [key: number]: string }>({});
 
   // Convert base64 string to File object
   const base64ToFile = (base64: string, filename: string): File => {
@@ -50,6 +51,8 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
     if (setProjectImages) {
       const imageIndex = projectImages.length;
       setProjectImages([...projectImages, imageData]);
+      // Set base64 image URL immediately for display
+      setImageUrls(prev => ({ ...prev, [imageIndex]: imageData }));
       
       // Upload immediately if projectId exists (edit mode)
       if (projectId) {
@@ -62,11 +65,20 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
             `!!image${imageIndex}`,
             true
           );
-          if (result && result.document && setProjectImages) {
-            // Update the image with the uploaded URL instead of base64
+          if (result && result.id && setProjectImages) {
+            // Update the image with the uploaded id and url instead of base64
             const updated = [...projectImages];
-            updated[imageIndex] = result.document;
+            updated[imageIndex] = { id: result.id, url: result.document };
             setProjectImages(updated);
+            // Fetch the download URL for the uploaded image
+            try {
+              const downloadUrl = await getDocumentDownloadUrl(result.id, 'project-docs', false);
+              if (downloadUrl) {
+                setImageUrls(prev => ({ ...prev, [imageIndex]: downloadUrl }));
+              }
+            } catch (error) {
+              console.error('Error fetching download URL:', error);
+            }
             toast.success(`تصویر ${imageIndex + 1} با موفقیت آپلود شد`);
           } else {
             // Upload failed, remove the image from state
@@ -95,7 +107,38 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
     if (setProjectImages) {
       setProjectImages(projectImages.filter((_, i) => i !== index));
     }
+    const newUrls = { ...imageUrls };
+    delete newUrls[index];
+    setImageUrls(newUrls);
   };
+
+  // Load image URLs for images with IDs
+  useEffect(() => {
+    const loadImageUrls = async () => {
+      const newUrls: { [key: number]: string } = {};
+      
+      for (let i = 0; i < projectImages.length; i++) {
+        const image = projectImages[i];
+        if (typeof image === 'object' && image.id) {
+          try {
+            const url = await getDocumentDownloadUrl(image.id, 'project-docs', false);
+            if (url) {
+              newUrls[i] = url;
+            }
+          } catch (error) {
+            console.error(`Error loading image ${i}:`, error);
+          }
+        } else if (typeof image === 'string') {
+          // For base64 strings or old paths, use them directly
+          newUrls[i] = image;
+        }
+      }
+      
+      setImageUrls(newUrls);
+    };
+    
+    loadImageUrls();
+  }, [projectImages]);
 
   const handleDocAdd = () => {
     if (setProjectDocs) {
@@ -313,7 +356,9 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
               تصاویر پروژه
             </Label>
             <div className="space-y-3">
-              {projectImages.map((image, index) => (
+              {projectImages.map((image, index) => {
+                const imageId = typeof image === 'object' && image.id ? image.id : null;
+                return (
                 <div key={index} className="bg-purple-50 rounded-xl p-3 border-2 border-purple-200 relative">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm text-slate-600 flex items-center gap-2">
@@ -325,20 +370,36 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                         </span>
                       )}
                     </span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleImageRemove(index)}
-                      className="h-8 w-8 p-0 text-red-600 hover:bg-red-50"
-                      disabled={uploadingImages[index]}
-                    >
-                      <Trash className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      {imageId && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => downloadDocument(imageId, 'project-docs', `project-image-${index + 1}`, true)}
+                          className="h-8 w-8 p-0 text-blue-600 hover:bg-blue-50"
+                          title="دانلود تصویر"
+                          disabled={uploadingImages[index]}
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleImageRemove(index)}
+                        className="h-8 w-8 p-0 text-red-600 hover:bg-red-50"
+                        disabled={uploadingImages[index]}
+                        title="حذف تصویر"
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   <div className="relative">
                     <img
-                      src={image}
+                      src={imageUrls[index] || ''}
                       alt={`تصویر ${index + 1} پروژه`}
                       className="w-full h-32 object-cover rounded-lg"
                     />
@@ -349,7 +410,8 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                     )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
               <div className="bg-purple-50 rounded-xl p-4 border-2 border-dashed border-pink-200 hover:border-pink-300 transition-colors">
                 <ImageUpload 
                   value=""
@@ -389,8 +451,8 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
               <Card key={index} className="bg-slate-50 border-2 border-slate-200">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-4">
-                    <div className="flex-1 space-y-3">
-                      <div>
+                    <div className="flex-1 space-y-3 grid grid-cols-4 gap-4">
+                      <div className="col-span-2">
                         <Label className="text-sm text-slate-700 font-medium mb-1 block">
                           عنوان سند
                         </Label>
@@ -408,11 +470,6 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
                             </div>
                           )}
-                          {doc.uploaded && !uploadingDocs[index] && (
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600">
-                              <CheckCircle className="w-4 h-4" />
-                            </div>
-                          )}
                         </div>
                         {doc.title.startsWith('!') && (
                           <p className="text-xs text-red-600 mt-1">
@@ -420,7 +477,7 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                           </p>
                         )}
                       </div>
-                      <div>
+                      <div className="col-span-2">
                         <Label className="text-sm text-slate-700 font-medium mb-1 block">
                           فایل سند
                         </Label>
@@ -458,15 +515,30 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                         </div>
                       </div>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDocRemove(index)}
-                      className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 mt-6"
-                    >
-                      <Trash className="h-4 w-4" />
-                    </Button>
+                    <div className="flex flex-col gap-2 mt-6">
+                      {doc.uploaded && doc.id && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => downloadDocument(doc.id!, 'project-docs', doc.title || 'document', true)}
+                          className="h-8 w-8 p-0 text-blue-600 hover:bg-blue-50"
+                          title="دانلود سند"
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDocRemove(index)}
+                        className="h-8 w-8 p-0 text-red-600 hover:bg-red-50"
+                        title="حذف سند"
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

@@ -353,6 +353,119 @@ export const deleteTableRow = async(tableName: string, id: number, onDeleted?: (
     return null
   }
 }
+// Get download URL for document (for displaying images)
+export const getDocumentDownloadUrl = async (fileId: number, type: 'user-doc' | 'project-docs', verbose: boolean = true): Promise<string | undefined> => {
+  const token = getToken();
+  try {
+    const resp = await fetch(`${api_base_url}/${type}/download/${fileId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : ''
+      }
+    });
+    if (resp.ok) {
+      const data = await resp.text();
+      return data;
+    } else if (resp.status === 401) {
+      if (verbose) {
+        toast.error(getFarsiError('401'));
+        await sleep(3000);
+        window.location.href = '/';
+      }
+      return undefined;
+    } else {
+      if (verbose) {
+        const err = await resp.json();
+        if (err.message) {
+          const errors = typeof err.message === 'object' ? err.message : [err.message];
+          Object.values(errors).forEach((m: any) => {
+            const msg = getFarsiError(m);
+            if (msg) {
+              toast.error(getFarsiError(m));
+            }
+          });
+        } else {
+          toast.error('خطایی رخ داده است');
+        }
+      }
+      return undefined;
+    }
+  } catch (err: any) {
+    if (verbose) {
+      if (err.message) {
+        toast.error(err.message);
+      } else {
+        toast.error('خطایی رخ داده است');
+      }
+    }
+    return undefined;
+  }
+};
+
+// Download document file by fetching from the download endpoint
+export const downloadDocument = async (fileId: number, type: 'user-doc' | 'project-docs', filename?: string, verbose: boolean = true): Promise<void> => {
+  const token = getToken();
+  try {
+    const resp = await fetch(`${api_base_url}/${type}/download/${fileId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : ''
+      }
+    });
+    if (resp.ok) {
+      const blob = await resp.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      
+      // Get filename from Content-Disposition header or use provided filename
+      const contentDisposition = resp.headers.get('Content-Disposition');
+      let downloadFilename = filename || 'document';
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        if (filenameMatch && filenameMatch[1]) {
+          downloadFilename = filenameMatch[1].replace(/['"]/g, '');
+        }
+      }
+      
+      a.download = downloadFilename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } else if (resp.status === 401) {
+      if (verbose) {
+        toast.error(getFarsiError('401'));
+        await sleep(3000);
+        window.location.href = '/';
+      }
+    } else {
+      if (verbose) {
+        const err = await resp.json();
+        if (err.message) {
+          const errors = typeof err.message === 'object' ? err.message : [err.message];
+          Object.values(errors).forEach((m: any) => {
+            const msg = getFarsiError(m);
+            if (msg) {
+              toast.error(getFarsiError(m));
+            }
+          });
+        } else {
+          toast.error('خطایی رخ داده است');
+        }
+      }
+    }
+  } catch (err: any) {
+    if (verbose) {
+      if (err.message) {
+        toast.error(err.message);
+      } else {
+        toast.error('خطایی رخ داده است');
+      }
+    }
+  }
+};
+
 export const updateTableRow = async(tableName: string, id: number | string, row: any, onUpdated?: (data: any) => void, verbose: boolean=true) => {
   const token =  getToken()
   row = {
