@@ -142,6 +142,61 @@ export const uploadMultipleFiles = async (files: File[], endpoint: string = 'upl
     return [];
   }
 };
+
+// Upload project document to project-docs endpoint
+export const uploadProjectDoc = async (
+  file: File,
+  projectId: number,
+  detail?: string,
+  verbose: boolean = true
+): Promise<any> => {
+  const token = getToken();
+  console.log('uploadProjectDoc', {file, projectId, detail});
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('projectId', `${projectId}`);
+    if (detail) {
+      formData.append('detail', detail);
+    }
+    console.log('formData', formData);
+    const response = await fetch(`${api_base_url}/project-docs`, {
+      method: 'POST',
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : ''
+        // Note: Don't set Content-Type header for FormData, browser will set it automatically with boundary
+      },
+      body: formData
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      return data;
+    } else {
+      if (verbose) {
+        const err = await response.json();
+        if (err.message) {
+          const errors = typeof err.message === 'object' ? err.message : [err.message];
+          Object.values(errors).forEach((m: any) => {
+            const msg = getFarsiError(m);
+            if (msg) {
+              toast.error(getFarsiError(m));
+            }
+          });
+        } else {
+          toast.error('خطا در آپلود سند پروژه');
+        }
+      }
+      return null;
+    }
+  } catch (error: any) {
+    console.error('Upload error:', error);
+    if (verbose) {
+      toast.error('خطا در آپلود سند پروژه');
+    }
+    return null;
+  }
+};
 export const getTable = async(tableName: string, onGot?: (data: any) => void, verbose: boolean=true) => {
   const token =  getToken()
   try{

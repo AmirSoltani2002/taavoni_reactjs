@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, CheckCircle } from "lucide-react";
-import { getTable, postTable, updateTableRow } from "@/general";
+import { getTable, postTable, updateTableRow, uploadProjectDoc } from "@/general";
 import { PageLoader } from "@/components/ui/loader";
 import type { Project, Block, SubProject } from "./columns";
 import type { User } from "../users/columns";
@@ -58,6 +58,10 @@ export default function ProjectCreate({
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [units, setUnits] = useState<SubProject[]>([]);
   const [hasDuplicateUnits, setHasDuplicateUnits] = useState(false);
+  
+  // Project images and docs state
+  const [projectImages, setProjectImages] = useState<string[]>([]);
+  const [projectDocs, setProjectDocs] = useState<Array<{ title: string; file: File | null; id?: number; uploaded?: boolean }>>([]);
 
   useEffect(() => {
     getTable('users/profile', setUser);
@@ -90,6 +94,42 @@ export default function ProjectCreate({
           });
           setUnits(allUnits);
         }
+        
+        // Load project docs
+        const projectDocsData = await getTable(`project-docs/project/${id}`);
+        if (projectDocsData && Array.isArray(projectDocsData)) {
+          // Separate images (detail starts with !!image) from regular docs
+          const images: string[] = [];
+          const docs: Array<{ title: string; file: File | null; id?: number; uploaded?: boolean }> = [];
+          
+          projectDocsData.forEach((doc: any) => {
+            if (doc.detail && doc.detail.startsWith('!!image')) {
+              // This is an image, extract index and add to images array
+              const match = doc.detail.match(/!!image(\d+)/);
+              if (match && doc.document) {
+                const imageIndex = parseInt(match[1]);
+                // Ensure array is large enough
+                while (images.length <= imageIndex) {
+                  images.push('');
+                }
+                images[imageIndex] = doc.document;
+              }
+            } else {
+              // This is a regular document
+              docs.push({
+                title: doc.detail || '',
+                file: null, // We can't convert URL back to File, but mark as uploaded
+                id: doc.id,
+                uploaded: true
+              });
+            }
+          });
+          
+          // Remove empty slots from images array (keep only actual images)
+          const filteredImages = images.filter(img => img);
+          setProjectImages(filteredImages);
+          setProjectDocs(docs);
+        }
       }
     } catch (error) {
       console.error('Error loading project data:', error);
@@ -118,6 +158,19 @@ export default function ProjectCreate({
 
   const handleProjectChange = (name: string, value: any) => {
     setProject({ ...project, [name]: value });
+  };
+
+  // Convert base64 string to File object
+  const base64ToFile = (base64: string, filename: string): File => {
+    const arr = base64.split(',');
+    const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, { type: mime });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -169,6 +222,9 @@ export default function ProjectCreate({
           }
         }
         
+        // Note: In edit mode, images and docs are uploaded immediately in Step1BasicInfo
+        // when selected, so no need to upload here
+        
         // Navigate back to projects list
         navigate('/projects/list');
       } else if (isEdit && onSubmit) {
@@ -214,6 +270,42 @@ export default function ProjectCreate({
             await postTable('subprojects/multiple', unitsWithBlockIds);
           }
           
+          // Upload project images with detail format !!image{index}
+          // Only upload images that are base64 (not already uploaded URLs)
+          for (let i = 0; i < projectImages.length; i++) {
+            const imageData = projectImages[i];
+            if (imageData && !imageData.startsWith('http') && !imageData.startsWith('/uploads')) {
+              try {
+                // Convert base64 to File
+                const imageFile = base64ToFile(imageData, `project-image-${i + 1}.jpg`);
+                await uploadProjectDoc(
+                  imageFile,
+                  projectResult.id,
+                  `!!image${i}`, // Detail format: !!image{index}
+                  true
+                );
+              } catch (error) {
+                console.error(`Error uploading image ${i + 1}:`, error);
+              }
+            }
+          }
+          
+          // Upload project documents (only those not already uploaded)
+          for (const doc of projectDocs) {
+            if (doc.file && doc.title && !doc.uploaded) {
+              try {
+                await uploadProjectDoc(
+                  doc.file,
+                  projectResult.id,
+                  doc.title, // Detail is the title for docs
+                  true
+                );
+              } catch (error) {
+                console.error('Error uploading document:', error);
+              }
+            }
+          }
+          
           navigate('/projects/list');
           // Call onSubmit callback for new projects too
           if (onSubmit) {
@@ -253,7 +345,12 @@ export default function ProjectCreate({
         return (
           <Step1BasicInfo 
             project={project} 
-            handleProjectChange={handleProjectChange} 
+            handleProjectChange={handleProjectChange}
+            projectId={isEditMode ? projectId : project.id}
+            projectImages={projectImages}
+            setProjectImages={setProjectImages}
+            projectDocs={projectDocs}
+            setProjectDocs={setProjectDocs}
           />
         );
       case 1:
