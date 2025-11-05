@@ -402,6 +402,55 @@ export const getDocumentDownloadUrl = async (fileId: number, type: 'user-doc' | 
   }
 };
 
+// Get image blob URL for displaying images (returns blob URL that can be used as img src)
+export const getImageBlobUrl = async (fileId: number, type: 'user-doc' | 'project-docs', verbose: boolean = false): Promise<string | undefined> => {
+  const token = getToken();
+  try {
+    const resp = await fetch(`${api_base_url}/${type}/download/${fileId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : ''
+      }
+    });
+    if (resp.ok) {
+      const blob = await resp.blob();
+      return URL.createObjectURL(blob);
+    } else if (resp.status === 401) {
+      if (verbose) {
+        toast.error(getFarsiError('401'));
+        await sleep(3000);
+        window.location.href = '/';
+      }
+      return undefined;
+    } else {
+      if (verbose) {
+        const err = await resp.json();
+        if (err.message) {
+          const errors = typeof err.message === 'object' ? err.message : [err.message];
+          Object.values(errors).forEach((m: any) => {
+            const msg = getFarsiError(m);
+            if (msg) {
+              toast.error(getFarsiError(m));
+            }
+          });
+        } else {
+          toast.error('خطایی رخ داده است');
+        }
+      }
+      return undefined;
+    }
+  } catch (err: any) {
+    if (verbose) {
+      if (err.message) {
+        toast.error(err.message);
+      } else {
+        toast.error('خطایی رخ داده است');
+      }
+    }
+    return undefined;
+  }
+};
+
 // Download document file by fetching from the download endpoint
 export const downloadDocument = async (fileId: number, type: 'user-doc' | 'project-docs', filename?: string, verbose: boolean = true): Promise<void> => {
   const token = getToken();

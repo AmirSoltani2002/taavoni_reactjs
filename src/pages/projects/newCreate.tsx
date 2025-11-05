@@ -62,7 +62,7 @@ export default function ProjectCreate({
   // Project images and docs state
   // Project images can be: string (base64 or old path) or {id: number, url?: string} (loaded from API)
   const [projectImages, setProjectImages] = useState<Array<string | {id: number, url?: string}>>([]);
-  const [projectDocs, setProjectDocs] = useState<Array<{ title: string; file: File | null; id?: number; uploaded?: boolean }>>([]);
+  const [projectDocs, setProjectDocs] = useState<Array<{ title: string; file: File | null; id?: number; uploaded?: boolean; filename?: string }>>([]);
 
   useEffect(() => {
     getTable('users/profile', setUser);
@@ -101,7 +101,7 @@ export default function ProjectCreate({
         if (projectDocsData && Array.isArray(projectDocsData)) {
           // Separate images (detail starts with !!image) from regular docs
           const images: Array<string | {id: number, url?: string}> = [];
-          const docs: Array<{ title: string; file: File | null; id?: number; uploaded?: boolean }> = [];
+          const docs: Array<{ title: string; file: File | null; id?: number; uploaded?: boolean; filename?: string }> = [];
           
           projectDocsData.forEach((doc: any) => {
             if (doc.detail && doc.detail.startsWith('!!image')) {
@@ -118,11 +118,14 @@ export default function ProjectCreate({
               }
             } else {
               // This is a regular document
+              // Extract filename from document path if available
+              const filename = doc.document ? doc.document.split('/').pop() || doc.document.split('\\').pop() : undefined;
               docs.push({
                 title: doc.detail || '',
                 file: null, // We can't convert URL back to File, but mark as uploaded
                 id: doc.id,
-                uploaded: true
+                uploaded: true,
+                filename: filename
               });
             }
           });
