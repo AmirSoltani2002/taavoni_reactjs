@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { docs_columns, type User, type UserDoc } from "./columns";
 import { getTable, updateTableRow, uploadFile } from "@/general";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,9 +14,15 @@ import { PageLoader } from "@/components/ui/loader";
 import FInput from "@/components/ui/functional-input";
 import { cn } from "@/lib/utils";
 import UserProjects from "./userProjects";
+import { 
+  User as UserIcon, Mail, Phone, MapPin, Calendar, FileText, 
+  Edit2, Save, X, ArrowRight, CheckCircle2, Upload, Lock, 
+  Award, Users, Home, Briefcase, Hash
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 // Document type for user-doc/profile
-const LABEL_CLASS = "font-bold text-blue-900"
+const LABEL_CLASS = "font-semibold text-gray-700 mb-1.5 block"
 
 export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -139,32 +145,45 @@ export default function ProfilePage() {
     }
   };
 
-  if (loading) return <div>در حال بارگذاری...</div>;
-  if (!user) return <div>کاربر یافت نشد</div>;
+  if (loading) return <PageLoader />;
+  if (!user) return (
+    <div className="container mx-auto py-10">
+      <Card className="p-8 text-center">
+        <p className="text-gray-500">کاربر یافت نشد</p>
+      </Card>
+    </div>
+  );
 
   return (
-    <div className="container mx-auto max-w-2xl py-10">
-      <Card className="bg-cyan-50">
-        <CardHeader className="flex flex-row justify-between">
-          <div className={cn("flex flex-col gap-4", LABEL_CLASS)}>
-            <CardTitle>پروفایل کاربری</CardTitle>
-            <CardDescription className={LABEL_CLASS}>
-              {`اطلاعات و مدارک ${fullName}`}
-            </CardDescription>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-purple-50 py-10">
+      <div className="container mx-auto max-w-5xl px-4">
+        {/* Header Section */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">پروفایل کاربری</h1>
+              <p className="text-gray-600 text-lg">{`اطلاعات و مدارک ${fullName}`}</p>
+            </div>
+            {userId && (
+              <Button variant="outline" onClick={() => navigate('/users/list')} className="gap-2">
+                <ArrowRight className="h-4 w-4" />
+                بازگشت
+              </Button>
+            )}
           </div>
           
-          {userId && <Button variant={'outline'} onClick={() => navigate('/users/list')}>بازگشت</Button>}
-        </CardHeader>
-        <CardContent>
-          {!edit ? (
-            <div className="space-y-4">
-              {(userId && user) && (
-                user.accepted ? (
-                  <Button variant="secondary" className="bg-green-300">
-                    کاربر تایید شده
-                  </Button>
-                ) : (
-                  <Button variant="default" onClick={async() => {
+          {/* Status Badge */}
+          {(userId && user) && (
+            <div className="mb-6">
+              {user.accepted ? (
+                <Badge className="bg-green-500 text-white px-4 py-2 text-sm gap-2">
+                  <CheckCircle2 className="h-4 w-4" />
+                  کاربر تایید شده
+                </Badge>
+              ) : (
+                <Button 
+                  variant="default" 
+                  onClick={async() => {
                     setIsLoading(true);
                     await updateTableRow(`users`, userId, {accepted: true}, () => {
                         getTable(`users/${userId}`, (data: User) => {
@@ -174,77 +193,209 @@ export default function ProfilePage() {
                         });
                     })
                     setIsLoading(false)
-                  }}>
-                    تایید کاربر
-                  </Button>
-                )
+                  }}
+                  className="gap-2"
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  تایید کاربر
+                </Button>
               )}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-row gap-2 items-center"><Label className={LABEL_CLASS}>نام:</Label><div>{user.name}</div></div>
-                <div className="flex flex-row gap-2 items-center"><Label className={LABEL_CLASS}>نام خانوادگی:</Label><div>{user.lastName}</div></div>
-                <div className="flex flex-row gap-2 items-center"><Label className={LABEL_CLASS}>ایمیل:</Label><div>{user.email}</div></div>
-                <div className="flex flex-row gap-2 items-center"><Label className={LABEL_CLASS}>موبایل:</Label><div>{user.mobile}</div></div>
-                <div className="flex flex-row gap-2 items-center"><Label className={LABEL_CLASS}>تلفن منزل:</Label><div>{user.homePhone}</div></div>
-                <div className="flex flex-row gap-2 items-center"><Label className={LABEL_CLASS}>تلفن محل کار:</Label><div>{user.workPhone}</div></div>
-                <div className="flex flex-row gap-2 items-center"><Label className={LABEL_CLASS}>کد ملی:</Label><div>{user.nationalNumber}</div></div>
-                <div className="col-span-2"><Label className={LABEL_CLASS}>آدرس:</Label><div>{user.address}</div></div>
-                <div className="flex flex-row gap-2 items-center"><Label className={LABEL_CLASS}>جنسیت:</Label><div>{user.sex === "male" ? "مرد" : "زن"}</div></div>
-                <div className="flex flex-row gap-2 items-center"><Label className={LABEL_CLASS}>تاریخ تولد:</Label><div>{user.birthDay ? (new Date(user.birthDay || '')).toLocaleDateString('fa-IR') : 'تاریخ تولد ثبت نشده'}</div></div>
-                <div className="flex flex-row gap-2 items-center"><Label className={LABEL_CLASS}>درصد ایثارگری:</Label><div>{user.isargaryPercent ?? "-"}</div></div>
-                <div className="flex flex-row gap-2 items-center"><Label className={LABEL_CLASS}>ماه های اسارت:</Label><div>{user.azadeEsaratMonths ?? "-"}</div></div>
-                <div className="flex flex-row gap-2 items-center"><Label className={LABEL_CLASS}>ماه های آزادگی:</Label><div>{user.azadeMonths ?? "-"}</div></div>
-                <div className="flex flex-row gap-2 items-center"><Label className={LABEL_CLASS}>تعداد اعضای خانواده شاهد:</Label><div>{user.shahedFamilyNumber ?? "-"}</div></div>
-                <div className="flex flex-row gap-2 items-center"><Label className={LABEL_CLASS}>ارتباط با ایثارگر:</Label><div>{user.shahedRelation ?? "-"}</div></div>
-              </div>
-              {(!userId || viewer?.type === 'system') &&
-                <Button onClick={() => setEdit(true)} className="w-full mt-4">ویرایش اطلاعات</Button>
-              }
             </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div><Label className={LABEL_CLASS}>نام</Label><Input className="bg-secondary" name="name" value={form.name ?? ""} onChange={handleChange} /></div>
-                <div><Label className={LABEL_CLASS}>نام خانوادگی</Label><Input className="bg-secondary" name="lastName" value={form.lastName ?? ""} onChange={handleChange} /></div>
-                <div><Label className={LABEL_CLASS}>ایمیل</Label><Input className="bg-secondary" name="email" value={form.email ?? ""} onChange={handleChange} type="email" /></div>
-                <div><Label className={LABEL_CLASS}>موبایل</Label><Input className="bg-secondary" name="mobile" value={form.mobile ?? ""} onChange={handleChange} /></div>
-                <div><Label className={LABEL_CLASS}>تلفن منزل</Label><Input className="bg-secondary" name="homePhone" value={form.homePhone ?? ""} onChange={handleChange} /></div>
-                <div><Label className={LABEL_CLASS}>تلفن محل کار</Label><Input className="bg-secondary" name="workPhone" value={form.workPhone ?? ""} onChange={handleChange} /></div>
-                <div><Label className={LABEL_CLASS}>کد ملی</Label><Input className="bg-secondary" name="nationalNumber" value={form.nationalNumber ?? ""} onChange={handleChange} /></div>
-                <div className="col-span-2"><Label className={LABEL_CLASS}>آدرس</Label><Input className="bg-secondary" name="address" value={form.address ?? ""} onChange={handleChange} /></div>
-                <div><Label className={LABEL_CLASS}>جنسیت</Label>
-                  <Select value={form.sex ?? ""} onValueChange={v => handleSelect("sex", v)}>
-                    <SelectTrigger className={LABEL_CLASS}><SelectValue placeholder="انتخاب کنید" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="male">مرد</SelectItem>
-                      <SelectItem value="female">زن</SelectItem>
-                    </SelectContent>
-                  </Select>
+          )}
+        </div>
+        {/* Main Content */}
+        {!edit ? (
+          <div className="space-y-6">
+            {/* Personal Information Card */}
+            <Card className="shadow-lg border-0 bg-white">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <UserIcon className="h-5 w-5 text-blue-600" />
+                    اطلاعات شخصی
+                  </CardTitle>
+                  {(!userId || viewer?.type === 'system') && (
+                    <Button onClick={() => setEdit(true)} variant="outline" size="sm" className="gap-2">
+                      <Edit2 className="h-4 w-4" />
+                      ویرایش
+                    </Button>
+                  )}
                 </div>
-                <div><Label className={LABEL_CLASS}>تاریخ تولد</Label>
-                  <Calendar22 date={birthDate} setDate={d => { setBirthDate(d); setForm(f => ({ ...f, birthDay: d ? d.toISOString().split("T")[0] : undefined })); }} /></div>
-                <div><Label className={LABEL_CLASS}>درصد ایثارگری</Label>
-                  <Input className="bg-secondary" name="isargaryPercent" value={form.isargaryPercent ?? ""} onChange={handleChange} type="number" min="0" />
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-1">
+                    <Label className={LABEL_CLASS}><UserIcon className="h-4 w-4 inline ml-2" />نام</Label>
+                    <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.name || "-"}</div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className={LABEL_CLASS}><UserIcon className="h-4 w-4 inline ml-2" />نام خانوادگی</Label>
+                    <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.lastName || "-"}</div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className={LABEL_CLASS}><Mail className="h-4 w-4 inline ml-2" />ایمیل</Label>
+                    <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.email || "-"}</div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className={LABEL_CLASS}><Phone className="h-4 w-4 inline ml-2" />موبایل</Label>
+                    <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.mobile || "-"}</div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className={LABEL_CLASS}><Home className="h-4 w-4 inline ml-2" />تلفن منزل</Label>
+                    <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.homePhone || "-"}</div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className={LABEL_CLASS}><Briefcase className="h-4 w-4 inline ml-2" />تلفن محل کار</Label>
+                    <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.workPhone || "-"}</div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className={LABEL_CLASS}><Hash className="h-4 w-4 inline ml-2" />کد ملی</Label>
+                    <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.nationalNumber || "-"}</div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className={LABEL_CLASS}><UserIcon className="h-4 w-4 inline ml-2" />جنسیت</Label>
+                    <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.sex === "male" ? "مرد" : user.sex === "female" ? "زن" : "-"}</div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className={LABEL_CLASS}><Calendar className="h-4 w-4 inline ml-2" />تاریخ تولد</Label>
+                    <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">
+                      {user.birthDay ? (new Date(user.birthDay || '')).toLocaleDateString('fa-IR') : 'تاریخ تولد ثبت نشده'}
+                    </div>
+                  </div>
+                  <div className="col-span-1 md:col-span-2 space-y-1">
+                    <Label className={LABEL_CLASS}><MapPin className="h-4 w-4 inline ml-2" />آدرس</Label>
+                    <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg min-h-[60px]">{user.address || "-"}</div>
+                  </div>
                 </div>
-                <div><Label className={LABEL_CLASS}>ماه های اسارت</Label>
-                  <Input className="bg-secondary" name="azadeEsaratMonths" value={form.azadeEsaratMonths ?? ""} onChange={handleNumberChange} type="number" min="0" />
-                </div>
-                <div><Label className={LABEL_CLASS}>ماه های آزادگی</Label>
-                  <Input className="bg-secondary" name="azadeMonths" value={form.azadeMonths ?? ""} onChange={handleNumberChange} type="number" min="0" />
-                </div>
-                <div><Label className={LABEL_CLASS}>تعداد اعضای خانواده شاهد</Label>
-                  <Input className="bg-secondary" name="shahedFamilyNumber" value={form.shahedFamilyNumber ?? ""} onChange={handleNumberChange} type="number" min="0" />
-                </div>
-                <div><Label className={LABEL_CLASS}>ارتباط با ایثارگر</Label>
-                  <Select value={form.shahedRelation ?? ""} onValueChange={v => handleSelect("shahedRelation", v)}>
-                    <SelectTrigger className={LABEL_CLASS}><SelectValue placeholder="انتخاب کنید" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="azade_wife">همسر آزاده</SelectItem>
-                      <SelectItem value="azade_child">فرزند آزاده</SelectItem>
-                      <SelectItem value="jan_wife">همسر جانباز</SelectItem>
-                      <SelectItem value="jan_child">فرزند جانباز</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              </CardContent>
+            </Card>
+
+            {/* Martyrdom Information Card */}
+            {(user.isargaryPercent || user.azadeEsaratMonths || user.azadeMonths || user.shahedFamilyNumber || user.shahedRelation) && (
+              <Card className="shadow-lg border-0 bg-white">
+                <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b">
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <Award className="h-5 w-5 text-purple-600" />
+                    اطلاعات ایثارگری
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-1">
+                      <Label className={LABEL_CLASS}>درصد ایثارگری</Label>
+                      <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.isargaryPercent ?? "-"}</div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className={LABEL_CLASS}>ماه های اسارت</Label>
+                      <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.azadeEsaratMonths ?? "-"}</div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className={LABEL_CLASS}>ماه های آزادگی</Label>
+                      <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.azadeMonths ?? "-"}</div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className={LABEL_CLASS}><Users className="h-4 w-4 inline ml-2" />تعداد اعضای خانواده شاهد</Label>
+                      <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.shahedFamilyNumber ?? "-"}</div>
+                    </div>
+                    <div className="space-y-1 md:col-span-2">
+                      <Label className={LABEL_CLASS}>ارتباط با ایثارگر</Label>
+                      <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">
+                        {user.shahedRelation === 'azade_wife' ? 'همسر آزاده' :
+                         user.shahedRelation === 'azade_child' ? 'فرزند آزاده' :
+                         user.shahedRelation === 'jan_wife' ? 'همسر جانباز' :
+                         user.shahedRelation === 'jan_child' ? 'فرزند جانباز' : "-"}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        ) : (
+          <Card className="shadow-lg border-0 bg-white">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b">
+              <CardTitle className="text-xl flex items-center gap-2">
+                <Edit2 className="h-5 w-5 text-blue-600" />
+                ویرایش اطلاعات
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className={LABEL_CLASS}><UserIcon className="h-4 w-4 inline ml-2" />نام</Label>
+                    <Input name="name" value={form.name ?? ""} onChange={handleChange} className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className={LABEL_CLASS}><UserIcon className="h-4 w-4 inline ml-2" />نام خانوادگی</Label>
+                    <Input name="lastName" value={form.lastName ?? ""} onChange={handleChange} className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className={LABEL_CLASS}><Mail className="h-4 w-4 inline ml-2" />ایمیل</Label>
+                    <Input name="email" value={form.email ?? ""} onChange={handleChange} type="email" className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className={LABEL_CLASS}><Phone className="h-4 w-4 inline ml-2" />موبایل</Label>
+                    <Input name="mobile" value={form.mobile ?? ""} onChange={handleChange} className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className={LABEL_CLASS}><Home className="h-4 w-4 inline ml-2" />تلفن منزل</Label>
+                    <Input name="homePhone" value={form.homePhone ?? ""} onChange={handleChange} className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className={LABEL_CLASS}><Briefcase className="h-4 w-4 inline ml-2" />تلفن محل کار</Label>
+                    <Input name="workPhone" value={form.workPhone ?? ""} onChange={handleChange} className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className={LABEL_CLASS}><Hash className="h-4 w-4 inline ml-2" />کد ملی</Label>
+                    <Input name="nationalNumber" value={form.nationalNumber ?? ""} onChange={handleChange} className="h-11" />
+                  </div>
+                  <div className="col-span-1 md:col-span-2 space-y-2">
+                    <Label className={LABEL_CLASS}><MapPin className="h-4 w-4 inline ml-2" />آدرس</Label>
+                    <Input name="address" value={form.address ?? ""} onChange={handleChange} className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className={LABEL_CLASS}><UserIcon className="h-4 w-4 inline ml-2" />جنسیت</Label>
+                    <Select value={form.sex ?? ""} onValueChange={v => handleSelect("sex", v)}>
+                      <SelectTrigger className="h-11"><SelectValue placeholder="انتخاب کنید" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="male">مرد</SelectItem>
+                        <SelectItem value="female">زن</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className={LABEL_CLASS}><Calendar className="h-4 w-4 inline ml-2" />تاریخ تولد</Label>
+                    <Calendar22 date={birthDate} setDate={d => { setBirthDate(d); setForm(f => ({ ...f, birthDay: d ? d.toISOString().split("T")[0] : undefined })); }} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className={LABEL_CLASS}>درصد ایثارگری</Label>
+                    <Input name="isargaryPercent" value={form.isargaryPercent ?? ""} onChange={handleChange} type="number" min="0" className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className={LABEL_CLASS}>ماه های اسارت</Label>
+                    <Input name="azadeEsaratMonths" value={form.azadeEsaratMonths ?? ""} onChange={handleNumberChange} type="number" min="0" className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className={LABEL_CLASS}>ماه های آزادگی</Label>
+                    <Input name="azadeMonths" value={form.azadeMonths ?? ""} onChange={handleNumberChange} type="number" min="0" className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className={LABEL_CLASS}><Users className="h-4 w-4 inline ml-2" />تعداد اعضای خانواده شاهد</Label>
+                    <Input name="shahedFamilyNumber" value={form.shahedFamilyNumber ?? ""} onChange={handleNumberChange} type="number" min="0" className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className={LABEL_CLASS}>ارتباط با ایثارگر</Label>
+                    <Select value={form.shahedRelation ?? ""} onValueChange={v => handleSelect("shahedRelation", v)}>
+                      <SelectTrigger className="h-11"><SelectValue placeholder="انتخاب کنید" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="azade_wife">همسر آزاده</SelectItem>
+                        <SelectItem value="azade_child">فرزند آزاده</SelectItem>
+                        <SelectItem value="jan_wife">همسر جانباز</SelectItem>
+                        <SelectItem value="jan_child">فرزند جانباز</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 {viewer?.type === 'system' && (
                   <FInput<User>
                     className={cn("w-full", LABEL_CLASS)}
@@ -285,102 +436,173 @@ export default function ProfilePage() {
                 )}
               </div>
               
-              {/* Password Change Section for System Users or Self */}
-              {(viewer?.type === 'system' || !userId) && (
-                <div className="mt-6 p-4 border rounded-lg bg-gray-50">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold text-gray-800">تغییر رمز عبور</h3>
-                    <Button 
-                      type="button" 
-                      variant="default" 
-                      size="sm"
-                      onClick={() => setShowPasswordChange(!showPasswordChange)}
-                    >
-                      {showPasswordChange ? 'بستن' : 'تغییر رمز عبور'}
-                    </Button>
-                  </div>
-                  
-                  {showPasswordChange && (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 gap-4">
-                        <div>
-                          <Label className={LABEL_CLASS}>رمز عبور جدید</Label>
-                          <Input 
-                            name="newPassword" 
-                            type="password" 
-                            value={passwordForm.newPassword} 
-                            onChange={handlePasswordChange}
-                            minLength={6}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <Label className={LABEL_CLASS}>تأیید رمز عبور جدید</Label>
-                          <Input 
-                            name="confirmPassword" 
-                            type="password" 
-                            value={passwordForm.confirmPassword} 
-                            onChange={handlePasswordChange}
-                            minLength={6}
-                            required
-                          />
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button type="button" onClick={handlePasswordSubmit} className="w-1/2" disabled={isLoading}>
-                          {isLoading ? "در حال تغییر..." : "تغییر رمز عبور"}
-                        </Button>
+                {/* Password Change Section for System Users or Self */}
+                {(viewer?.type === 'system' || !userId) && (
+                  <Card className="bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200">
+                    <CardHeader>
+                      <div className="flex justify-between items-center">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Lock className="h-5 w-5 text-gray-600" />
+                          تغییر رمز عبور
+                        </CardTitle>
                         <Button 
                           type="button" 
-                          variant="secondary" 
-                          className="w-1/2"
-                          onClick={() => {
-                            setPasswordForm({
-                              newPassword: '',
-                              confirmPassword: ''
-                            });
-                            setShowPasswordChange(false);
-                          }}
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setShowPasswordChange(!showPasswordChange)}
+                          className="gap-2"
                         >
-                          انصراف
+                          {showPasswordChange ? (
+                            <>
+                              <X className="h-4 w-4" />
+                              بستن
+                            </>
+                          ) : (
+                            <>
+                              <Lock className="h-4 w-4" />
+                              تغییر رمز عبور
+                            </>
+                          )}
                         </Button>
                       </div>
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              <div className="flex gap-2 w-full">
-                <Button type="submit" className="w-3/4">ذخیره</Button>
-                <Button type="button" className="w-1/4" variant="secondary" onClick={() => { setEdit(false); setForm(user); setBirthDate(user.birthDay ? new Date(user.birthDay) : undefined); }}>انصراف</Button>
-              </div>
-            </form>
-          )}
-          <Card className="mt-8">
-            <CardContent>
-              <h2 className="font-bold mb-2">{`مدارک ${fullName}`}</h2>
-              {!userId && <div className="mt-4">
-                <h3 className="font-medium mb-2">افزودن مدرک</h3>
-                <div className="flex items-center gap-2">
-                  <Input type='text' value={fileInputTitle} placeholder="موضوع فایل" 
-                    onChange={(e) => setFileInputTitle(e.target.value)} 
-                  />
-                  <Input ref={fileInputRef} type="file" accept="image/*,application/pdf" />
-                  <Button onClick={handleAddDocument} disabled={uploading}>
-                    {uploading ? "در حال آپلود..." : "افزودن مدرک"}
+                    </CardHeader>
+                  
+                    {showPasswordChange && (
+                      <CardContent className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label className={LABEL_CLASS}>رمز عبور جدید</Label>
+                            <Input 
+                              name="newPassword" 
+                              type="password" 
+                              value={passwordForm.newPassword} 
+                              onChange={handlePasswordChange}
+                              minLength={6}
+                              required
+                              className="h-11"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className={LABEL_CLASS}>تأیید رمز عبور جدید</Label>
+                            <Input 
+                              name="confirmPassword" 
+                              type="password" 
+                              value={passwordForm.confirmPassword} 
+                              onChange={handlePasswordChange}
+                              minLength={6}
+                              required
+                              className="h-11"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button type="button" onClick={handlePasswordSubmit} className="flex-1 gap-2" disabled={isLoading}>
+                            <Lock className="h-4 w-4" />
+                            {isLoading ? "در حال تغییر..." : "تغییر رمز عبور"}
+                          </Button>
+                          <Button 
+                            type="button" 
+                            variant="secondary" 
+                            className="flex-1 gap-2"
+                            onClick={() => {
+                              setPasswordForm({
+                                newPassword: '',
+                                confirmPassword: ''
+                              });
+                              setShowPasswordChange(false);
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                            انصراف
+                          </Button>
+                        </div>
+                      </CardContent>
+                    )}
+                  </Card>
+                )}
+                
+                <div className="flex gap-3 pt-4 border-t">
+                  <Button type="submit" className="flex-1 gap-2 h-11">
+                    <Save className="h-4 w-4" />
+                    ذخیره تغییرات
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="secondary" 
+                    className="flex-1 gap-2 h-11"
+                    onClick={() => { 
+                      setEdit(false); 
+                      setForm(user); 
+                      setBirthDate(user.birthDay ? new Date(user.birthDay) : undefined); 
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                    انصراف
                   </Button>
                 </div>
-              </div>}
-              {docs.length === 0 ? (
-                <div>مدرکی ثبت نشده است.</div>
-              ) : (
-                <DataTable columns={docs_columns} data={docs} tableName="user-doc" />
-              )}
+              </form>
             </CardContent>
           </Card>
-          <UserProjects />
-        </CardContent>
-      </Card>
+        )}
+
+        {/* Documents Section */}
+        <Card className="mt-6 shadow-lg border-0 bg-white">
+          <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b">
+            <CardTitle className="text-xl flex items-center gap-2">
+              <FileText className="h-5 w-5 text-green-600" />
+              مدارک {fullName}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            {!userId && (
+              <Card className="mb-6 bg-blue-50 border-blue-200">
+                <CardContent className="pt-6">
+                  <h3 className="font-semibold mb-4 flex items-center gap-2">
+                    <Upload className="h-5 w-5 text-blue-600" />
+                    افزودن مدرک جدید
+                  </h3>
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <Input 
+                      type='text' 
+                      value={fileInputTitle} 
+                      placeholder="موضوع فایل (اختیاری)" 
+                      onChange={(e) => setFileInputTitle(e.target.value)}
+                      className="flex-1 h-11"
+                    />
+                    <Input 
+                      ref={fileInputRef} 
+                      type="file" 
+                      accept="image/*,application/pdf"
+                      className="flex-1 h-11"
+                    />
+                    <Button 
+                      onClick={handleAddDocument} 
+                      disabled={uploading}
+                      className="gap-2 h-11"
+                    >
+                      <Upload className="h-4 w-4" />
+                      {uploading ? "در حال آپلود..." : "افزودن مدرک"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            {docs.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <FileText className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                <p>مدرکی ثبت نشده است.</p>
+              </div>
+            ) : (
+              <DataTable columns={docs_columns} data={docs} tableName="user-doc" />
+            )}
+          </CardContent>
+        </Card>
+
+        {/* User Projects Section */}
+        <div className="mt-6">
+          <UserProjects user={user} isSelf={userId ? false : true} isAdmin={['system', 'admin'].includes(viewer?.type || '')} />
+        </div>
+      </div>
       {isLoading && <PageLoader />}
     </div>
   );

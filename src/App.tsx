@@ -13,7 +13,8 @@ import ChatPage from "./pages/tickets/chat";
 import TicketsList from "./pages/tickets/ticketList";
 import { Suspense } from "react";
 import { PageLoader } from "./components/ui/loader";
-import ProfilePage from "./pages/profile";
+import ProfilePage from "./pages/users/profile";
+import AssignProject from "./pages/users/assignProject";
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
                   <Route path="/users/list" element={<UsersList />} />
                   <Route path="/users/create" element={<UserCreate />} />
                   <Route path="/users/:userId" element={<ProfilePage />} />
+                  <Route path="/users/:userId/assign-project" element={<AssignProject />} />
                   <Route path="/*" element={<LockedPage />} />
                 </Routes>
               </Layout>

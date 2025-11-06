@@ -1,4 +1,5 @@
 import { type ColumnDef } from "@tanstack/react-table"
+import { getDirection } from "./general";
  
 // Updated types to match new schema
 export type Project = {
@@ -27,6 +28,7 @@ export type Block = {
     createdAt?: string;
     updatedAt?: string;
     subProjects?: SubProject[];
+    project?: Project;
 }
 
 export type SubProject = {
@@ -43,6 +45,7 @@ export type SubProject = {
     createdAt?: string;
     updatedAt?: string;
     subProjectDocs?: SubProjectDoc[];
+    block?: Block;
 }
 
 export type ProjectDoc = {
@@ -130,5 +133,44 @@ export const columns: ColumnDef<Project>[] = [
                 return value;
             }
         }
+    },
+]
+
+export const subProjectColumns: ColumnDef<SubProject>[] = [
+    {
+        header: "نام پروژه",
+        cell: ({ row }) => {
+            const project = row.original.block?.project;
+            return project ? project.name : "-";
+        }
+    },
+    {
+        header: "نام بلوک",
+        cell: ({ row }) => {
+            const block = row.original.block;
+            return block ? block.name : "-";
+        }
+    },
+    {
+        accessorKey: "unitNumber",
+        header: "شماره واحد",
+    },
+    {
+        accessorKey: "area",
+        header: "مساحت",
+    },
+    {
+        accessorFn: (row) => {
+            return getDirection(row.direction);
+        },
+        header: "جهت",
+    },
+    {
+        accessorKey: "floor",
+        header: "طبقه",
+    },
+    {
+        accessorKey: "roomCount",
+        header: "تعداد اتاق",
     },
 ]

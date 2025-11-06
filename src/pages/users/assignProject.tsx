@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import type { Project, Block, SubProject } from "../projects/columns";
-import { getTable } from "@/general";
+import type { User } from "./columns";
+import { getTable, updateTableRow } from "@/general";
 import { PageLoader } from "@/components/ui/loader";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -10,9 +11,11 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Building, Home, Layers, CheckCircle2, AlertCircle, ArrowRight } from "lucide-react";
 import { getDirection } from "../projects/general";
+import { toast } from "sonner";
 
 const AssignProject = () => {
     const { userId } = useParams();
+    const [user, setUser] = useState<User | null>(null);
     const [projects, setProjects] = useState<Project[]>([]);
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [selectedBlock, setSelectedBlock] = useState<Block | null>(null);
@@ -21,9 +24,22 @@ const AssignProject = () => {
     const [units, setUnits] = useState<SubProject[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
+    const navigate = useNavigate();
     useEffect(() => {
         setIsLoading(true);
+        
+        // Fetch user data
+        if (userId) {
+            getTable(`users/${userId}`, (data: User | {error: {error: string, status: number}}) => {
+                if('error' in data){
+                    console.error('Error loading user:', data.error);
+                } else {
+                    setUser(data as User);
+                }
+            }, false);
+        }
+        
+        // Fetch projects
         getTable(`projects/all`, (data: Project[] | {error: {error: string, status: number}}) => {
             if('error' in data){
                 setError(data.error.error);
@@ -33,7 +49,7 @@ const AssignProject = () => {
             }
             setIsLoading(false);
         }, false);
-    }, []);
+    }, [userId]);
 
     useEffect(() => {
         if(selectedProject){
@@ -52,9 +68,18 @@ const AssignProject = () => {
     }, [selectedBlock]);
 
     const handleAssignUnit = () => {
-        if(selectedUnit){
-            console.log({selectedUnit, userId});
+        if(!selectedUnit || !userId || !selectedUnit.id){
+            return;
         }
+        console.log({selectedUnit, userId});
+        updateTableRow(`subprojects`, selectedUnit.id, {userId: userId}, (data: SubProject) => {
+            if(data && data.id){
+                toast.success('واحد با موفقیت اعطا شد');
+                navigate(`/users/${userId}`);
+            } else {
+                toast.error('خطایی رخ داده است' + JSON.stringify(data));
+            }
+        });
     }
 
     const isFormComplete = selectedProject && selectedBlock && selectedUnit;
@@ -64,7 +89,9 @@ const AssignProject = () => {
             <div className="container mx-auto max-w-6xl px-4">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-2">اعطای واحد جدید به کاربر</h1>
+                    <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                        اعطای واحد جدید به {user?.name && user?.lastName ? `${user.name} ${user.lastName}` : user?.name || user?.lastName || 'کاربر'}
+                    </h1>
                     <p className="text-gray-600">لطفاً پروژه، بلاک و واحد مورد نظر را انتخاب کنید</p>
                 </div>
 
