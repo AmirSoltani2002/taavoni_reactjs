@@ -3,13 +3,24 @@ import { DataTable } from "@/components/ui/data-table"
 import { getTable } from "@/general"
 import { useEffect, useState } from "react"
 import type { User } from "../users/columns"
-import { CreditCard } from "lucide-react"
+import { CreditCard, Plus } from "lucide-react"
 import { PageLoader } from "@/components/ui/loader"
+import { Button } from "@/components/ui/button"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
+import TransactionCreate from "./create"
 
 export default function TransactionsList() {
     const [data, setData] = useState<Transaction[]>([])
     const [userInfo, setUserInfo] = useState<User>()
     const [isLoading, setIsLoading] = useState(true)
+    const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
 
     useEffect(() => {
         getTable('users/profile', (user) => {
@@ -64,6 +75,30 @@ export default function TransactionsList() {
                                     : 'رسیدهای پرداخت شما'}
                             </p>
                         </div>
+                        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button className="gap-2 shadow-md">
+                                    <Plus className="w-4 h-4" />
+                                    ثبت رسید پرداخت جدید
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                                <DialogHeader>
+                                    <DialogTitle>ثبت رسید پرداخت جدید</DialogTitle>
+                                    <DialogDescription>
+                                        اطلاعات رسید پرداخت خود را وارد کنید
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <TransactionCreate
+                                    onSubmit={() => {
+                                        setIsCreateDialogOpen(false);
+                                        refreshData();
+                                    }}
+                                    onCancel={() => setIsCreateDialogOpen(false)}
+                                    userInfo={userInfo}
+                                />
+                            </DialogContent>
+                        </Dialog>
                     </div>
                 </div>
 

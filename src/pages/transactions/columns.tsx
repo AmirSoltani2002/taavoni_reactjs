@@ -1,7 +1,9 @@
 import { type ColumnDef } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
 import { Download, Eye } from "lucide-react"
-import { getDocumentDownloadUrl, downloadDocument } from "@/general"
+import { getToken } from "@/general"
+import { api_base_url } from "@/config"
+import { toast } from "sonner"
 import type { User } from "../users/columns"
 import type { SubProject } from "../projects/columns"
 
@@ -70,59 +72,97 @@ export const columns: ColumnDef<Transaction>[] = [
         accessorKey: "document",
         header: "مستندات",
         cell: ({ row }) => {
-            const document = row.original.document;
-            if (!document) return "-";
+            const documentFilename = row.original.document;
+            const transactionId = row.original.id;
+            if (!documentFilename || !transactionId) return "-";
             
-            // Check if document is a numeric string (document ID) or a URL/path
-            const isNumeric = /^\d+$/.test(document);
-            
-            if (isNumeric) {
-                // Treat as document ID
-                return (
-                    <div className="flex gap-2">
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={async () => {
-                                const url = await getDocumentDownloadUrl(parseInt(document), 'user-doc', false);
-                                if (url) {
-                                    window.open(url, '_blank');
-                                }
-                            }}
-                        >
-                            <Eye className="w-4 h-4 ml-1" />
-                            مشاهده
-                        </Button>
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={async () => {
-                                await downloadDocument(parseInt(document), 'user-doc');
-                            }}
-                        >
-                            <Download className="w-4 h-4 ml-1" />
-                            دانلود
-                        </Button>
-                    </div>
-                );
-            } else {
-                // Treat as URL or file path
-                const isUrl = document.startsWith('http://') || document.startsWith('https://') || document.startsWith('/');
-                if (isUrl) {
-                    return (
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => window.open(document, '_blank')}
-                        >
-                            <Eye className="w-4 h-4 ml-1" />
-                            مشاهده
-                        </Button>
-                    );
-                } else {
-                    return <span className="text-sm text-gray-600">{document}</span>;
+            const handleDownload = async () => {
+                try {
+                    const token = getToken();
+                    const resp = await fetch(`${api_base_url}/transaction/download/${transactionId}`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': token ? `Bearer ${token}` : ''
+                        }
+                    });
+                    
+                    if (resp.ok) {
+                        const blob = await resp.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        
+                        // Get filename from Content-Disposition header or use document filename
+                        const contentDisposition = resp.headers.get('Content-Disposition');
+                        let downloadFilename = documentFilename;
+                        if (contentDisposition) {
+                            const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                            if (filenameMatch && filenameMatch[1]) {
+                                downloadFilename = filenameMatch[1].replace(/['"]/g, '');
+                            }
+                        }
+                        
+                        a.download = downloadFilename;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                    } else {
+                        const err = await resp.json();
+                        toast.error(err.message || 'خطا در دانلود فایل');
+                    }
+                } catch (error: any) {
+                    console.error('Download error:', error);
+                    toast.error('خطا در دانلود فایل');
                 }
-            }
+            };
+
+            const handleView = async () => {
+                try {
+                    const token = getToken();
+                    const resp = await fetch(`${api_base_url}/transaction/download/${transactionId}`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': token ? `Bearer ${token}` : ''
+                        }
+                    });
+                    
+                    if (resp.ok) {
+                        const blob = await resp.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        window.open(url, '_blank');
+                        // Clean up the URL after a delay
+                        setTimeout(() => window.URL.revokeObjectURL(url), 100);
+                    } else {
+                        const err = await resp.json();
+                        toast.error(err.message || 'خطا در مشاهده فایل');
+                    }
+                } catch (error: any) {
+                    console.error('View error:', error);
+                    toast.error('خطا در مشاهده فایل');
+                }
+            };
+            
+            return (
+                <div className="flex gap-2">
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleView}
+                    >
+                        <Eye className="w-4 h-4 ml-1" />
+                        مشاهده
+                    </Button>
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleDownload}
+                    >
+                        <Download className="w-4 h-4 ml-1" />
+                        دانلود
+                    </Button>
+                </div>
+            );
         }
     },
     {
