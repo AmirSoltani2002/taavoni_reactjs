@@ -20,6 +20,7 @@ export default function UsersList() {
     }, [])
     return (
         <div className="container mx-auto py-10">
+            <h1 className="text-3xl font-bold mb-6">لیست کاربران</h1>
             <DataTable columns={columns} data={data} tableName="users" onRefresh={() => {
                 getTable('users', setData);
             }} 

@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { docs_columns, type User, type UserDoc } from "./users/columns";
+import { docs_columns, type User, type UserDoc } from "./columns";
 import { getTable, updateTableRow, uploadFile } from "@/general";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { PageLoader } from "@/components/ui/loader";
 import FInput from "@/components/ui/functional-input";
 import { cn } from "@/lib/utils";
+import UserProjects from "./userProjects";
 
 // Document type for user-doc/profile
 const LABEL_CLASS = "font-bold text-blue-900"
@@ -377,6 +378,7 @@ export default function ProfilePage() {
               )}
             </CardContent>
           </Card>
+          <UserProjects />
         </CardContent>
       </Card>
       {isLoading && <PageLoader />}

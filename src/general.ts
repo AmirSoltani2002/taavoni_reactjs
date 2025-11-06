@@ -214,14 +214,22 @@ export const getTable = async(tableName: string, onGot?: (data: any) => void, ve
         return data;
       }
     } else if(resp.status === 401) {
-      toast.error(getFarsiError('401'));
+      const error = { error: getFarsiError('401'), status: 401 };
+      if(verbose){
+        toast.error(getFarsiError('401'));
+      }
       // Go to login page
       await sleep(3000);
       window.location.href = '/';
-      return [];
+      if(onGot){
+        onGot({error});
+      } else {
+        return {error};
+      }
     } else {
+      const err = await resp.json();
+      const error = { error: err.message || 'خطایی رخ داده است', status: resp.status };
       if(verbose){
-        const err = await resp.json();
         if(err.message){
           const errors = typeof err.message === 'object' ? err.message : [err.message]
           Object.values(errors).forEach((m: any) => {
@@ -230,14 +238,19 @@ export const getTable = async(tableName: string, onGot?: (data: any) => void, ve
               toast.error(getFarsiError(m));
             }
           });
-          return;
         }
         else {
           toast.error('خطایی رخ داده است');
         }
       }
+      if(onGot){
+        onGot({error});
+      } else {
+        return {error};
+      }
     }
   } catch (err: any) {
+    const error = { error: err.message || 'خطایی رخ داده است', status: 0 };
     if(verbose){
       if(err.message){
         toast.error(err.message);
@@ -245,7 +258,11 @@ export const getTable = async(tableName: string, onGot?: (data: any) => void, ve
         toast.error('خطایی رخ داده است');
       }
     }
-    return []
+    if(onGot){
+      onGot({error});
+    } else {
+      return {error};
+    }
   } 
 }
 
