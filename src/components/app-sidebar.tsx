@@ -103,7 +103,7 @@ export function AppSidebar() {
         },
         {
           title: "رسیدهای پرداخت",
-          url: "/payments/list",
+          url: "/transactions/list",
           icon: CreditCard,
         },
         {
@@ -133,7 +133,7 @@ export function AppSidebar() {
         },
         {
           title: "رسیدهای پرداخت",
-          url: "/payments/list",
+          url: "/transactions/list",
           icon: CreditCard,
         },
         {

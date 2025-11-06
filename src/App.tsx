@@ -11,6 +11,7 @@ import UsersList from "./pages/users/userList";
 import UserCreate from "./pages/users/create";
 import ChatPage from "./pages/tickets/chat";
 import TicketsList from "./pages/tickets/ticketList";
+import TransactionsList from "./pages/transactions/list";
 import { Suspense } from "react";
 import { PageLoader } from "./components/ui/loader";
 import ProfilePage from "./pages/users/profile";
@@ -34,6 +35,7 @@ function App() {
                   <Route path="/projects/list" element={<ProjectsList />} />
                   <Route path="/tickets/list" element={<TicketsList />} />
                   <Route path="/tickets/:ticketType/:ticketId" element={<ChatPage />} />
+                  <Route path="/transactions/list" element={<TransactionsList />} />
                   <Route path="/users/list" element={<UsersList />} />
                   <Route path="/users/create" element={<UserCreate />} />
                   <Route path="/users/:userId" element={<ProfilePage />} />
