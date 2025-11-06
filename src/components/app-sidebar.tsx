@@ -146,7 +146,7 @@ export function AppSidebar() {
         }
       ])
     }
-  }, [isAdmin])
+  }, [isAdmin, userInfo])
   return (
     <Sidebar side='right' variant='floating'>
       <SidebarContent>

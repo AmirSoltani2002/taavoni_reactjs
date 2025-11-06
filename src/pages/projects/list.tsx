@@ -11,9 +11,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { deleteTableRow } from "@/general"
 import { ImageStorage } from "@/lib/imageStorage"
 import { useNavigate } from "react-router-dom"
+import type { User } from "../users/columns"
 
 export default function ProjectsList() {
     const [data, setData] = useState<Project[]>([])
+    const [userInfo, setUserInfo] = useState<User>()
     const [selectedImage, setSelectedImage] = useState<{url: string, title: string} | undefined>()
     const [editingProject, setEditingProject] = useState<Project>()
     const [deletingProject, setDeletingProject] = useState<Project>()
@@ -47,6 +49,10 @@ export default function ProjectsList() {
                 setData(enhancedData);
             });
         } catch (_) {}
+    }, [])
+
+    useEffect(() => {
+        getTable('users/profile', setUserInfo);
     }, [])
 
     const refreshData = () => {
@@ -90,10 +96,12 @@ export default function ProjectsList() {
                                 <Building className="w-10 h-10 text-blue-600" />
                                 مدیریت پروژه‌ها
                             </h1>
-                            <p className="text-slate-600 text-lg">مشاهده و مدیریت تمام پروژه‌های موجود در سیستم</p>
+                            <p className="text-slate-600 text-lg">
+                                {['admin', 'system'].includes(userInfo?.type || '') ? 'مشاهده و مدیریت تمام پروژه‌های موجود در سیستم' : 'پروژه‌های شما'}
+                            </p>
                         </div>
                         
-                        <div className="flex flex-col sm:flex-row gap-3">
+                        {['admin', 'system'].includes(userInfo?.type || '') && <div className="flex flex-col sm:flex-row gap-3">
                             <Button 
                                 className="gap-2 shadow-md"
                                 onClick={() => navigate('/projects/create')}
@@ -101,11 +109,11 @@ export default function ProjectsList() {
                                 <Plus className="w-4 h-4" />
                                 پروژه جدید
                             </Button>
-                        </div>
+                        </div>}
                     </div>
                 
                     {/* Statistics Cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {['admin', 'system'].includes(userInfo?.type || '') && <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-lg transition-all duration-300">
                             <CardContent className="p-6">
                                 <div className="flex items-center justify-between">
@@ -160,7 +168,7 @@ export default function ProjectsList() {
                                 </div>
                             </CardContent>
                         </Card>
-                    </div>
+                    </div>}
                 </div>
 
                 {/* Main Content */}
