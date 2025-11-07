@@ -105,7 +105,6 @@ export default function TransactionCreate({ onSubmit, onCancel, userSubProjects:
             
             // Append file
             formData.append('file', form.file);
-            formData.append('document', form.file.name);
             formData.append('userId', userInfo?.id?.toString() || '');
             // Append other fields
             formData.append('amount', form.amount.toString());

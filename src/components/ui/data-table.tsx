@@ -36,9 +36,10 @@ interface DataTableProps<TData, TValue> {
   editComponent?: React.ComponentType<{ initialValues: any; onSubmit: (values: any) => void; isEdit?: boolean }>;
   onClickRow?: (row: TData) => void;
   options?: {
-    title: string;
+    title: string | React.ReactNode;
     onClick: (row: TData) => void;
   }[]
+  _showDeleteButton?: boolean;
 }
 
 
@@ -49,7 +50,8 @@ export function DataTable<TData extends { id?: number }, TValue>({
   onRefresh,
   editComponent: EditComponent,
   onClickRow,
-  options
+  options,
+  _showDeleteButton = true,
 }: DataTableProps<TData, TValue>) {
   // Add actions column if tableName and id are present
   const hasId = data.length > 0 && data[0].id !== undefined;
@@ -83,7 +85,7 @@ export function DataTable<TData extends { id?: number }, TValue>({
         </div>;
     }
   }, [EditComponent, editRow]);
-  const allColumns = hasId && tableName
+  const allColumns = hasId && tableName && (_showDeleteButton || options || EditComponent)
     ? [
         ...columns,
         {
@@ -97,7 +99,17 @@ export function DataTable<TData extends { id?: number }, TValue>({
                   {editRow && editRow.id === row.original.id && EditElement}
                 </>
               )}
-              <Button size="sm" variant="destructive" onClick={() => setDeleteRow(row.original)}><Trash2 /></Button>    
+              {options && options.map((op, index) => (
+                <Button 
+                  key={index}
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => op.onClick(row.original)}
+                >
+                  {op.title}
+                </Button>
+              ))}
+              {_showDeleteButton && <Button size="sm" variant="destructive" onClick={() => setDeleteRow(row.original)}><Trash2 /></Button>}    
             </div>
           ),
         } as ColumnDef<TData, TValue>,
