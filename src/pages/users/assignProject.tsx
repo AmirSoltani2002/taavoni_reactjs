@@ -2,19 +2,22 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { Project, Block, SubProject } from "../projects/columns";
 import type { User } from "./columns";
-import { getTable, updateTableRow } from "@/general";
+import { getTable, updateTableRow, getToken } from "@/general";
 import { PageLoader } from "@/components/ui/loader";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Building, Home, Layers, CheckCircle2, AlertCircle, ArrowRight } from "lucide-react";
+import { Building, Home, Layers, CheckCircle2, AlertCircle, ArrowRight, Upload, X, FileText, Download } from "lucide-react";
 import { getDirection } from "../projects/general";
 import { toast } from "sonner";
+import { api_base_url } from "@/config";
 
 const AssignProject = () => {
-    const { userId } = useParams();
+    const { userId, subProjectId } = useParams();
+    const isEditMode = !!subProjectId;
     const [user, setUser] = useState<User | null>(null);
     const [projects, setProjects] = useState<Project[]>([]);
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -24,7 +27,23 @@ const AssignProject = () => {
     const [units, setUnits] = useState<SubProject[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isAssigning, setIsAssigning] = useState(false);
+    const [existingInvoiceId, setExistingInvoiceId] = useState<number | null>(null);
+    const [existingInvoiceDocument, setExistingInvoiceDocument] = useState<string | null>(null);
     const navigate = useNavigate();
+    
+    // Invoice form state
+    const [invoiceForm, setInvoiceForm] = useState<{
+        amount: number | '';
+        number: string;
+        detail: string;
+        file: File | null;
+    }>({
+        amount: '',
+        number: '',
+        detail: '',
+        file: null,
+    });
     useEffect(() => {
         setIsLoading(true);
         
@@ -51,8 +70,55 @@ const AssignProject = () => {
         }, false);
     }, [userId]);
 
+    // Load subproject and invoice data in edit mode
     useEffect(() => {
-        if(selectedProject){
+        if (isEditMode && subProjectId) {
+            // Fetch the subproject directly
+            getTable(`subprojects/${subProjectId}`, (subProject: SubProject | {error: {error: string, status: number}}) => {
+                if (!('error' in subProject)) {
+                    const foundSubProject = subProject as SubProject;
+                    const foundBlock = foundSubProject.block;
+                    const foundProject = foundBlock?.project;
+                    console.log({foundSubProject, foundBlock, foundProject});
+
+                    if (foundSubProject && foundBlock && foundProject) {
+                        setSelectedProject(foundProject);
+                        setSelectedBlock(foundBlock);
+                        setSelectedUnit(foundSubProject);
+                        
+                        // Set blocks and units from the loaded project
+                        if (foundProject.blocks) {
+                            setBlocks(foundProject.blocks);
+                            const blockWithSubProjects = foundProject.blocks.find(b => b.id === foundBlock.id);
+                            if (blockWithSubProjects?.subProjects) {
+                                setUnits(blockWithSubProjects.subProjects);
+                            }
+                        }
+                    }
+                }
+            }, false);
+
+            // Load invoice data
+            getTable(`invoice/users/${userId}`, (invoices: any[] | {error: {error: string, status: number}}) => {
+                if (!('error' in invoices)) {
+                    const invoice = (invoices as any[]).find((inv: any) => inv.subProjectId?.toString() === subProjectId);
+                    if (invoice) {
+                        setExistingInvoiceId(invoice.id);
+                        setExistingInvoiceDocument(invoice.document || null);
+                        setInvoiceForm({
+                            amount: invoice.amount || '',
+                            number: invoice.number || '',
+                            detail: invoice.detail || '',
+                            file: null, // File can't be pre-loaded
+                        });
+                    }
+                }
+            }, false);
+        }
+    }, [isEditMode, subProjectId, userId]);
+
+    useEffect(() => {
+        if(selectedProject && !isEditMode){
             setBlocks(selectedProject.blocks || []);
             setSelectedBlock(null);
             setSelectedUnit(null);
@@ -61,28 +127,173 @@ const AssignProject = () => {
     }, [selectedProject]);
     
     useEffect(() => {
-        if(selectedBlock){
+        if(selectedBlock && !isEditMode){
             setUnits(selectedBlock.subProjects || []);
             setSelectedUnit(null);
+            // Reset invoice fields when block changes
+            setInvoiceForm({
+                amount: '',
+                number: '',
+                detail: '',
+                file: null,
+            });
         }
     }, [selectedBlock]);
 
-    const handleAssignUnit = () => {
+    useEffect(() => {
+        // Reset invoice fields when unit changes
+        if (!selectedUnit) {
+            setInvoiceForm({
+                amount: '',
+                number: '',
+                detail: '',
+                file: null,
+            });
+        }
+    }, [selectedUnit]);
+
+    const createOrUpdateInvoice = async (subProjectId: number): Promise<boolean> => {
+        // In edit mode, file is optional if invoice already exists
+        if (!isEditMode && !invoiceForm.file) {
+            toast.error('لطفا فایل فاکتور را آپلود کنید');
+            return false;
+        }
+
+        // In edit mode without existing invoice, file is required
+        if (isEditMode && !existingInvoiceId && !invoiceForm.file) {
+            toast.error('لطفا فایل فاکتور را آپلود کنید');
+            return false;
+        }
+
+        try {
+            const token = getToken();
+            const formData = new FormData();
+            
+            if (invoiceForm.file) {
+                formData.append('file', invoiceForm.file);
+            }
+            formData.append('userId', userId || '');
+            formData.append('subProjectId', subProjectId.toString());
+            
+            if (invoiceForm.amount) {
+                formData.append('amount', invoiceForm.amount.toString());
+            }
+            if (invoiceForm.number) {
+                formData.append('number', invoiceForm.number);
+            }
+            if (invoiceForm.detail) {
+                formData.append('detail', invoiceForm.detail);
+            }
+
+            const url = isEditMode && existingInvoiceId 
+                ? `${api_base_url}/invoice/${existingInvoiceId}`
+                : `${api_base_url}/invoice`;
+            const method = isEditMode && existingInvoiceId ? 'PATCH' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Authorization': token ? `Bearer ${token}` : ''
+                },
+                body: formData
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data && data.id) {
+                    toast.success(isEditMode ? 'فاکتور با موفقیت به‌روزرسانی شد' : 'فاکتور با موفقیت ثبت شد');
+                    return true;
+                } else {
+                    toast.error(isEditMode ? 'خطا در به‌روزرسانی فاکتور' : 'خطا در ثبت فاکتور');
+                    return false;
+                }
+            } else {
+                const err = await response.json();
+                if (err.message) {
+                    const errors = typeof err.message === 'object' ? err.message : [err.message];
+                    errors.forEach((m: any) => {
+                        toast.error(m || 'خطایی رخ داده است');
+                    });
+                } else {
+                    toast.error(isEditMode ? 'خطا در به‌روزرسانی فاکتور' : 'خطا در ثبت فاکتور');
+                }
+                return false;
+            }
+        } catch (error: any) {
+            console.error('Invoice operation error:', error);
+            toast.error(isEditMode ? 'خطا در به‌روزرسانی فاکتور' : 'خطا در ثبت فاکتور');
+            return false;
+        }
+    };
+
+    const handleAssignUnit = async () => {
         if(!selectedUnit || !userId || !selectedUnit.id){
             return;
         }
-        console.log({selectedUnit, userId});
-        updateTableRow(`subprojects`, selectedUnit.id, {userId: userId}, (data: SubProject) => {
-            if(data && data.id){
-                toast.success('واحد با موفقیت اعطا شد');
+
+        // In create mode, file is required
+        if (!isEditMode && !invoiceForm.file) {
+            toast.error('لطفا فایل فاکتور را آپلود کنید');
+            return;
+        }
+
+        // In edit mode without existing invoice, file is required
+        if (isEditMode && !existingInvoiceId && !invoiceForm.file) {
+            toast.error('لطفا فایل فاکتور را آپلود کنید');
+            return;
+        }
+
+        setIsAssigning(true);
+
+        const unitId = selectedUnit.id;
+        if (!unitId) {
+            toast.error('خطا: شناسه واحد یافت نشد');
+            setIsAssigning(false);
+            return;
+        }
+
+        // In edit mode, we only update the invoice, not reassign the unit
+        if (isEditMode) {
+            const invoiceUpdated = await createOrUpdateInvoice(unitId);
+            if (invoiceUpdated) {
+                toast.success('فاکتور با موفقیت به‌روزرسانی شد');
                 navigate(`/users/${userId}`);
+            }
+            setIsAssigning(false);
+            return;
+        }
+
+        // In create mode, assign the unit first, then create invoice
+        updateTableRow(`subprojects`, unitId, {userId: userId}, async (data: SubProject) => {
+            if(data && data.id){
+                // Then create the invoice
+                const invoiceCreated = await createOrUpdateInvoice(unitId);
+                if (invoiceCreated) {
+                    toast.success('واحد با موفقیت اعطا شد و فاکتور ثبت شد');
+                    navigate(`/users/${userId}`);
+                } else {
+                    // Unit was assigned but invoice failed - show warning
+                    toast.warning('واحد اعطا شد اما ثبت فاکتور با خطا مواجه شد');
+                }
             } else {
                 toast.error('خطایی رخ داده است' + JSON.stringify(data));
             }
+            setIsAssigning(false);
         });
     }
 
-    const isFormComplete = selectedProject && selectedBlock && selectedUnit;
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setInvoiceForm(prev => ({ ...prev, file }));
+        }
+    };
+
+    const handleRemoveFile = () => {
+        setInvoiceForm(prev => ({ ...prev, file: null }));
+    };
+
+    const isFormComplete = selectedProject && selectedBlock && selectedUnit && (isEditMode ? true : invoiceForm.file);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-purple-50 py-10">
@@ -90,9 +301,11 @@ const AssignProject = () => {
                 {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                        اعطای واحد جدید به {user?.name && user?.lastName ? `${user.name} ${user.lastName}` : user?.name || user?.lastName || 'کاربر'}
+                        {isEditMode ? 'ویرایش فاکتور واحد' : `اعطای واحد جدید به ${user?.name && user?.lastName ? `${user.name} ${user.lastName}` : user?.name || user?.lastName || 'کاربر'}`}
                     </h1>
-                    <p className="text-gray-600">لطفاً پروژه، بلاک و واحد مورد نظر را انتخاب کنید</p>
+                    <p className="text-gray-600">
+                        {isEditMode ? 'اطلاعات فاکتور واحد را ویرایش کنید' : 'لطفاً پروژه، بلوک و واحد مورد نظر را انتخاب کنید'}
+                    </p>
                 </div>
 
                 {/* Error Display */}
@@ -136,8 +349,9 @@ const AssignProject = () => {
                                         <Select 
                                             value={selectedProject?.id?.toString() || ''} 
                                             onValueChange={(value) => setSelectedProject(projects.find((project) => project.id?.toString() === value) || null)}
+                                            disabled={isEditMode}
                                         >
-                                            <SelectTrigger id="project-select" className="h-12">
+                                            <SelectTrigger id="project-select" className="h-12" disabled={isEditMode}>
                                                 <SelectValue placeholder="انتخاب پروژه" />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -167,8 +381,8 @@ const AssignProject = () => {
                                             <Layers className="h-5 w-5 text-purple-600" />
                                         </div>
                                         <div className="flex-1">
-                                            <CardTitle className="text-xl">انتخاب بلاک</CardTitle>
-                                            <CardDescription>بلاک مورد نظر را انتخاب کنید</CardDescription>
+                                            <CardTitle className="text-xl">انتخاب بلوک</CardTitle>
+                                            <CardDescription>بلوک مورد نظر را انتخاب کنید</CardDescription>
                                         </div>
                                         {selectedBlock && (
                                             <Badge variant="default" className="bg-green-500">
@@ -181,15 +395,24 @@ const AssignProject = () => {
                                 <CardContent>
                                     <div className="space-y-2">
                                         <Label htmlFor="block-select" className="text-base font-semibold">
-                                            بلاک
+                                            بلوک
                                         </Label>
                                         <Select 
                                             value={selectedBlock?.id?.toString() || ''} 
                                             onValueChange={(value) => setSelectedBlock(blocks.find((block) => block.id?.toString() === value) || null)}
-                                            disabled={!selectedProject}
+                                            disabled={!selectedProject || isEditMode}
                                         >
-                                            <SelectTrigger id="block-select" className="h-12" disabled={!selectedProject}>
-                                                <SelectValue placeholder={selectedProject ? "انتخاب بلاک مورد نظر" : "ابتدا پروژه را انتخاب کنید"} />
+                                            <SelectTrigger id="block-select" className="h-12" disabled={!selectedProject || isEditMode}>
+                                                {selectedBlock ? (
+                                                    <>
+                                                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                            <Layers className="h-4 w-4 text-purple-600 flex-shrink-0" />
+                                                            <span className="font-semibold">{selectedBlock.name}</span>
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <SelectValue placeholder={selectedProject ? "انتخاب بلوک مورد نظر" : "ابتدا پروژه را انتخاب کنید"} />
+                                                )}
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {blocks.length > 0 ? blocks.map((block) => (
@@ -201,7 +424,7 @@ const AssignProject = () => {
                                                     </SelectItem>
                                                 )) : (
                                                     <SelectItem value="no-blocks" disabled>
-                                                        {selectedProject ? "هیچ بلاکی ثبت نشده است" : "ابتدا پروژه را انتخاب کنید"}
+                                                        {selectedProject ? "هیچ بلوکی ثبت نشده است" : "ابتدا پروژه را انتخاب کنید"}
                                                     </SelectItem>
                                                 )}
                                             </SelectContent>
@@ -237,9 +460,9 @@ const AssignProject = () => {
                                         <Select 
                                             value={selectedUnit?.id?.toString() || ''} 
                                             onValueChange={(value) => setSelectedUnit(units.find((subProject) => subProject.id?.toString() === value) || null)}
-                                            disabled={!selectedBlock}
+                                            disabled={!selectedBlock || isEditMode}
                                         >
-                                            <SelectTrigger id="unit-select" className="h-12" disabled={!selectedBlock}>
+                                            <SelectTrigger id="unit-select" className="h-12" disabled={!selectedBlock || isEditMode}>
                                                 {selectedUnit ? (
                                                     <>
                                                         <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -252,7 +475,7 @@ const AssignProject = () => {
                                                         </div>
                                                     </>
                                                 ) : (
-                                                    <SelectValue placeholder={selectedBlock ? "انتخاب واحد مورد نظر" : "ابتدا بلاک را انتخاب کنید"} />
+                                                    <SelectValue placeholder={selectedBlock ? "انتخاب واحد مورد نظر" : "ابتدا بلوک را انتخاب کنید"} />
                                                 )}
                                             </SelectTrigger>
                                             <SelectContent>
@@ -276,11 +499,115 @@ const AssignProject = () => {
                                                     </SelectItem>
                                                 )) : (
                                                     <SelectItem value="no-units" disabled>
-                                                        {selectedBlock ? "هیچ واحدی ثبت نشده است" : "ابتدا بلاک را انتخاب کنید"}
+                                                        {selectedBlock ? "هیچ واحدی ثبت نشده است" : "ابتدا بلوک را انتخاب کنید"}
                                                     </SelectItem>
                                                 )}
                                             </SelectContent>
                                         </Select>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Step 4: Invoice Information */}
+                            <Card className={`shadow-md transition-opacity ${selectedUnit ? 'opacity-100' : 'opacity-50'}`}>
+                                <CardHeader>
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-orange-100 rounded-lg">
+                                            <FileText className="h-5 w-5 text-orange-600" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <CardTitle className="text-xl">اطلاعات فاکتور</CardTitle>
+                                            <CardDescription>اطلاعات فاکتور واحد را وارد کنید</CardDescription>
+                                        </div>
+                                        {invoiceForm.file && (
+                                            <Badge variant="default" className="bg-green-500">
+                                                <CheckCircle2 className="h-3 w-3" />
+                                                فایل آپلود شده
+                                            </Badge>
+                                        )}
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    {/* Invoice File Upload */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="invoice-file" className="text-base font-semibold">
+                                            فایل فاکتور {isEditMode && existingInvoiceId ? <span className="text-gray-400 text-sm">(اختیاری - برای تغییر فایل فعلی)</span> : <span className="text-red-500">*</span>}
+                                        </Label>
+                                        {!invoiceForm.file ? (
+                                            <div className="flex items-center gap-2">
+                                                <Input
+                                                    id="invoice-file"
+                                                    type="file"
+                                                    onChange={handleFileChange}
+                                                    accept="image/*,.pdf"
+                                                    disabled={!selectedUnit}
+                                                    className="cursor-pointer"
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center gap-2 p-3 border rounded-md bg-gray-50">
+                                                <Upload className="w-4 h-4 text-gray-600" />
+                                                <span className="flex-1 text-sm text-gray-700">{invoiceForm.file.name}</span>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={handleRemoveFile}
+                                                    className="h-8 w-8 p-0"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </Button>
+                                            </div>
+                                        )}
+                                        <p className="text-xs text-gray-500">فرمت‌های مجاز: تصویر یا PDF</p>
+                                    </div>
+
+                                    {/* Invoice Amount */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="invoice-amount" className="text-base font-semibold">
+                                            مبلغ (تومان) <span className="text-gray-400 text-sm">(اختیاری)</span>
+                                        </Label>
+                                        <Input
+                                            id="invoice-amount"
+                                            type="number"
+                                            value={invoiceForm.amount}
+                                            onChange={(e) => setInvoiceForm(prev => ({ ...prev, amount: e.target.value ? Number(e.target.value) : '' }))}
+                                            placeholder="مثال: 1000000"
+                                            disabled={!selectedUnit}
+                                            min="0"
+                                            step="1000"
+                                        />
+                                    </div>
+
+                                    {/* Invoice Number */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="invoice-number" className="text-base font-semibold">
+                                            شماره فاکتور <span className="text-gray-400 text-sm">(اختیاری)</span>
+                                        </Label>
+                                        <Input
+                                            id="invoice-number"
+                                            type="text"
+                                            value={invoiceForm.number}
+                                            onChange={(e) => setInvoiceForm(prev => ({ ...prev, number: e.target.value }))}
+                                            placeholder="شماره فاکتور"
+                                            disabled={!selectedUnit}
+                                        />
+                                    </div>
+
+                                    {/* Invoice Detail */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="invoice-detail" className="text-base font-semibold">
+                                            جزئیات <span className="text-gray-400 text-sm">(اختیاری)</span>
+                                        </Label>
+                                        <textarea
+                                            id="invoice-detail"
+                                            value={invoiceForm.detail}
+                                            onChange={(e) => setInvoiceForm(prev => ({ ...prev, detail: e.target.value }))}
+                                            placeholder="توضیحات اضافی"
+                                            disabled={!selectedUnit}
+                                            className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                            rows={3}
+                                        />
                                     </div>
                                 </CardContent>
                             </Card>
@@ -314,7 +641,7 @@ const AssignProject = () => {
 
                                     {/* Block Summary */}
                                     <div className="space-y-2">
-                                        <Label className="text-sm font-semibold text-gray-700">بلاک</Label>
+                                        <Label className="text-sm font-semibold text-gray-700">بلوک</Label>
                                         <div className="p-3 bg-white rounded-lg border">
                                             {selectedBlock ? (
                                                 <div className="flex items-center gap-2">
@@ -350,16 +677,116 @@ const AssignProject = () => {
                                         </div>
                                     </div>
 
+                                    {/* Invoice Summary */}
+                                    {selectedUnit && (
+                                        <div className="space-y-2">
+                                            <Label className="text-sm font-semibold text-gray-700">فاکتور</Label>
+                                            <div className="p-3 bg-white rounded-lg border">
+                                                {invoiceForm.file ? (
+                                                    <div className="space-y-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <FileText className="h-4 w-4 text-orange-600" />
+                                                            <span className="font-medium text-sm">{invoiceForm.file.name}</span>
+                                                        </div>
+                                                        {invoiceForm.amount && (
+                                                            <div className="text-sm text-gray-600">
+                                                                مبلغ: {invoiceForm.amount.toLocaleString('fa-IR')} تومان
+                                                            </div>
+                                                        )}
+                                                        {invoiceForm.number && (
+                                                            <div className="text-sm text-gray-600">
+                                                                شماره: {invoiceForm.number}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ) : existingInvoiceId && existingInvoiceDocument ? (
+                                                    <div className="space-y-2">
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                                <FileText className="h-4 w-4 text-orange-600 flex-shrink-0" />
+                                                                <span className="font-medium text-sm truncate">{existingInvoiceDocument}</span>
+                                                            </div>
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={async () => {
+                                                                    if (!existingInvoiceId) return;
+                                                                    try {
+                                                                        const token = getToken();
+                                                                        const resp = await fetch(`${api_base_url}/invoice/download/${existingInvoiceId}`, {
+                                                                            method: 'GET',
+                                                                            headers: {
+                                                                                'Authorization': token ? `Bearer ${token}` : ''
+                                                                            }
+                                                                        });
+                                                                        
+                                                                        if (resp.ok) {
+                                                                            const blob = await resp.blob();
+                                                                            const url = window.URL.createObjectURL(blob);
+                                                                            const a = document.createElement('a');
+                                                                            a.href = url;
+                                                                            
+                                                                            // Get filename from Content-Disposition header or use document filename
+                                                                            const contentDisposition = resp.headers.get('Content-Disposition');
+                                                                            let downloadFilename = existingInvoiceDocument;
+                                                                            if (contentDisposition) {
+                                                                                const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                                                                                if (filenameMatch && filenameMatch[1]) {
+                                                                                    downloadFilename = filenameMatch[1].replace(/['"]/g, '');
+                                                                                }
+                                                                            }
+                                                                            
+                                                                            a.download = downloadFilename;
+                                                                            document.body.appendChild(a);
+                                                                            a.click();
+                                                                            window.URL.revokeObjectURL(url);
+                                                                            document.body.removeChild(a);
+                                                                        } else {
+                                                                            const err = await resp.json();
+                                                                            toast.error(err.message || 'خطا در دانلود فایل');
+                                                                        }
+                                                                    } catch (error: any) {
+                                                                        console.error('Download error:', error);
+                                                                        toast.error('خطا در دانلود فایل');
+                                                                    }
+                                                                }}
+                                                                className="h-8 w-8 p-0 text-blue-600 hover:bg-blue-50 flex-shrink-0"
+                                                                title="دانلود فایل"
+                                                            >
+                                                                <Download className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
+                                                        {invoiceForm.amount && (
+                                                            <div className="text-sm text-gray-600">
+                                                                مبلغ: {invoiceForm.amount.toLocaleString('fa-IR')} تومان
+                                                            </div>
+                                                        )}
+                                                        {invoiceForm.number && (
+                                                            <div className="text-sm text-gray-600">
+                                                                شماره: {invoiceForm.number}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-gray-400 text-sm">فایل فاکتور آپلود نشده است</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* Action Button */}
                                     <Button 
                                         onClick={handleAssignUnit}
-                                        disabled={!isFormComplete}
+                                        disabled={!isFormComplete || isAssigning}
                                         className="w-full h-12 text-base font-semibold shadow-md hover:shadow-lg transition-all"
                                         size="lg"
                                     >
-                                        {isFormComplete ? (
+                                        {isAssigning ? (
+                                            'در حال ثبت...'
+                                        ) : isFormComplete ? (
                                             <>
-                                                اعطای واحد به کاربر
+                                                {isEditMode ? 'به‌روزرسانی فاکتور' : 'اعطای واحد به کاربر'}
                                                 <ArrowRight className="h-5 w-5 mr-2" />
                                             </>
                                         ) : (

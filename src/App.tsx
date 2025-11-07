@@ -40,6 +40,7 @@ function App() {
                   <Route path="/users/create" element={<UserCreate />} />
                   <Route path="/users/:userId" element={<ProfilePage />} />
                   <Route path="/users/:userId/assign-project" element={<AssignProject />} />
+                  <Route path="/users/:userId/assign-project/:subProjectId" element={<AssignProject />} />
                   <Route path="/*" element={<LockedPage />} />
                 </Routes>
               </Layout>
