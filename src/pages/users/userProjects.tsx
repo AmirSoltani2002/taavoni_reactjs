@@ -60,6 +60,8 @@ const UserProjects = ({ user, isSelf = false, isAdmin = false }: UserProjectsPro
     const handleRowClick = useCallback((row: SubProject) => {
         if (isAdmin && !isSelf && row.id && userId) {
             navigate(`/users/${userId}/assign-project/${row.id}`);
+        } else if(row.id){
+            navigate(`/unit/${row.id}`);
         }
     }, [isAdmin, isSelf, navigate, userId]);
 
@@ -98,7 +100,7 @@ const UserProjects = ({ user, isSelf = false, isAdmin = false }: UserProjectsPro
                     onRefresh={loadProjects}
                     options={tableOptions}
                     _showDeleteButton={false}
-                    onClickRow={isAdmin && !isSelf ? handleRowClick : undefined}
+                    onClickRow={handleRowClick}
                 />
             )}
             {isLoading && <PageLoader />}
