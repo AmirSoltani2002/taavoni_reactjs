@@ -8,10 +8,12 @@ import { useRef, useState, useEffect } from "react";
 import { uploadProjectDoc, downloadDocument, deleteTableRow, getImageBlobUrl } from "@/general";
 import { toast } from "sonner";
 import type { Project } from "../columns";
+import MapPicker from "@/components/app/MapPicker";
 
 interface Step1BasicInfoProps {
   project: Project;
   handleProjectChange: (name: string, value: any) => void;
+  handleLocationChange?: (lat: number, lng: number) => void;
   projectId?: number | string; // For immediate upload in edit mode
   projectImages?: Array<string | {id: number, url?: string}>;
   setProjectImages?: (images: Array<string | {id: number, url?: string}>) => void;
@@ -22,6 +24,7 @@ interface Step1BasicInfoProps {
 export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({ 
   project, 
   handleProjectChange,
+  handleLocationChange: parentHandleLocationChange,
   projectId,
   projectImages = [],
   setProjectImages,
@@ -220,6 +223,9 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
       });
     };
   }, [projectImages]);
+  useEffect(() => {
+    console.log("project", project)
+  }, [project])
 
   const handleDocRemove = async (index: number) => {
     const doc = projectDocs[index];
@@ -291,6 +297,31 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
     }
   };
 
+  // Handle location change from MapPicker
+  const handleLocationChange = (lat: number, lng: number) => {
+    console.log("handleLocationChange", {lat, lng})
+    // Use parent handler if provided (updates both at once), otherwise fall back to individual updates
+    if (parentHandleLocationChange) {
+      parentHandleLocationChange(lat, lng);
+    } else {
+      // Fallback: update both individually
+      handleProjectChange('latitude', lat);
+      handleProjectChange('longitude', lng);
+    }
+  };
+
+  // Get map position from project coordinates, default to Tehran if not set
+  const getMapPosition = (): [number, number] => {
+    console.log({lat: project.latitude, lng: project.longitude})
+    // Check if both coordinates are valid numbers (including 0, which is a valid coordinate)
+    if (project.latitude && project.longitude && 
+        Number.isFinite(project.latitude) && Number.isFinite(project.longitude)) {
+      return [project.latitude, project.longitude];
+    }
+    // Default to Tehran coordinates
+    return [35.6892, 51.3890];
+  };
+
   return (
     <Card className="bg-white/70 backdrop-blur-sm shadow-xl border-0 ring-1 ring-white/20 hover:shadow-2xl transition-all duration-300">
       <CardHeader className="bg-gradient-to-r from-blue-50/50 to-purple-50/50 border-b border-blue-200/30 pb-6">
@@ -349,6 +380,30 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                 className="h-12 bg-white/50 border-slate-200 focus:bg-white focus:border-green-400 focus:ring-green-400/20 transition-all duration-200"
                 placeholder="آدرس کامل پروژه را وارد کنید..."
               />
+            </div>
+
+            <div>
+              <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-3">
+                <div className="p-1 rounded-md">
+                  <MapPin className="w-4 h-4 text-blue-600" />
+                </div>
+                موقعیت جغرافیایی پروژه
+              </Label>
+              <div className="bg-white/50 border border-slate-200 rounded-md overflow-hidden">
+                <MapPicker
+                  onLocationChange={handleLocationChange}
+                  position={getMapPosition()}
+                  zoom={13}
+                />
+              </div>
+              <p className="text-xs text-slate-500 mt-2">
+                روی نقشه کلیک کنید یا نشانگر را بکشید تا موقعیت پروژه را مشخص کنید
+              </p>
+              {(project.latitude && project.longitude) && (
+                <p className="text-xs text-slate-600 mt-1">
+                  عرض جغرافیایی: {project.latitude.toFixed(6)} | طول جغرافیایی: {project.longitude.toFixed(6)}
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

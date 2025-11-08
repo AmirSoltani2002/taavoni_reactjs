@@ -41,8 +41,8 @@ export default function ProjectCreate({
         landArea: initialValues.landArea || 0,
         startDate: initialValues.startDate || "",
         endDate: initialValues.endDate || "",
-        longitude: initialValues.longitude || 0,
-        latitude: initialValues.latitude || 0,
+        longitude: initialValues.longitude,
+        latitude: initialValues.latitude,
       } as Project;
     }
     return {
@@ -51,6 +51,8 @@ export default function ProjectCreate({
       landArea: 0,
       startDate: "",
       endDate: "",
+      longitude: undefined,
+      latitude: undefined,
     } as Project;
   });
 
@@ -162,7 +164,16 @@ export default function ProjectCreate({
   }, [initialValues, isEdit]);
 
   const handleProjectChange = (name: string, value: any) => {
-    setProject({ ...project, [name]: value });
+    setProject((prevProject) => ({ ...prevProject, [name]: value }));
+  };
+
+  // Special handler for location updates to ensure both latitude and longitude update together
+  const handleLocationChange = (lat: number, lng: number) => {
+    setProject((prevProject) => ({
+      ...prevProject,
+      latitude: lat,
+      longitude: lng
+    }));
   };
 
   // Convert base64 string to File object
@@ -195,8 +206,8 @@ export default function ProjectCreate({
         const { id: _, ...projectData } = project;
         await updateTableRow('projects', projectId!, {
           ...projectData,
-          longitude: projectData.longitude || 0,
-          latitude: projectData.latitude || 0,
+          longitude: projectData.longitude,
+          latitude: projectData.latitude,
           blocks: undefined,
           projectDocs: undefined,
         });
@@ -240,8 +251,8 @@ export default function ProjectCreate({
         console.log('Project data:', projectData);
         const projectResult = await postTable('projects', {
           ...projectData,
-          longitude: projectData.longitude || 0,
-          latitude: projectData.latitude || 0,
+          longitude: projectData.longitude,
+          latitude: projectData.latitude,
         });
         if (projectResult && projectResult.id) {
           // Create blocks one by one (remove ID from block data)
@@ -355,6 +366,7 @@ export default function ProjectCreate({
           <Step1BasicInfo 
             project={project} 
             handleProjectChange={handleProjectChange}
+            handleLocationChange={handleLocationChange}
             projectId={isEditMode ? projectId : project.id}
             projectImages={projectImages}
             setProjectImages={setProjectImages}
