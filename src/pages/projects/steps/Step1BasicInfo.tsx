@@ -223,10 +223,7 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
       });
     };
   }, [projectImages]);
-  useEffect(() => {
-    console.log("project", project)
-  }, [project])
-
+  
   const handleDocRemove = async (index: number) => {
     const doc = projectDocs[index];
     if (!doc || !doc.id) {
@@ -312,7 +309,6 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
 
   // Get map position from project coordinates, default to Tehran if not set
   const getMapPosition = (): [number, number] => {
-    console.log({lat: project.latitude, lng: project.longitude})
     // Check if both coordinates are valid numbers (including 0, which is a valid coordinate)
     if (project.latitude && project.longitude && 
         Number.isFinite(project.latitude) && Number.isFinite(project.longitude)) {

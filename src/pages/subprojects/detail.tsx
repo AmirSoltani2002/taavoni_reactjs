@@ -3,12 +3,13 @@ import { useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Building, Camera, FileText, Download, Receipt } from "lucide-react";
+import { Building, Camera, FileText, Download, Receipt, MapPin } from "lucide-react";
 import { getTable, getImageBlobUrl, downloadDocument, getToken } from "@/general";
 import { toast } from "sonner";
 import type { SubProject, ProjectDoc } from "../projects/columns";
 import { PageLoader } from "@/components/ui/loader";
 import { api_base_url } from "@/config";
+import MapView from "@/components/app/MapView";
 
 export default function SubProjectDetail() {
     const { id } = useParams<{ id: string }>();
@@ -239,6 +240,61 @@ export default function SubProjectDetail() {
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Project Location Map */}
+            {project && project.latitude != null && project.longitude != null && 
+             Number.isFinite(project.latitude) && Number.isFinite(project.longitude) && (
+                <Card className="bg-white/70 backdrop-blur-sm shadow-xl border-0 ring-1 ring-white/20">
+                    <CardHeader className="bg-gradient-to-r from-blue-50/50 to-purple-50/50 border-b border-blue-200/30 pb-6">
+                        <CardTitle className="flex items-center gap-4 text-xl">
+                            <div className="relative">
+                                <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-blue-500 rounded-xl blur-sm opacity-30"></div>
+                                <div className="relative p-3 bg-gradient-to-r from-green-500 to-blue-500 rounded-xl">
+                                    <MapPin className="w-6 h-6 text-white" />
+                                </div>
+                            </div>
+                            <div>
+                                <span className="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent font-bold">
+                                    موقعیت پروژه
+                                </span>
+                                <p className="text-sm text-slate-500 font-normal mt-1">
+                                    موقعیت جغرافیایی پروژه روی نقشه
+                                </p>
+                            </div>
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                        <div className="space-y-4">
+                            <MapView 
+                                position={[project.latitude, project.longitude]} 
+                                zoom={16}
+                                title={project.name || project.address || 'موقعیت پروژه'}
+                            />
+                            <div className="flex flex-wrap gap-4 text-sm text-slate-600">
+                                <div>
+                                    <span className="font-semibold">عرض جغرافیایی: </span>
+                                    <span>{project.latitude.toFixed(6)}</span>
+                                </div>
+                                <div>
+                                    <span className="font-semibold">طول جغرافیایی: </span>
+                                    <span>{project.longitude.toFixed(6)}</span>
+                                </div>
+                            </div>
+                            <div className="mt-4">
+                                <Label className="text-slate-700 font-semibold mb-2 block flex items-center gap-2">
+                                    <MapPin className="w-4 h-4 text-green-600" />
+                                    آدرس پروژه
+                                </Label>
+                                <div className="p-4 bg-gradient-to-br from-slate-50 to-blue-50 rounded-lg border-2 border-slate-200 hover:border-green-300 transition-all duration-200">
+                                    <p className="text-slate-900 font-medium leading-relaxed text-base">
+                                        {project?.address || '-'}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Project Images */}
             <Card className="bg-white/70 backdrop-blur-sm shadow-xl border-0 ring-1 ring-white/20">

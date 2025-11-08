@@ -200,7 +200,6 @@ export default function ProjectCreate({
     setLoading(true);
     
     try {
-      console.log('Submitting project data:', { project, blocks, units });
       if (isEditMode) {
         // Update existing project (remove ID from project data)
         const { id: _, ...projectData } = project;
@@ -248,7 +247,6 @@ export default function ProjectCreate({
       } else {
         // Create project first (remove ID from project data)
         const { id: _, ...projectData } = project;
-        console.log('Project data:', projectData);
         const projectResult = await postTable('projects', {
           ...projectData,
           longitude: projectData.longitude,
