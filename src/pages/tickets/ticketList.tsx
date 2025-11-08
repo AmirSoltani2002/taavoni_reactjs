@@ -14,15 +14,109 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { getUserType, type User } from "../users/columns"
+
+const PREDEFINED_TITLES = {
+    'account-verification': {
+        title: 'تایید حساب کاربری',
+        content: 'با سلام و احترام\n\nدرخواست تایید حساب کاربری خود را دارم. لطفاً حساب کاربری من را بررسی و تایید فرمایید.\n\nبا تشکر'
+    },
+    'purchase-request': {
+        title: 'درخواست خرید واحد مسکونی',
+        content: 'با سلام و احترام\n\nدرخواست خرید واحد مسکونی دارم. لطفاً واحدهای موجود را بررسی و در صورت امکان، واحد مناسب را به من اختصاص دهید.\n\nبا تشکر'
+    },
+    'payment-verification': {
+        title: 'تایید پرداخت',
+        content: 'با سلام و احترام\n\nپرداخت مربوط به واحد مسکونی را انجام داده‌ام. لطفاً پرداخت را بررسی و تایید فرمایید.\n\nبا تشکر'
+    },
+    'transfer-request': {
+        title: 'درخواست واگذاری واحد خریداری شده',
+        content: 'با سلام و احترام\n\nدرخواست واگذاری واحد خریداری شده را دارم. لطفاً مراحل واگذاری را بررسی و راهنمایی فرمایید.\n\nبا تشکر'
+    }
+} as const;
+
+type PredefinedTitleKey = keyof typeof PREDEFINED_TITLES;
+
+const getAccountVerificationContent = (user: User | undefined): string => {
+    if (!user) {
+        return PREDEFINED_TITLES['account-verification'].content;
+    }
+    let content = `با سلام و احترام\n\n
+    اینجانب ${user.name} ${user.lastName} با کد ملی ${user.nationalNumber} درخواست تایید حساب کاربری خود را  به عنوان ${getUserType(user.type)} دارم.`
+    content += `\n\nبا تشکر`;
+    return content;
+}
+
+const getPurchaseRequestContent = (user: User | undefined): string => {
+    if (!user) {
+        return PREDEFINED_TITLES['purchase-request'].content;
+    }
+    let content = `با سلام و احترام\n\n
+    اینجانب ${user.name} ${user.lastName} با کد ملی ${user.nationalNumber} درخواست خرید واحد مسکونی با مشخصات زیر را دارم:\n\n`;
+    content += `متراژ: حداقل ... متر مربع\n\n`;
+    content += `تعداد خواب: حداقل ... خواب\n\n`;
+    content += `قیمت: بین ... تا ... میلیون تومان\n\n`;
+    content += `سایر مشخصات: ...\n\n`;
+    content += `\n\nبا تشکر`;
+    return content;
+}
+
+const getPaymentVerificationContent = (user: User | undefined): string => {
+    if (!user) {
+        return PREDEFINED_TITLES['payment-verification'].content;
+    }
+    let content = `با سلام و احترام\n\n
+    اینجانب ${user.name} ${user.lastName} با کد ملی ${user.nationalNumber} پرداخت مربوط به واحد مسکونی را انجام داده‌ام. لطفاً پرداخت را بررسی و تایید فرمایید.`
+    content += `\n\nبا تشکر`;
+    return content;
+}
+
+const getTransferRequestContent = (user: User | undefined): string => {
+    if (!user) {
+        return PREDEFINED_TITLES['transfer-request'].content;
+    }
+    let content = `با سلام و احترام\n\n
+    اینجانب ${user.name} ${user.lastName} با کد ملی ${user.nationalNumber} درخواست واگذاری واحد خریداری شده را دارم. لطفاً مراحل واگذاری را بررسی و راهنمایی فرمایید.`
+    content += `\n\nبا تشکر`;
+    return content;
+}
+
+const getContentForTitle = (title: PredefinedTitleKey, user: User | undefined): string => {
+    switch (title) {
+        case 'account-verification':
+            return getAccountVerificationContent(user);
+        case 'purchase-request':
+            return getPurchaseRequestContent(user);
+        case 'payment-verification':
+            return getPaymentVerificationContent(user);
+        case 'transfer-request':
+            return getTransferRequestContent(user);
+        default:
+            return PREDEFINED_TITLES[title as keyof typeof PREDEFINED_TITLES].content;
+    }
+}
 
 export default function TicketsList() {
     const [otherTickets, setOtherTickets] = useState<OtherTicket[]>([]);
     const [subProjectsTickets, setSubProjectsTickets] = useState<SubProjectTicket[]>([]);
     const [data, setData] = useState<(OtherTicket | SubProjectTicket)[]>([]);
-    const [newTicketTitle, setNewTicketTitle] = useState<string | undefined>();
+    const [selectedTitle, setSelectedTitle] = useState<PredefinedTitleKey | 'other' | ''>('');
+    const [user, setUser] = useState<User>();
+    const [customTitle, setCustomTitle] = useState<string>('');
+    const [editedContent, setEditedContent] = useState<string>('');
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
     const navigate = useNavigate();
 
+    const resetForm = () => {
+        setSelectedTitle('');
+        setCustomTitle('');
+        setEditedContent('');
+    };
+
     useEffect(() => {
+        getTable('users/profile', setUser);
         getTable('other-tickets/profile', setOtherTickets);
         getTable('sub-project-tickets/profile', setSubProjectsTickets);
     }, []);
@@ -34,11 +128,17 @@ export default function TicketsList() {
     }, [otherTickets, subProjectsTickets])
     return (
         <div className="container mx-auto py-10 px-4">
-            <Dialog>
-                <DialogTrigger>
+            <Dialog open={isDialogOpen} onOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (!open) {
+                    resetForm();
+                }
+            }}>
+                <DialogTrigger asChild>
                     <Button 
                         variant={'default'} 
                         className="mb-4"
+                        onClick={() => setIsDialogOpen(true)}
                     >
                         تیکت جدید +
                     </Button>
@@ -46,29 +146,107 @@ export default function TicketsList() {
                 <DialogContent>
                     <DialogHeader className="text-right sm:text-right">
                         <DialogTitle>
-                            لطفا موضوع تیکت خود را بنویسید
+                            لطفا موضوع تیکت خود را انتخاب کنید
                         </DialogTitle>
                     </DialogHeader>
                     <div className="grid gap-4">
                         <div className="grid gap-3">
-                            <Label htmlFor="name-1">موضوع</Label>
-                            <Input id="title" name="title" value={newTicketTitle} onChange={(e) => setNewTicketTitle(e.target.value)} />
+                            <Label htmlFor="title-select">موضوع</Label>
+                            <Select 
+                                value={selectedTitle} 
+                                onValueChange={(value) => {
+                                    setSelectedTitle(value as PredefinedTitleKey | 'other');
+                                    setEditedContent(''); // Reset edited content when title changes
+                                    if (value !== 'other') {
+                                        setCustomTitle('');
+                                    }
+                                }}
+                            >
+                                <SelectTrigger id="title-select" className="h-12">
+                                    <SelectValue placeholder="انتخاب موضوع" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {Object.entries(PREDEFINED_TITLES).map(([key, item]) => (
+                                        <SelectItem key={key} value={key}>
+                                            {item.title}
+                                        </SelectItem>
+                                    ))}
+                                    <SelectItem value="other">سایر</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
+
+                        {selectedTitle === 'other' && (
+                            <div className="grid gap-3">
+                                <Label htmlFor="custom-title">موضوع دلخواه</Label>
+                                <Input 
+                                    id="custom-title" 
+                                    name="custom-title" 
+                                    value={customTitle} 
+                                    onChange={(e) => setCustomTitle(e.target.value)}
+                                    placeholder="موضوع تیکت خود را بنویسید"
+                                />
+                            </div>
+                        )}
+
+                        {selectedTitle && selectedTitle !== 'other' && selectedTitle in PREDEFINED_TITLES && (
+                            <div className="grid gap-3">
+                                <Label htmlFor="predefined-content">محتوای پیشنهادی</Label>
+                                <Textarea 
+                                    id="predefined-content"
+                                    value={
+                                        editedContent || getContentForTitle(selectedTitle as PredefinedTitleKey, user)
+                                    }
+                                    onChange={(e) => {
+                                        setEditedContent(e.target.value);
+                                    }}
+                                    className="min-h-[120px] bg-slate-50"
+                                />
+                                <p className="text-xs text-gray-500">این محتوا به عنوان اولین پیام در تیکت ارسال خواهد شد</p>
+                            </div>
+                        )}
                     </div>
                     <DialogFooter>
-                        {newTicketTitle && <Button onClick={async() => {
-                            const user = await getTable('users/profile');
-                            const newTicket = await postTable('other-tickets', {
-                                type: newTicketTitle,
-                                recieverId: 1,
-                                userId: user.id,
-                            })
-                            if(newTicket){
-                                navigate(`/tickets/other/${newTicket.id}`)
-                            }
-                        }}>
-                            ایجاد تیکت
-                        </Button>}
+                        {((selectedTitle && selectedTitle !== 'other' && selectedTitle in PREDEFINED_TITLES) || 
+                          (selectedTitle === 'other' && customTitle.trim())) && (
+                            <Button onClick={async() => {
+                                if(!user){
+                                    return;
+                                }
+                                const title = selectedTitle !== 'other' && selectedTitle in PREDEFINED_TITLES
+                                    ? PREDEFINED_TITLES[selectedTitle as PredefinedTitleKey].title
+                                    : customTitle.trim();
+                                
+                                const newTicket = await postTable('other-tickets', {
+                                    type: title,
+                                    recieverId: 1,
+                                    userId: user.id,
+                                });
+                                
+                                if(newTicket && newTicket.id) {
+                                    // If predefined title is selected, send the predefined content as first message
+                                    if (selectedTitle !== 'other' && selectedTitle in PREDEFINED_TITLES) {
+                                        const predefinedContent = getContentForTitle(selectedTitle as PredefinedTitleKey, user);
+                                        
+                                        // Use edited content if available, otherwise use predefined content
+                                        const finalContent = editedContent || predefinedContent;
+                                        
+                                        await postTable('other-chats', {
+                                            ticketId: newTicket.id,
+                                            message: finalContent,
+                                        });
+                                    }
+                                    
+                                    // Reset form and close dialog
+                                    resetForm();
+                                    setIsDialogOpen(false);
+                                    
+                                    navigate(`/tickets/other/${newTicket.id}`);
+                                }
+                            }}>
+                                ایجاد تیکت
+                            </Button>
+                        )}
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

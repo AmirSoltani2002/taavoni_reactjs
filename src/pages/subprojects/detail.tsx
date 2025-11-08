@@ -3,11 +3,12 @@ import { useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Building, Camera, FileText, Download } from "lucide-react";
-import { getTable, getImageBlobUrl, downloadDocument } from "@/general";
+import { Building, Camera, FileText, Download, Receipt } from "lucide-react";
+import { getTable, getImageBlobUrl, downloadDocument, getToken } from "@/general";
 import { toast } from "sonner";
 import type { SubProject, ProjectDoc } from "../projects/columns";
 import { PageLoader } from "@/components/ui/loader";
+import { api_base_url } from "@/config";
 
 export default function SubProjectDetail() {
     const { id } = useParams<{ id: string }>();
@@ -16,6 +17,13 @@ export default function SubProjectDetail() {
     const [projectImages, setProjectImages] = useState<Array<{ id: number; url?: string; index: number }>>([]);
     const [imageUrls, setImageUrls] = useState<{ [key: number]: string }>({});
     const [isLoading, setIsLoading] = useState(true);
+    const [invoice, setInvoice] = useState<{
+        id: number;
+        amount?: number;
+        number?: string;
+        detail?: string;
+        document?: string;
+    } | null>(null);
 
     useEffect(() => {
         if (id) {
@@ -59,6 +67,27 @@ export default function SubProjectDetail() {
                         images.sort((a, b) => a.index - b.index);
                         setProjectImages(images);
                         setProjectDocs(docs);
+                    }
+                }
+
+                // Load invoice if subproject has a userId
+                const userId = (subProjectData as SubProject).userId;
+                if (userId) {
+                    const invoicesData = await getTable(`invoice/profile`, undefined, false);
+                    if (invoicesData && Array.isArray(invoicesData) && !('error' in invoicesData)) {
+                        console.log({invoicesData});
+                        const foundInvoice = (invoicesData as any[]).find((inv: any) => 
+                            inv.subProjectId?.toString() === subProjectId
+                        );
+                        if (foundInvoice) {
+                            setInvoice({
+                                id: foundInvoice.id,
+                                amount: foundInvoice.amount,
+                                number: foundInvoice.number,
+                                detail: foundInvoice.detail,
+                                document: foundInvoice.document,
+                            });
+                        }
                     }
                 }
             } else {
@@ -343,6 +372,125 @@ export default function SubProjectDetail() {
                         <div className="text-center py-6 text-slate-500 border-2 border-dashed border-slate-200 rounded-lg">
                             <FileText className="w-10 h-10 mx-auto mb-2 text-slate-400" />
                             <p className="text-sm">هیچ سندی ثبت نشده است</p>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
+            {/* Invoice Information */}
+            <Card className="bg-white/70 backdrop-blur-sm shadow-xl border-0 ring-1 ring-white/20">
+                <CardHeader className="bg-gradient-to-r from-blue-50/50 to-purple-50/50 border-b border-blue-200/30 pb-6">
+                    <CardTitle className="flex items-center gap-4 text-xl">
+                        <div className="relative">
+                            <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl blur-sm opacity-30"></div>
+                            <div className="relative p-3 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl">
+                                <Receipt className="w-6 h-6 text-white" />
+                            </div>
+                        </div>
+                        <div>
+                            <span className="bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent font-bold">
+                                اطلاعات فاکتور
+                            </span>
+                            <p className="text-sm text-slate-500 font-normal mt-1">
+                                اطلاعات فاکتور واحد
+                            </p>
+                        </div>
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                    {invoice ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {invoice.document && (
+                                <div className="md:col-span-2 lg:col-span-3">
+                                    <Label className="text-slate-700 font-semibold mb-2 block">فایل فاکتور</Label>
+                                    <div className="p-3 bg-slate-50 rounded-md border border-slate-200 flex items-center justify-between">
+                                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                                            <FileText className="h-5 w-5 text-orange-600 flex-shrink-0" />
+                                            <span className="font-medium text-slate-900 truncate">{invoice.document}</span>
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={async () => {
+                                                if (!invoice.id) return;
+                                                try {
+                                                    const token = getToken();
+                                                    const resp = await fetch(`${api_base_url}/invoice/download/${invoice.id}`, {
+                                                        method: 'GET',
+                                                        headers: {
+                                                            'Authorization': token ? `Bearer ${token}` : ''
+                                                        }
+                                                    });
+                                                    
+                                                    if (resp.ok) {
+                                                        const blob = await resp.blob();
+                                                        const url = window.URL.createObjectURL(blob);
+                                                        const a = document.createElement('a');
+                                                        a.href = url;
+                                                        
+                                                        // Get filename from Content-Disposition header or use document filename
+                                                        const contentDisposition = resp.headers.get('Content-Disposition');
+                                                        let downloadFilename = invoice.document || 'invoice';
+                                                        if (contentDisposition) {
+                                                            const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                                                            if (filenameMatch && filenameMatch[1]) {
+                                                                downloadFilename = filenameMatch[1].replace(/['"]/g, '');
+                                                            }
+                                                        }
+                                                        
+                                                        a.download = downloadFilename;
+                                                        document.body.appendChild(a);
+                                                        a.click();
+                                                        window.URL.revokeObjectURL(url);
+                                                        document.body.removeChild(a);
+                                                        toast.success('فایل با موفقیت دانلود شد');
+                                                    } else {
+                                                        const err = await resp.json();
+                                                        toast.error(err.message || 'خطا در دانلود فایل');
+                                                    }
+                                                } catch (error: any) {
+                                                    console.error('Download error:', error);
+                                                    toast.error('خطا در دانلود فایل');
+                                                }
+                                            }}
+                                            className="h-8 w-8 p-0 text-blue-600 hover:bg-blue-50 flex-shrink-0"
+                                            title="دانلود فایل"
+                                        >
+                                            <Download className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+                            {invoice.amount && (
+                                <div>
+                                    <Label className="text-slate-700 font-semibold mb-2 block">مبلغ (تومان)</Label>
+                                    <div className="p-3 bg-slate-50 rounded-md border border-slate-200">
+                                        <p className="text-slate-900 font-medium">{invoice.amount.toLocaleString('fa-IR')}</p>
+                                    </div>
+                                </div>
+                            )}
+                            {invoice.number && (
+                                <div>
+                                    <Label className="text-slate-700 font-semibold mb-2 block">شماره فاکتور</Label>
+                                    <div className="p-3 bg-slate-50 rounded-md border border-slate-200">
+                                        <p className="text-slate-900 font-medium">{invoice.number}</p>
+                                    </div>
+                                </div>
+                            )}
+                            {invoice.detail && (
+                                <div className="md:col-span-2 lg:col-span-3">
+                                    <Label className="text-slate-700 font-semibold mb-2 block">جزئیات</Label>
+                                    <div className="p-3 bg-slate-50 rounded-md border border-slate-200">
+                                        <p className="text-slate-900 font-medium whitespace-pre-wrap">{invoice.detail}</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="text-center py-6 text-slate-500 border-2 border-dashed border-slate-200 rounded-lg">
+                            <Receipt className="w-10 h-10 mx-auto mb-2 text-slate-400" />
+                            <p className="text-sm">هیچ فاکتوری برای این واحد ثبت نشده است</p>
                         </div>
                     )}
                 </CardContent>

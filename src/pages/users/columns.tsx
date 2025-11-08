@@ -39,6 +39,24 @@ export type UserDoc = {
     createdAt?: string;
     updatedAt?: string;
 }
+
+export const getUserType = (type: any) => {
+    if(type === 'system') {
+        return 'مدیر سیستم';
+    } else if(type === 'admin') {
+        return 'ادمین';
+    } else if(type === 'tehranUni') {
+        return 'عضو دانشگاه تهران';
+    } else if(type === 'otherUni') {
+        return 'عضو سایر دانشگاه ها';
+    } else if(type === 'employee') {
+        return ' کارمند غیر دانشگاهی';
+    } else if(type === 'free') {
+        return 'عضو آزاد';
+    } else {
+        return type;
+    }
+}
 export const columns: ColumnDef<User>[] = [
     {
         accessorKey: "name",
@@ -62,21 +80,7 @@ export const columns: ColumnDef<User>[] = [
         header: "نوع اکانت",
         cell: ({ cell }) => {
             const v = cell.getValue();
-            if(v === 'system') {
-                return 'مدیر سیستم';
-            } else if(v === 'admin') {
-                return 'ادمین';
-            } else if(v === 'tehranUni') {
-                return 'عضو دانشگاه تهران';
-            } else if(v === 'otherUni') {
-                return 'عضو سایر دانشگاه ها';
-            } else if(v === 'employee') {
-                return ' کارمند غیر دانشگاهی';
-            } else if(v === 'free') {
-                return 'عضو آزاد';
-            } else {
-                return v;
-            }
+            return getUserType(v);
         }
     },
     {

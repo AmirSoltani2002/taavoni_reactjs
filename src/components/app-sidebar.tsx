@@ -126,12 +126,6 @@ export function AppSidebar() {
           icon: Home,
         },
         {
-          title: "پروژه‌ها",
-          url: "/projects/list",
-          icon: Building,
-          disabled: !userInfo?.accepted,
-        },
-        {
           title: "رسیدهای پرداخت",
           url: "/transactions/list",
           icon: CreditCard,
