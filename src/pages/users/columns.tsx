@@ -66,14 +66,22 @@ export const columns: ColumnDef<User>[] = [
             const Badge = (u.type === 'system' || u.type === 'admin') ? Crown : u.accepted ? CircleCheckBig : null;
             const badgeColor = Badge === Crown ? 'purple' : 'green'
             return <span>
-                {row.original.name + ' ' + row.original.lastName}
+                {row.original.name}
                 {Badge && <Badge className="m-1" size={15} style={{display: 'inline', color: `var(--color-${badgeColor}-500)`}} />}
             </span>
         }
     },
     {
-        accessorKey: "email",
-        header: "ایمیل",
+        accessorKey: "lastName",
+        header: "نام خانوادگی",
+    },
+    {
+        accessorKey: "nationalNumber",
+        header: "کد ملی",
+    },
+    {
+        accessorKey: "mobile",
+        header: "موبایل",
     },
     {
         accessorKey: "type",
@@ -82,14 +90,6 @@ export const columns: ColumnDef<User>[] = [
             const v = cell.getValue();
             return getUserType(v);
         }
-    },
-    {
-        accessorKey: "mobile",
-        header: "موبایل",
-    },
-    {
-        accessorKey: "nationalNumber",
-        header: "کد ملی",
     },
     {
         accessorKey: "birthDate",
@@ -110,57 +110,11 @@ export const columns: ColumnDef<User>[] = [
         }
     },
     {
-        accessorKey: "address",
-        header: "آدرس"
-    },
-    {
         accessorKey: "isargary_percent",
         header: "درصد ایثارگری",
         cell: ({ cell }) => {
             const v = cell.getValue();
             return v ? `${v} %` : 'ندارد'
-        }
-    },
-    {
-        accessorKey: "azade_esarat_months",
-        header: "ماه های اسارت",
-        cell: ({ cell }) => {
-            const v = cell.getValue();
-            return v ? `${v} ماه` : 'ندارد'
-        }
-    },
-    {
-        accessorKey: "azade_months",
-        header: "ماه های آزادگی",
-        cell: ({ cell }) => {
-            const v = cell.getValue();
-            return v ? `${v} ماه` : 'ندارد'
-        }
-    },
-    {
-        accessorKey: "shahed_family_number",
-        header: "تعداد اعضای خانواده شاهد",
-        cell: ({ cell }) => {
-            const v = cell.getValue();
-            return v ? v : 'ندارد'
-        }
-    },
-    {
-        accessorKey: "isargari_relation",
-        header: "ارتباط با ایثارگر",
-        cell: ({ cell }) => {
-            const v = cell.getValue();
-            if(v === 'azade_wife') {
-                return 'همسر آزاده'
-            } else if(v === 'azade_child') {
-                return 'فرزند آزاده'
-            } else if(v === 'jan_wife') {
-                return 'همسر جانباز'
-            } else if(v === 'jan_child') {
-                return 'فرزند جانباز'
-            } else {
-                return 'ندارد'
-            }
         }
     },
 ]

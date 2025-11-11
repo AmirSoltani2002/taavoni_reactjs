@@ -3,11 +3,13 @@ import {
   type ColumnDef,
   flexRender,
   getCoreRowModel,
+  getSortedRowModel,
   useReactTable,
+  type SortingState,
 } from "@tanstack/react-table"
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { deleteTableRow, updateTableRow } from "@/general";
 import { useMemo, useState } from "react";
@@ -85,12 +87,30 @@ export function DataTable<TData extends { id?: number }, TValue>({
         </div>;
     }
   }, [EditComponent, editRow]);
+  const [sorting, setSorting] = useState<SortingState>([]);
+
+  // Enable sorting for all columns by default, except actions column
+  const columnsWithSorting = useMemo(() => {
+    return columns.map((col) => {
+      // If column already has enableSorting set, respect it
+      if (col.enableSorting === false) {
+        return col;
+      }
+      // Enable sorting by default for all columns
+      return {
+        ...col,
+        enableSorting: col.enableSorting !== undefined ? col.enableSorting : true,
+      };
+    });
+  }, [columns]);
+
   const allColumns = hasId && tableName && (_showDeleteButton || options || EditComponent)
     ? [
-        ...columns,
+        ...columnsWithSorting,
         {
           id: "actions",
           header: "عملیات",
+          enableSorting: false, // Actions column should not be sortable
           cell: ({ row }: any) => (
             <div className="flex gap-2">
               {EditComponent && (
@@ -114,12 +134,17 @@ export function DataTable<TData extends { id?: number }, TValue>({
           ),
         } as ColumnDef<TData, TValue>,
       ]
-    : columns;
+    : columnsWithSorting;
 
   const table = useReactTable({
     data,
     columns: allColumns,
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    onSortingChange: setSorting,
+    state: {
+      sorting,
+    },
   });
   const HEADER_COLOR = 'slate';
   return (
@@ -129,14 +154,47 @@ export function DataTable<TData extends { id?: number }, TValue>({
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
               {headerGroup.headers.map((header) => {
+                const canSort = header.column.getCanSort();
+                const isSorted = header.column.getIsSorted();
                 return (
-                  <TableHead key={header.id} className="text-start">
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
+                  <TableHead 
+                    key={header.id} 
+                    className={cn(
+                      "text-start",
+                      canSort && "cursor-pointer select-none hover:bg-slate-100"
+                    )}
+                    onClick={() => {
+                      if (canSort) {
+                        const currentSort = header.column.getIsSorted();
+                        if (currentSort === false) {
+                          header.column.toggleSorting(false);
+                        } else if (currentSort === 'asc') {
+                          header.column.toggleSorting(true);
+                        } else {
+                          header.column.clearSorting();
+                        }
+                      }
+                    }}
+                  >
+                    {header.isPlaceholder ? null : (
+                      <div className="flex items-center gap-2">
+                        {flexRender(
                           header.column.columnDef.header,
                           header.getContext()
                         )}
+                        {canSort && (
+                          <span className="text-slate-400">
+                            {isSorted === 'asc' ? (
+                              <ArrowUp className="h-4 w-4" />
+                            ) : isSorted === 'desc' ? (
+                              <ArrowDown className="h-4 w-4" />
+                            ) : (
+                              <ArrowUpDown className="h-4 w-4 opacity-50" />
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </TableHead>
                 );
               })}
