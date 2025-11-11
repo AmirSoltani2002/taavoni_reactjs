@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar22 } from "@/components/calendars/calendar";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { DataTable } from "@/components/ui/data-table";
 import { useNavigate, useParams } from "react-router-dom";
@@ -17,9 +18,19 @@ import UserProjects from "./userProjects";
 import { 
   User as UserIcon, Mail, Phone, MapPin, Calendar, FileText, 
   Edit2, Save, X, ArrowRight, CheckCircle2, Upload, Lock, 
-  Award, Users, Home, Briefcase, Hash
+  Award, Users, Home, Briefcase, Hash, CreditCard
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import type { Transaction } from "../transactions/columns";
+import { columns as transactionColumns } from "../transactions/columns";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // Document type for user-doc/profile
 const LABEL_CLASS = "font-semibold text-gray-700 mb-1.5 block"
@@ -42,6 +53,9 @@ export default function ProfilePage() {
     confirmPassword: ''
   });
   const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loadingTransactions, setLoadingTransactions] = useState(false);
+  const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
   const { userId } = useParams();
   const navigate = useNavigate()
 
@@ -64,6 +78,21 @@ export default function ProfilePage() {
   useEffect(() => {
     getTable('users/profile', setViewer)
   }, [])
+
+  useEffect(() => {
+    if (user) {
+      setLoadingTransactions(true);
+      const endpoint = userId ? `transaction/users/${userId}` : 'transaction/profile';
+      getTable(endpoint, (data: Transaction[] | {error?: any}) => {
+        if (data && !('error' in data)) {
+          setTransactions(data as Transaction[] || []);
+        } else {
+          setTransactions([]);
+        }
+        setLoadingTransactions(false);
+      });
+    }
+  }, [user, userId])
 
   const handleAddDocument = async () => {
     if(!user){return}
@@ -174,12 +203,20 @@ export default function ProfilePage() {
           
           {/* Status Badge */}
           {(userId && user) && (
-            <div className="mb-6">
+            <div className="mb-6 flex items-center gap-4">
               {user.accepted ? (
-                <Badge className="bg-green-500 text-white px-4 py-2 text-sm gap-2">
-                  <CheckCircle2 className="h-4 w-4" />
-                  کاربر تایید شده
-                </Badge>
+                <>
+                  <Badge className="bg-green-500 text-white px-4 py-2 text-sm gap-2">
+                    <CheckCircle2 className="h-4 w-4" />
+                    کاربر تایید شده
+                  </Badge>
+                  <button
+                    onClick={() => setShowDeactivateDialog(true)}
+                    className="cursor-pointer text-red-600 hover:text-red-700 text-sm font-medium underline-offset-4 hover:underline transition-colors"
+                  >
+                    غیر فعال کردن حساب کاربری
+                  </button>
+                </>
               ) : (
                 <Button 
                   variant="default" 
@@ -202,115 +239,333 @@ export default function ProfilePage() {
               )}
             </div>
           )}
-        </div>
-        {/* Main Content */}
-        {!edit ? (
-          <div className="space-y-6">
-            {/* Personal Information Card */}
-            <Card className="shadow-lg border-0 bg-white">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl flex items-center gap-2">
-                    <UserIcon className="h-5 w-5 text-blue-600" />
-                    اطلاعات شخصی
-                  </CardTitle>
-                  {(!userId || viewer?.type === 'system') && (
-                    <Button onClick={() => setEdit(true)} variant="outline" size="sm" className="gap-2">
-                      <Edit2 className="h-4 w-4" />
-                      ویرایش
-                    </Button>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-1">
-                    <Label className={LABEL_CLASS}><UserIcon className="h-4 w-4 inline ml-2" />نام</Label>
-                    <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.name || "-"}</div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className={LABEL_CLASS}><UserIcon className="h-4 w-4 inline ml-2" />نام خانوادگی</Label>
-                    <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.lastName || "-"}</div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className={LABEL_CLASS}><Mail className="h-4 w-4 inline ml-2" />ایمیل</Label>
-                    <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.email || "-"}</div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className={LABEL_CLASS}><Phone className="h-4 w-4 inline ml-2" />موبایل</Label>
-                    <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.mobile || "-"}</div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className={LABEL_CLASS}><Home className="h-4 w-4 inline ml-2" />تلفن منزل</Label>
-                    <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.homePhone || "-"}</div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className={LABEL_CLASS}><Briefcase className="h-4 w-4 inline ml-2" />تلفن محل کار</Label>
-                    <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.workPhone || "-"}</div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className={LABEL_CLASS}><Hash className="h-4 w-4 inline ml-2" />کد ملی</Label>
-                    <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.nationalNumber || "-"}</div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className={LABEL_CLASS}><UserIcon className="h-4 w-4 inline ml-2" />جنسیت</Label>
-                    <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.sex === "male" ? "مرد" : user.sex === "female" ? "زن" : "-"}</div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className={LABEL_CLASS}><Calendar className="h-4 w-4 inline ml-2" />تاریخ تولد</Label>
-                    <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">
-                      {user.birthDay ? (new Date(user.birthDay || '')).toLocaleDateString('fa-IR') : 'تاریخ تولد ثبت نشده'}
-                    </div>
-                  </div>
-                  <div className="col-span-1 md:col-span-2 space-y-1">
-                    <Label className={LABEL_CLASS}><MapPin className="h-4 w-4 inline ml-2" />آدرس</Label>
-                    <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg min-h-[60px]">{user.address || "-"}</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* Martyrdom Information Card */}
-            {(user.isargaryPercent || user.azadeEsaratMonths || user.azadeMonths || user.shahedFamilyNumber || user.shahedRelation) && (
+          {/* Deactivate User Confirmation Dialog */}
+          <Dialog open={showDeactivateDialog} onOpenChange={setShowDeactivateDialog}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>غیر فعال کردن حساب کاربری</DialogTitle>
+                <DialogDescription className="text-right">
+                  آیا مطمئن هستید که می‌خواهید حساب کاربری {fullName} را غیر فعال کنید؟
+                  این عمل باعث می‌شود کاربر دیگر نتواند به سیستم دسترسی داشته باشد.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDeactivateDialog(false)}
+                >
+                  انصراف
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={async () => {
+                    if (!userId) return;
+                    setIsLoading(true);
+                    await updateTableRow(`users`, userId, {accepted: false}, () => {
+                      getTable(`users/${userId}`, (data: User) => {
+                        setUser(data);
+                        setForm(data);
+                        setBirthDate(data.birthDay ? new Date(data.birthDay) : undefined);
+                        toast.success("حساب کاربری با موفقیت غیر فعال شد");
+                      });
+                    });
+                    setIsLoading(false);
+                    setShowDeactivateDialog(false);
+                  }}
+                >
+                  غیر فعال کردن
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+        
+        {/* Main Content with Tabs */}
+        {!edit ? (
+          <Tabs defaultValue="personal" className="w-full">
+            <div className="border-b border-gray-200 mb-6">
+              <TabsList className="w-full h-auto bg-transparent p-0 gap-0 inline-flex flex-wrap">
+                <TabsTrigger 
+                  value="personal" 
+                  className="gap-2 px-4 py-3 text-sm font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-blue-50/50 hover:text-gray-700 hover:bg-gray-50/50 transition-colors"
+                >
+                  <UserIcon className="h-4 w-4" />
+                  <span className="hidden sm:inline">اطلاعات شخصی</span>
+                  <span className="sm:hidden">شخصی</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="contact" 
+                  className="gap-2 px-4 py-3 text-sm font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-blue-50/50 hover:text-gray-700 hover:bg-gray-50/50 transition-colors"
+                >
+                  <Phone className="h-4 w-4" />
+                  <span className="hidden sm:inline">اطلاعات تماس</span>
+                  <span className="sm:hidden">تماس</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="martyrdom" 
+                  className="gap-2 px-4 py-3 text-sm font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-blue-50/50 hover:text-gray-700 hover:bg-gray-50/50 transition-colors"
+                >
+                  <Award className="h-4 w-4" />
+                  <span className="hidden sm:inline">اطلاعات ایثارگری</span>
+                  <span className="sm:hidden">ایثارگری</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="documents" 
+                  className="gap-2 px-4 py-3 text-sm font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-blue-50/50 hover:text-gray-700 hover:bg-gray-50/50 transition-colors"
+                >
+                  <FileText className="h-4 w-4" />
+                  مدارک
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="projects" 
+                  className="gap-2 px-4 py-3 text-sm font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-blue-50/50 hover:text-gray-700 hover:bg-gray-50/50 transition-colors"
+                >
+                  <Home className="h-4 w-4" />
+                  پروژه ها
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="payments" 
+                  className="gap-2 px-4 py-3 text-sm font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-blue-50/50 hover:text-gray-700 hover:bg-gray-50/50 transition-colors"
+                >
+                  <CreditCard className="h-4 w-4" />
+                  پرداخت ها
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            {/* Personal Information Tab */}
+            <TabsContent value="personal" className="mt-0">
               <Card className="shadow-lg border-0 bg-white">
-                <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b">
-                  <CardTitle className="text-xl flex items-center gap-2">
-                    <Award className="h-5 w-5 text-purple-600" />
-                    اطلاعات ایثارگری
-                  </CardTitle>
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-xl flex items-center gap-2">
+                      <UserIcon className="h-5 w-5 text-blue-600" />
+                      اطلاعات شخصی
+                    </CardTitle>
+                    {(!userId || viewer?.type === 'system') && (
+                      <Button onClick={() => setEdit(true)} variant="outline" size="sm" className="gap-2">
+                        <Edit2 className="h-4 w-4" />
+                        ویرایش
+                      </Button>
+                    )}
+                  </div>
                 </CardHeader>
                 <CardContent className="pt-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-1">
-                      <Label className={LABEL_CLASS}>درصد ایثارگری</Label>
-                      <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.isargaryPercent ?? "-"}</div>
+                      <Label className={LABEL_CLASS}><UserIcon className="h-4 w-4 inline ml-2" />نام</Label>
+                      <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.name || "-"}</div>
                     </div>
                     <div className="space-y-1">
-                      <Label className={LABEL_CLASS}>ماه های اسارت</Label>
-                      <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.azadeEsaratMonths ?? "-"}</div>
+                      <Label className={LABEL_CLASS}><UserIcon className="h-4 w-4 inline ml-2" />نام خانوادگی</Label>
+                      <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.lastName || "-"}</div>
                     </div>
                     <div className="space-y-1">
-                      <Label className={LABEL_CLASS}>ماه های آزادگی</Label>
-                      <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.azadeMonths ?? "-"}</div>
+                      <Label className={LABEL_CLASS}><Hash className="h-4 w-4 inline ml-2" />کد ملی</Label>
+                      <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.nationalNumber || "-"}</div>
                     </div>
                     <div className="space-y-1">
-                      <Label className={LABEL_CLASS}><Users className="h-4 w-4 inline ml-2" />تعداد اعضای خانواده شاهد</Label>
-                      <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.shahedFamilyNumber ?? "-"}</div>
+                      <Label className={LABEL_CLASS}><UserIcon className="h-4 w-4 inline ml-2" />جنسیت</Label>
+                      <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.sex === "male" ? "مرد" : user.sex === "female" ? "زن" : "-"}</div>
                     </div>
-                    <div className="space-y-1 md:col-span-2">
-                      <Label className={LABEL_CLASS}>ارتباط با ایثارگر</Label>
+                    <div className="space-y-1">
+                      <Label className={LABEL_CLASS}><Calendar className="h-4 w-4 inline ml-2" />تاریخ تولد</Label>
                       <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">
-                        {user.shahedRelation === 'azade_wife' ? 'همسر آزاده' :
-                         user.shahedRelation === 'azade_child' ? 'فرزند آزاده' :
-                         user.shahedRelation === 'jan_wife' ? 'همسر جانباز' :
-                         user.shahedRelation === 'jan_child' ? 'فرزند جانباز' : "-"}
+                        {user.birthDay ? (new Date(user.birthDay || '')).toLocaleDateString('fa-IR') : 'تاریخ تولد ثبت نشده'}
                       </div>
+                    </div>
+                    <div className="col-span-1 md:col-span-2 space-y-1">
+                      <Label className={LABEL_CLASS}><MapPin className="h-4 w-4 inline ml-2" />آدرس</Label>
+                      <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg min-h-[60px]">{user.address || "-"}</div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            )}
-          </div>
+            </TabsContent>
+
+            {/* Contact Information Tab */}
+            <TabsContent value="contact" className="mt-0">
+              <Card className="shadow-lg border-0 bg-white">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-xl flex items-center gap-2">
+                      <Phone className="h-5 w-5 text-blue-600" />
+                      اطلاعات تماس
+                    </CardTitle>
+                    {(!userId || viewer?.type === 'system') && (
+                      <Button onClick={() => setEdit(true)} variant="outline" size="sm" className="gap-2">
+                        <Edit2 className="h-4 w-4" />
+                        ویرایش
+                      </Button>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-1">
+                      <Label className={LABEL_CLASS}><Mail className="h-4 w-4 inline ml-2" />ایمیل</Label>
+                      <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.email || "-"}</div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className={LABEL_CLASS}><Phone className="h-4 w-4 inline ml-2" />موبایل</Label>
+                      <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.mobile || "-"}</div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className={LABEL_CLASS}><Home className="h-4 w-4 inline ml-2" />تلفن منزل</Label>
+                      <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.homePhone || "-"}</div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className={LABEL_CLASS}><Briefcase className="h-4 w-4 inline ml-2" />تلفن محل کار</Label>
+                      <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.workPhone || "-"}</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Martyrdom Information Tab */}
+            <TabsContent value="martyrdom" className="mt-0">
+              {(user.isargaryPercent || user.azadeEsaratMonths || user.azadeMonths || user.shahedFamilyNumber || user.shahedRelation) ? (
+                <Card className="shadow-lg border-0 bg-white">
+                  <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-xl flex items-center gap-2">
+                        <Award className="h-5 w-5 text-purple-600" />
+                        اطلاعات ایثارگری
+                      </CardTitle>
+                      {(!userId || viewer?.type === 'system') && (
+                        <Button onClick={() => setEdit(true)} variant="outline" size="sm" className="gap-2">
+                          <Edit2 className="h-4 w-4" />
+                          ویرایش
+                        </Button>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-1">
+                        <Label className={LABEL_CLASS}>درصد ایثارگری</Label>
+                        <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.isargaryPercent ?? "-"}</div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className={LABEL_CLASS}>ماه های اسارت</Label>
+                        <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.azadeEsaratMonths ?? "-"}</div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className={LABEL_CLASS}>ماه های آزادگی</Label>
+                        <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.azadeMonths ?? "-"}</div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className={LABEL_CLASS}><Users className="h-4 w-4 inline ml-2" />تعداد اعضای خانواده شاهد</Label>
+                        <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.shahedFamilyNumber ?? "-"}</div>
+                      </div>
+                      <div className="space-y-1 md:col-span-2">
+                        <Label className={LABEL_CLASS}>ارتباط با ایثارگر</Label>
+                        <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">
+                          {user.shahedRelation === 'azade_wife' ? 'همسر آزاده' :
+                           user.shahedRelation === 'azade_child' ? 'فرزند آزاده' :
+                           user.shahedRelation === 'jan_wife' ? 'همسر جانباز' :
+                           user.shahedRelation === 'jan_child' ? 'فرزند جانباز' : "-"}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card className="shadow-lg border-0 bg-white">
+                  <CardContent className="pt-6 text-center py-12 text-gray-500">
+                    <Award className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <p>اطلاعات ایثارگری ثبت نشده است.</p>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+
+            {/* Documents Tab */}
+            <TabsContent value="documents" className="mt-0">
+              <Card className="shadow-lg border-0 bg-white">
+                <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b">
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-green-600" />
+                    مدارک {fullName}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  {!userId && (
+                    <Card className="mb-6 bg-blue-50 border-blue-200">
+                      <CardContent className="pt-6">
+                        <h3 className="font-semibold mb-4 flex items-center gap-2">
+                          <Upload className="h-5 w-5 text-blue-600" />
+                          افزودن مدرک جدید
+                        </h3>
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                          <Input 
+                            type='text' 
+                            value={fileInputTitle} 
+                            placeholder="موضوع فایل (اختیاری)" 
+                            onChange={(e) => setFileInputTitle(e.target.value)}
+                            className="flex-1 h-11"
+                          />
+                          <Input 
+                            ref={fileInputRef} 
+                            type="file" 
+                            accept="image/*,application/pdf"
+                            className="flex-1 h-11"
+                          />
+                          <Button 
+                            onClick={handleAddDocument} 
+                            disabled={uploading}
+                            className="gap-2 h-11"
+                          >
+                            <Upload className="h-4 w-4" />
+                            {uploading ? "در حال آپلود..." : "افزودن مدرک"}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                  {docs.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500">
+                      <FileText className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                      <p>مدرکی ثبت نشده است.</p>
+                    </div>
+                  ) : (
+                    <DataTable columns={docs_columns} data={docs} tableName="user-doc" />
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Projects Tab */}
+            <TabsContent value="projects" className="mt-0">
+              <UserProjects user={user} isSelf={userId ? false : true} isAdmin={['system', 'admin'].includes(viewer?.type || '')} />
+            </TabsContent>
+
+            {/* Payments Tab */}
+            <TabsContent value="payments" className="mt-0">
+              <Card className="shadow-lg border-0 bg-white">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b">
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <CreditCard className="h-5 w-5 text-blue-600" />
+                    پرداخت‌های {fullName}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  {loadingTransactions ? (
+                    <PageLoader />
+                  ) : transactions.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500">
+                      <CreditCard className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                      <p>پرداختی ثبت نشده است.</p>
+                    </div>
+                  ) : (
+                    <DataTable columns={transactionColumns} data={transactions} tableName="transaction" />
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         ) : (
           <Card className="shadow-lg border-0 bg-white">
             <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b">
@@ -544,64 +799,6 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
         )}
-
-        {/* Documents Section */}
-        <Card className="mt-6 shadow-lg border-0 bg-white">
-          <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b">
-            <CardTitle className="text-xl flex items-center gap-2">
-              <FileText className="h-5 w-5 text-green-600" />
-              مدارک {fullName}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-6">
-            {!userId && (
-              <Card className="mb-6 bg-blue-50 border-blue-200">
-                <CardContent className="pt-6">
-                  <h3 className="font-semibold mb-4 flex items-center gap-2">
-                    <Upload className="h-5 w-5 text-blue-600" />
-                    افزودن مدرک جدید
-                  </h3>
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                    <Input 
-                      type='text' 
-                      value={fileInputTitle} 
-                      placeholder="موضوع فایل (اختیاری)" 
-                      onChange={(e) => setFileInputTitle(e.target.value)}
-                      className="flex-1 h-11"
-                    />
-                    <Input 
-                      ref={fileInputRef} 
-                      type="file" 
-                      accept="image/*,application/pdf"
-                      className="flex-1 h-11"
-                    />
-                    <Button 
-                      onClick={handleAddDocument} 
-                      disabled={uploading}
-                      className="gap-2 h-11"
-                    >
-                      <Upload className="h-4 w-4" />
-                      {uploading ? "در حال آپلود..." : "افزودن مدرک"}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-            {docs.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <FileText className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <p>مدرکی ثبت نشده است.</p>
-              </div>
-            ) : (
-              <DataTable columns={docs_columns} data={docs} tableName="user-doc" />
-            )}
-          </CardContent>
-        </Card>
-
-        {/* User Projects Section */}
-        <div className="mt-6">
-          <UserProjects user={user} isSelf={userId ? false : true} isAdmin={['system', 'admin'].includes(viewer?.type || '')} />
-        </div>
       </div>
       {isLoading && <PageLoader />}
     </div>
