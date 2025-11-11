@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
 import { getUserType, type User } from "../users/columns"
 
 const PREDEFINED_TITLES = {
@@ -34,6 +35,10 @@ const PREDEFINED_TITLES = {
     'transfer-request': {
         title: 'درخواست واگذاری واحد خریداری شده',
         content: 'با سلام و احترام\n\nدرخواست واگذاری واحد خریداری شده را دارم. لطفاً مراحل واگذاری را بررسی و راهنمایی فرمایید.\n\nبا تشکر'
+    },
+    'profile-info-change': {
+        title: 'درخواست تغییر اطلاعات شخصی',
+        content: 'با سلام و احترام\n\nدرخواست تغییر اطلاعات شخصی خود را دارم.\n\nبا تشکر'
     }
 } as const;
 
@@ -83,7 +88,46 @@ const getTransferRequestContent = (user: User | undefined): string => {
     return content;
 }
 
-const getContentForTitle = (title: PredefinedTitleKey, user: User | undefined): string => {
+const FIELD_LABELS: Record<string, string> = {
+    'name': 'نام',
+    'lastName': 'نام خانوادگی',
+    'email': 'ایمیل',
+    'mobile': 'موبایل',
+    'homePhone': 'تلفن منزل',
+    'workPhone': 'تلفن محل کار',
+    'nationalNumber': 'کد ملی',
+    'address': 'آدرس',
+    'sex': 'جنسیت',
+    'birthDay': 'تاریخ تولد',
+    'isargaryPercent': 'درصد ایثارگری',
+    'azadeEsaratMonths': 'ماه های اسارت',
+    'azadeMonths': 'ماه های آزادگی',
+    'shahedFamilyNumber': 'تعداد اعضای خانواده شاهد',
+    'shahedRelation': 'ارتباط با ایثارگر'
+};
+
+const getProfileInfoChangeContent = (user: User | undefined, selectedFields: string[]): string => {
+    if (!user) {
+        return PREDEFINED_TITLES['profile-info-change'].content;
+    }
+    let content = `با سلام و احترام\n\n
+    اینجانب ${user.name} ${user.lastName} با کد ملی ${user.nationalNumber} درخواست تغییر اطلاعات پروفایل خود را دارم.\n\n`;
+    
+    if (selectedFields.length > 0) {
+        content += `مواردی که می‌خواهم تغییر دهم:\n\n`;
+        selectedFields.forEach((field, index) => {
+            content += `${index + 1}. ${FIELD_LABELS[field] || field} جدید: ...\n`;
+        });
+        content += `\n`;
+    } else {
+        content += `لطفاً اطلاعات پروفایل من را بررسی و در صورت نیاز تغییر دهید.\n\n`;
+    }
+    
+    content += `با تشکر`;
+    return content;
+}
+
+const getContentForTitle = (title: PredefinedTitleKey, user: User | undefined, selectedFields?: string[]): string => {
     switch (title) {
         case 'account-verification':
             return getAccountVerificationContent(user);
@@ -93,6 +137,8 @@ const getContentForTitle = (title: PredefinedTitleKey, user: User | undefined): 
             return getPaymentVerificationContent(user);
         case 'transfer-request':
             return getTransferRequestContent(user);
+        case 'profile-info-change':
+            return getProfileInfoChangeContent(user, selectedFields || []);
         default:
             return PREDEFINED_TITLES[title as keyof typeof PREDEFINED_TITLES].content;
     }
@@ -106,6 +152,7 @@ export default function TicketsList() {
     const [user, setUser] = useState<User>();
     const [customTitle, setCustomTitle] = useState<string>('');
     const [editedContent, setEditedContent] = useState<string>('');
+    const [selectedFields, setSelectedFields] = useState<string[]>([]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const navigate = useNavigate();
 
@@ -113,6 +160,7 @@ export default function TicketsList() {
         setSelectedTitle('');
         setCustomTitle('');
         setEditedContent('');
+        setSelectedFields([]);
     };
 
     useEffect(() => {
@@ -157,6 +205,7 @@ export default function TicketsList() {
                                 onValueChange={(value) => {
                                     setSelectedTitle(value as PredefinedTitleKey | 'other');
                                     setEditedContent(''); // Reset edited content when title changes
+                                    setSelectedFields([]); // Reset selected fields when title changes
                                     if (value !== 'other') {
                                         setCustomTitle('');
                                     }
@@ -166,11 +215,17 @@ export default function TicketsList() {
                                     <SelectValue placeholder="انتخاب موضوع" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {Object.entries(PREDEFINED_TITLES).map(([key, item]) => (
-                                        <SelectItem key={key} value={key}>
-                                            {item.title}
-                                        </SelectItem>
-                                    ))}
+                                    {Object.entries(PREDEFINED_TITLES).map(([key, item]) => {
+                                        // Only show profile-info-change if user is accepted
+                                        if (key === 'profile-info-change' && !user?.accepted) {
+                                            return null;
+                                        }
+                                        return (
+                                            <SelectItem key={key} value={key}>
+                                                {item.title}
+                                            </SelectItem>
+                                        );
+                                    })}
                                     <SelectItem value="other">سایر</SelectItem>
                                 </SelectContent>
                             </Select>
@@ -189,13 +244,48 @@ export default function TicketsList() {
                             </div>
                         )}
 
+                        {selectedTitle === 'profile-info-change' && (
+                            <div className="grid gap-3">
+                                <Label>فیلدهایی که می‌خواهید تغییر دهید (می‌توانید چند مورد را انتخاب کنید)</Label>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4 border rounded-lg bg-slate-50 max-h-[300px] overflow-y-auto">
+                                    {Object.entries(FIELD_LABELS).map(([key, label]) => (
+                                        <div key={key} className="flex items-center space-x-2 space-x-reverse">
+                                            <Checkbox
+                                                id={`field-${key}`}
+                                                checked={selectedFields.includes(key)}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) {
+                                                        setSelectedFields([...selectedFields, key]);
+                                                    } else {
+                                                        setSelectedFields(selectedFields.filter(f => f !== key));
+                                                    }
+                                                    // Reset edited content when fields change
+                                                    setEditedContent('');
+                                                }}
+                                            />
+                                            <label
+                                                htmlFor={`field-${key}`}
+                                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                            >
+                                                {label}
+                                            </label>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         {selectedTitle && selectedTitle !== 'other' && selectedTitle in PREDEFINED_TITLES && (
                             <div className="grid gap-3">
                                 <Label htmlFor="predefined-content">محتوای پیشنهادی</Label>
                                 <Textarea 
                                     id="predefined-content"
                                     value={
-                                        editedContent || getContentForTitle(selectedTitle as PredefinedTitleKey, user)
+                                        editedContent || getContentForTitle(
+                                            selectedTitle as PredefinedTitleKey, 
+                                            user,
+                                            selectedTitle === 'profile-info-change' ? selectedFields : undefined
+                                        )
                                     }
                                     onChange={(e) => {
                                         setEditedContent(e.target.value);
@@ -226,7 +316,11 @@ export default function TicketsList() {
                                 if(newTicket && newTicket.id) {
                                     // If predefined title is selected, send the predefined content as first message
                                     if (selectedTitle !== 'other' && selectedTitle in PREDEFINED_TITLES) {
-                                        const predefinedContent = getContentForTitle(selectedTitle as PredefinedTitleKey, user);
+                                        const predefinedContent = getContentForTitle(
+                                            selectedTitle as PredefinedTitleKey, 
+                                            user,
+                                            selectedTitle === 'profile-info-change' ? selectedFields : undefined
+                                        );
                                         
                                         // Use edited content if available, otherwise use predefined content
                                         const finalContent = editedContent || predefinedContent;

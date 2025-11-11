@@ -343,7 +343,7 @@ export default function ProfilePage() {
                       <UserIcon className="h-5 w-5 text-blue-600" />
                       اطلاعات شخصی
                     </CardTitle>
-                    {(!userId || viewer?.type === 'system') && (
+                    {((viewer?.type === 'system' || viewer?.type === 'admin') || (!userId && !user.accepted)) && (
                       <Button onClick={() => setEdit(true)} variant="outline" size="sm" className="gap-2">
                         <Edit2 className="h-4 w-4" />
                         ویرایش
@@ -393,7 +393,7 @@ export default function ProfilePage() {
                       <Phone className="h-5 w-5 text-blue-600" />
                       اطلاعات تماس
                     </CardTitle>
-                    {(!userId || viewer?.type === 'system') && (
+                    {((viewer?.type === 'system' || viewer?.type === 'admin') || (!userId && !user.accepted)) && (
                       <Button onClick={() => setEdit(true)} variant="outline" size="sm" className="gap-2">
                         <Edit2 className="h-4 w-4" />
                         ویرایش

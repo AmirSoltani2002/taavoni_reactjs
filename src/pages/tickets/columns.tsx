@@ -1,4 +1,7 @@
 import { type ColumnDef } from "@tanstack/react-table"
+import { type User } from "../users/columns"
+import { type SubProject } from "../projects/columns"
+import { Badge } from "@/components/ui/badge";
 
 export type SubProjectTicket = {
     id?: number;
@@ -7,6 +10,12 @@ export type SubProjectTicket = {
     userId?: number;
     type?: string;
     subProjectId?: number;
+    subProject?: SubProject;
+    recieverRead?: boolean;
+    senderRead?: boolean;
+    reciever?: User;
+    user?: User;
+    closed?: boolean;
 }
 export type OtherTicket = {
     id?: number;
@@ -14,7 +23,12 @@ export type OtherTicket = {
     updatedAt?: string;
     userId?: number;
     recieverId?: number;
+    reciever?: User;
     type?: string;
+    recieverRead?: boolean;
+    senderRead?: boolean;
+    user?: User;
+    closed?: boolean;
 }
 
 export type OtherChat = {
@@ -28,10 +42,6 @@ export type OtherChat = {
 
 export const columns: ColumnDef<SubProjectTicket | OtherTicket>[] = [
     {
-        accessorKey: 'userId',
-        header: 'کاربر',
-    },
-    {
         accessorKey: 'type',
         header: 'موضوع'
     },
@@ -44,6 +54,23 @@ export const columns: ColumnDef<SubProjectTicket | OtherTicket>[] = [
             return d.toLocaleDateString('fa-IR')
         },
         header: 'تاریخ ایجاد'
+    },
+    {
+        header: 'وضعیت',
+        cell: ({ row }) => {
+            const ticket = row.original;
+            if(ticket.closed){
+                return <Badge variant="outline">بسته شده</Badge>
+            }
+            console.log({reciever: ticket.reciever});
+            const recieverIsAdmin = ticket.reciever?.type === 'admin' || ticket.reciever?.type === 'system';
+            if(recieverIsAdmin && !ticket.recieverRead){
+                return <Badge variant="outline">در انتظار پاسخ ادمین</Badge>
+            } else if(!ticket.senderRead){
+                return <Badge variant="outline">در انتظار پاسخ شما</Badge>
+            }
+            return <Badge variant="outline">باز</Badge>
+        }
     }
 ]
 
