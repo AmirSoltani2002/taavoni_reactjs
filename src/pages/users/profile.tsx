@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { docs_columns, type User, type UserDoc } from "./columns";
-import { getTable, updateTableRow, uploadFile } from "@/general";
+import { getTable, updateTableRow, uploadFile, deleteTableRow, getDocumentDownloadUrl, downloadDocument } from "@/general";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,8 +18,10 @@ import UserProjects from "./userProjects";
 import { 
   User as UserIcon, Mail, Phone, MapPin, Calendar, FileText, 
   Edit2, Save, X, ArrowRight, CheckCircle2, Upload, Lock, 
-  Award, Users, Home, Briefcase, Hash, CreditCard
+  Award, Users, Home, Briefcase, Hash, CreditCard, Camera, 
+  Download, Trash2
 } from "lucide-react";
+import { FaFaceSmile } from "react-icons/fa6";
 import { Badge } from "@/components/ui/badge";
 import type { Transaction } from "../transactions/columns";
 import { columns as transactionColumns } from "../transactions/columns";
@@ -56,6 +58,11 @@ export default function ProfilePage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
   const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
+  const [profileImageDoc, setProfileImageDoc] = useState<UserDoc | null>(null);
+  const [profileImageUrl, setProfileImageUrl] = useState<string | undefined>(undefined);
+  const [loadingProfileImage, setLoadingProfileImage] = useState(false);
+  const [uploadingProfileImage, setUploadingProfileImage] = useState(false);
+  const profileImageInputRef = useRef<HTMLInputElement | null>(null);
   const { userId } = useParams();
   const navigate = useNavigate()
 
@@ -73,6 +80,14 @@ export default function ProfilePage() {
     });
     getTable(userId ? `user-doc/user/${userId}` : "user-doc/profile", (data: UserDoc[]) => {
       setDocs(data);
+      // Find profile image doc
+      const profileDoc = data.find(doc => doc.detail && doc.detail === 'profile-image');
+      setProfileImageDoc(profileDoc || null);
+      if (profileDoc?.id) {
+        loadProfileImage(profileDoc.id);
+      } else {
+        setProfileImageUrl(undefined);
+      }
     });
   }, []);
   useEffect(() => {
@@ -94,6 +109,93 @@ export default function ProfilePage() {
     }
   }, [user, userId])
 
+  const loadProfileImage = async (docId: number) => {
+    setLoadingProfileImage(true);
+    try {
+      const url = await getDocumentDownloadUrl(docId, 'user-doc', false);
+      setProfileImageUrl(url);
+    } catch (error) {
+      console.error('Error loading profile image:', error);
+      setProfileImageUrl(undefined);
+    } finally {
+      setLoadingProfileImage(false);
+    }
+  };
+
+  const handleProfileImageUpload = async () => {
+    if (!user) return;
+    const file = profileImageInputRef.current?.files?.[0];
+    if (!file) {
+      toast.error("لطفاً یک فایل تصویری انتخاب کنید");
+      return;
+    }
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error("لطفاً فقط فایل تصویری انتخاب کنید");
+      return;
+    }
+
+    setUploadingProfileImage(true);
+    try {
+      // Delete existing profile image if any
+      if (profileImageDoc?.id) {
+        await deleteTableRow('user-doc', profileImageDoc.id, undefined, false);
+      }
+      
+      // Upload new profile image
+      await uploadFile("user-doc", file, [
+        {
+          titleName: 'detail',
+          titleValue: 'profile-image',
+        },
+      ], user?.id);
+      
+      // Reload docs to get the new profile image
+      await getTable(userId ? `user-doc/user/${userId}` : "user-doc/profile", (data: UserDoc[]) => {
+        setDocs(data);
+        const profileDoc = data.find(doc => doc.detail && doc.detail === 'profile-image');
+        setProfileImageDoc(profileDoc || null);
+        if (profileDoc?.id) {
+          loadProfileImage(profileDoc.id);
+        }
+      });
+      toast.success("تصویر پروفایل با موفقیت آپلود شد");
+    } catch (error) {
+      console.error('Error uploading profile image:', error);
+      toast.error("خطا در آپلود تصویر پروفایل");
+    } finally {
+      setUploadingProfileImage(false);
+      if (profileImageInputRef.current) {
+        profileImageInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleProfileImageDelete = async () => {
+    if (!profileImageDoc?.id) return;
+    
+    try {
+      await deleteTableRow('user-doc', profileImageDoc.id, () => {
+        setProfileImageDoc(null);
+        setProfileImageUrl(undefined);
+        // Reload docs
+        getTable(userId ? `user-doc/user/${userId}` : "user-doc/profile", (data: UserDoc[]) => {
+          setDocs(data);
+        });
+        toast.success("تصویر پروفایل با موفقیت حذف شد");
+      }, true);
+    } catch (error) {
+      console.error('Error deleting profile image:', error);
+      toast.error("خطا در حذف تصویر پروفایل");
+    }
+  };
+
+  const handleProfileImageDownload = async () => {
+    if (!profileImageDoc?.id) return;
+    await downloadDocument(profileImageDoc.id, 'user-doc', 'profile-image', true);
+  };
+
   const handleAddDocument = async () => {
     if(!user){return}
     const file = fileInputRef.current?.files?.[0];
@@ -111,6 +213,14 @@ export default function ProfilePage() {
     ], user?.id);
     await getTable("user-doc/profile", (data: UserDoc[]) => {
       setDocs(data);
+      // Update profile image doc if it exists
+      const profileDoc = data.find(doc => doc.detail && doc.detail === 'profile-image');
+      setProfileImageDoc(profileDoc || null);
+      if (profileDoc?.id) {
+        loadProfileImage(profileDoc.id);
+      } else {
+        setProfileImageUrl(undefined);
+      }
     });
     setUploading(false);
     setFileInputTitle('');
@@ -352,6 +462,70 @@ export default function ProfilePage() {
                   </div>
                 </CardHeader>
                 <CardContent className="pt-6">
+                  {/* Profile Image Section */}
+                  <div className="mb-8 flex justify-center">
+                    <div className="relative group">
+                      <input
+                        ref={profileImageInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleProfileImageUpload}
+                        className="hidden"
+                        disabled={uploadingProfileImage}
+                      />
+                      {loadingProfileImage ? (
+                        <div className="w-40 h-40 rounded-full bg-gray-200 flex items-center justify-center">
+                          <div className="text-gray-500">در حال بارگذاری...</div>
+                        </div>
+                      ) : profileImageUrl ? (
+                        <div className="relative w-40 h-40 rounded-full overflow-hidden border-4 border-gray-200 group">
+                          <img 
+                            src={profileImageUrl} 
+                            alt="Profile" 
+                            className="w-full h-full object-cover"
+                          />
+                          {/* Hover overlay with download icon - available to all */}
+                          <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-40 transition-opacity duration-200 flex items-center justify-center pointer-events-none group-hover:pointer-events-auto">
+                            <Download 
+                              className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer"
+                              onClick={handleProfileImageDownload}
+                            />
+                          </div>
+                          {/* Delete button at bottom - only for admins or user themselves */}
+                          {((viewer?.type === 'system' || viewer?.type === 'admin') || (!userId && !user.accepted)) && (
+                            <div 
+                              className="absolute bottom-0 left-0 right-0 bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-10 flex items-center justify-center cursor-pointer pointer-events-none group-hover:pointer-events-auto"
+                              onClick={handleProfileImageDelete}
+                            >
+                              <Trash2 className="h-5 w-5 text-white" />
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div 
+                          className="relative w-40 h-40 rounded-full bg-gray-200 border-4 border-gray-300 flex items-center justify-center cursor-pointer overflow-hidden group"
+                          onClick={() => {
+                            if (uploadingProfileImage) return;
+                            profileImageInputRef.current?.click();
+                          }}
+                        >
+                          <FaFaceSmile className="h-16 w-16 text-gray-400 opacity-100 group-hover:opacity-0 transition-opacity duration-200" />
+                          {/* Camera icon on hover */}
+                          <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-40 transition-opacity duration-200 flex items-center justify-center pointer-events-none group-hover:pointer-events-auto">
+                            <Camera 
+                              className="h-10 w-10 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                            />
+                          </div>
+                          {uploadingProfileImage && (
+                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                              <div className="text-white">در حال آپلود...</div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-1">
                       <Label className={LABEL_CLASS}><UserIcon className="h-4 w-4 inline ml-2" />نام</Label>
