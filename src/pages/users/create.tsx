@@ -1,4 +1,4 @@
-import { useEffect, useState, type HTMLInputTypeAttribute } from "react";
+import { useEffect, useMemo, useState, type HTMLInputTypeAttribute } from "react";
 import { Button } from "@/components/ui/button";
 import { postTable } from "@/general";
 import { toast } from "sonner";
@@ -39,120 +39,112 @@ export default function UserCreate({ initialValues, onSubmit, isEdit }: UserCrea
   const [form, setForm] = useState<User>(initialValues || initialState);
   const [searchParams] = useSearchParams();
   const urlType = searchParams.get("type") as User["type"] | null;
-  const FIELDS: {
-    title?: string;
-    name: keyof User;
-    isRequired?: boolean;
-    type?: HTMLInputTypeAttribute | 'select';
-    options?: { label: string; value: string }[];
-    className?: string;
-    hideWhenEdit?: boolean;
-    hideWhenNotAdmin?: boolean;
-    
-  }[] = [
-    {
-      title: 'نام',
-      name: 'name',
-      isRequired: true,
-      hideWhenNotAdmin: false,
-    },
-    {
-      title: 'نام خانوادگی',
-      name: 'lastName',
-      isRequired: true,
-      hideWhenNotAdmin: false,
-
-    },
-    {
-      title: 'جنسیت',
-      name: 'sex',
-      isRequired: true,
-      hideWhenNotAdmin: false,
-      type: 'select',
-      options: [
-        {
-          label: 'مرد',
-          value: 'male',
-        },
-        {
-          label: 'خانم',
-          value: 'female',
-        },
-      ]
-    },
-    {
-      title: 'نوع عضویت',
-      name: 'type',
-      isRequired: true,
-      hideWhenNotAdmin: false,
-      type: 'select',
-      options: [
-        {
-          label: 'کارمند دانشگاه تهران',
-          value: 'tehranUni'
-        },
-        {
-          label: 'کارمند سایر دانشگاه‌ها',
-          value: 'otherUni'
-        },
-        {
-          label: 'کارمند غیردانشگاهی',
-          value: 'employee'
-        },
-        {
-          label: 'عضو آزاد',
-          value: 'free'
-        },
-        
-      ]
-    },
-    {
-      title: 'کد ملی',
-      name: 'nationalNumber',
-      isRequired: true,
-      hideWhenNotAdmin: false
-    },
-    {
-      title: 'ایمیل',
-      name: 'email',
-      isRequired: true,
-      type: 'email',
-      hideWhenNotAdmin: true,
-
-    },
-    {
-      title: 'رمز عبور',
-      name: 'password',
-      isRequired: true,
-      hideWhenEdit: true,
-      hideWhenNotAdmin: false,
-      type: 'password'
-    },
-    {
-      title: 'موبایل',
-      name: 'mobile',
-      isRequired: true,
-      hideWhenNotAdmin: true,
-
-    },
-    {
-      title: 'آدرس',
-      name: 'address',
-      isRequired: true,
-      className: "col-span-2",
-      hideWhenNotAdmin: true,
-
-    },
-    {
-      title: 'تاریخ تولد',
-      name: 'birthDay',
-      type: 'date',
-      isRequired: true,
-      hideWhenNotAdmin: true,
-
-    },
-    
-  ]
+  const FIELDS = useMemo(() => {
+    let fields: {
+      title?: string;
+      name: keyof User;
+      isRequired?: boolean;
+      type?: HTMLInputTypeAttribute | 'select';
+      options?: { label: string; value: string }[];
+      className?: string;
+      hideWhenEdit?: boolean;
+      hideWhenNotAdmin?: boolean;
+    }[] = [
+      {
+        title: 'نام',
+        name: 'name',
+        isRequired: true,
+        hideWhenNotAdmin: false,
+      },
+      {
+        title: 'نام خانوادگی',
+        name: 'lastName',
+        isRequired: true,
+        hideWhenNotAdmin: false,
+      },
+      {
+        title: 'جنسیت',
+        name: 'sex',
+        isRequired: true,
+        hideWhenNotAdmin: false,
+        type: 'select',
+        options: [
+          { label: 'مرد', value: 'male' },
+          { label: 'خانم', value: 'female' },
+        ],
+      },
+      {
+        title: 'کد ملی',
+        name: 'nationalNumber',
+        isRequired: true,
+        hideWhenNotAdmin: false,
+      },
+      {
+        title: 'ایمیل',
+        name: 'email',
+        isRequired: true,
+        type: 'email',
+        hideWhenNotAdmin: true,
+      },
+      {
+        title: 'رمز عبور',
+        name: 'password',
+        isRequired: true,
+        hideWhenEdit: true,
+        hideWhenNotAdmin: false,
+        type: 'password',
+      },
+      {
+        title: 'موبایل',
+        name: 'mobile',
+        isRequired: true,
+        hideWhenNotAdmin: true,
+      },
+      {
+        title: 'آدرس',
+        name: 'address',
+        isRequired: true,
+        className: "col-span-2",
+        hideWhenNotAdmin: true,
+      },
+      {
+        title: 'تاریخ تولد',
+        name: 'birthDay',
+        type: 'date',
+        isRequired: true,
+        hideWhenNotAdmin: true,
+      }
+    ];
+    if(urlType !== 'admin') {
+      fields.push({
+        title: 'نوع عضویت',
+        name: 'type',
+        isRequired: true,
+        hideWhenNotAdmin: false,
+        type: 'select',
+        options: [
+          {
+            label: 'کارمند دانشگاه تهران',
+            value: 'tehranUni'
+          },
+          {
+            label: 'کارمند سایر دانشگاه‌ها',
+            value: 'otherUni'
+          },
+          {
+            label: 'کارمند غیردانشگاهی',
+            value: 'employee'
+          },
+          {
+            label: 'عضو آزاد',
+            value: 'free'
+          },
+          
+        ]
+      });
+    }
+    return fields;
+  }, [urlType]);
   useEffect(() => {
     if (urlType && !form.type) {
       setForm((prev) => ({ ...prev, type: urlType }));
@@ -199,7 +191,7 @@ export default function UserCreate({ initialValues, onSubmit, isEdit }: UserCrea
             />
           ))}
         </div>
-        <Button type="submit" className="w-full mt-4">{`${isEdit ? 'تغییر' : 'افزودن'} کاربر`}</Button>
+        <Button type="submit" className="w-full mt-4">{`${isEdit ? 'تغییر' : 'افزودن'} ${NAME_TO_DISPLAY}`}</Button>
       </form>
     </div>
   );

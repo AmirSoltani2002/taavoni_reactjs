@@ -271,7 +271,7 @@ export function AppSidebar() {
                                   to={opt.url || '#'} 
                                   className={cn(
                                     "block px-4 py-2 rounded-md text-sm transition-all duration-200",
-                                    "hover:bg-gray-50 hover:pr-6",
+                                    "hover:bg-gray-50 hover:pr-6 hover:text-xs hover:font-semibold",
                                     isSubActive 
                                       ? "bg-blue-50 text-blue-700 font-semibold border-r-2 border-blue-500 pr-6" 
                                       : "text-gray-700"
