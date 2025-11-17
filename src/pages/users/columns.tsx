@@ -1,7 +1,6 @@
 import { type ColumnDef } from "@tanstack/react-table"
 import { CircleCheckBig, Crown, Download } from "lucide-react";
-import { getDocumentDownloadUrl, downloadDocument } from "@/general";
-import { useState, useEffect } from "react";
+import { downloadDocument } from "@/general";
 import { Button } from "@/components/ui/button";
  
 // This type is used to define the shape of our data.
@@ -35,7 +34,7 @@ export type UserDoc = {
     id?: number;
     userId?: number;
     document?: string;
-    detail?: null,
+    detail?: string,
     createdAt?: string;
     updatedAt?: string;
 }
@@ -119,7 +118,7 @@ export const columns: ColumnDef<User>[] = [
     },
 ]
 
-export const docs_columns: ColumnDef<UserDoc>[] = [
+export const getDocsColumns = (downloadingDocs: Set<number>, setDownloadingDocs: (updater: (prev: Set<number>) => Set<number>) => void): ColumnDef<UserDoc>[] => [
     {
         header: 'موضوع عکس',
         accessorFn: (row) => row.detail || 'بدون موضوع',
@@ -135,72 +134,44 @@ export const docs_columns: ColumnDef<UserDoc>[] = [
         }
     },
     {
-        header: 'تصویر',
-        accessorFn: row => row.document ?? row.document ?? '', // return string URL only
-        // render JSX in `cell`
-        cell: ({row}) => {
-            const docId = row.original.id;
-            if (!docId) return 'بدون تصویر';
-            
-            // Component to handle async image loading
-            const ImageCell = () => {
-                const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
-                const [loading, setLoading] = useState(true);
-                
-                useEffect(() => {
-                    let isMounted = true;
-                    
-                    getDocumentDownloadUrl(docId, 'user-doc', false).then((url: string | undefined) => {
-                        if (isMounted) {
-                            setImageUrl(url);
-                            setLoading(false);
-                        }
-                    }).catch(() => {
-                        if (isMounted) {
-                            setLoading(false);
-                        }
-                    });
-                    
-                    return () => {
-                        isMounted = false;
-                    };
-                }, [docId]);
-                
-                if (loading) {
-                    return <div style={{ maxWidth: 120, height: 80, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>در حال بارگذاری...</div>;
-                }
-                
-                if (!imageUrl) {
-                    return 'بدون تصویر';
-                }
-                
-                const parts = imageUrl?.split('-') ?? [];
-                const filename = parts.length ? parts[parts.length - 1] : 'img';
-                return <img src={imageUrl} alt={filename} style={{ maxWidth: 120 }} />;
-            };
-            
-            return <ImageCell />;
-        }
-    },
-    {
         header: 'دانلود',
         accessorFn: row => row.id,
         cell: ({row}) => {
             const docId = row.original.id;
             if (!docId) return null;
+            const isDownloading = downloadingDocs.has(docId);
             
             return (
                 <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => downloadDocument(docId, 'user-doc', row.original.detail || 'document', true)}
+                    onClick={async () => {
+                        setDownloadingDocs(prev => new Set(prev).add(docId));
+                        try {
+                            await downloadDocument(docId, 'user-doc', row.original.detail || 'document', true);
+                        } finally {
+                            setDownloadingDocs(prev => {
+                                const newSet = new Set(prev);
+                                newSet.delete(docId);
+                                return newSet;
+                            });
+                        }
+                    }}
+                    disabled={isDownloading}
                     className="h-8 w-8 p-0 text-blue-600 hover:bg-blue-50"
                     title="دانلود فایل"
                 >
-                    <Download className="h-4 w-4" />
+                    {isDownloading ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    ) : (
+                        <Download className="h-4 w-4" />
+                    )}
                 </Button>
             );
         }
     }
 ]
+
+// Keep the old export for backward compatibility
+export const docs_columns: ColumnDef<UserDoc>[] = getDocsColumns(new Set(), () => {});

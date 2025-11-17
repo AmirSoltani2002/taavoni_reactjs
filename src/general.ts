@@ -50,6 +50,45 @@ const getFarsiError = (err: string) => {
 
 export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+// Helper function to fix double-encoded UTF-8 file names
+// This happens when UTF-8 bytes are incorrectly interpreted as ISO-8859-1/Latin-1
+export const fixDoubleEncodedFileName = (fileName: string): string => {
+  try {
+    // Check if the string contains mojibake (garbled characters) that suggest double encoding
+    // Common pattern: UTF-8 Persian/Arabic bytes interpreted as Latin-1
+    // Example: "Ù¾Ø±ÙØ§ÙÙ" should be "پروانه"
+    
+    // Try to detect if this is a double-encoded UTF-8 string
+    // We'll attempt to fix it by:
+    // 1. Encoding the string as Latin-1 (ISO-8859-1) to get the original bytes
+    // 2. Decoding those bytes as UTF-8
+    
+    // Use TextEncoder/TextDecoder API for proper encoding conversion
+    // First, encode the string as if it were Latin-1 to get the original bytes
+    const latin1Bytes = new Uint8Array(fileName.length);
+    for (let i = 0; i < fileName.length; i++) {
+      latin1Bytes[i] = fileName.charCodeAt(i);
+    }
+    
+    // Now decode those bytes as UTF-8
+    const decoder = new TextDecoder('utf-8');
+    const fixed = decoder.decode(latin1Bytes);
+    
+    // Check if the fixed string contains valid Persian/Arabic characters
+    // If it does, it's likely we fixed the encoding
+    const persianArabicRegex = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+    if (persianArabicRegex.test(fixed)) {
+      return fixed;
+    }
+    
+    // If no Persian/Arabic characters found, return original
+    return fileName;
+  } catch (error) {
+    // If conversion fails, return original
+    return fileName;
+  }
+};
+
 // File upload function
 export const uploadFile = async (
   tableName: string, 

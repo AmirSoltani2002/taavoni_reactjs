@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
-import { docs_columns, type User, type UserDoc } from "./columns";
-import { getTable, updateTableRow, uploadFile, deleteTableRow, getDocumentDownloadUrl, downloadDocument } from "@/general";
+import { getDocsColumns, type User, type UserDoc } from "./columns";
+import { getTable, updateTableRow, uploadFile, deleteTableRow, getImageBlobUrl, downloadDocument } from "@/general";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,6 +62,8 @@ export default function ProfilePage() {
   const [profileImageUrl, setProfileImageUrl] = useState<string | undefined>(undefined);
   const [loadingProfileImage, setLoadingProfileImage] = useState(false);
   const [uploadingProfileImage, setUploadingProfileImage] = useState(false);
+  const [downloadingDocs, setDownloadingDocs] = useState<Set<number>>(new Set());
+  const [downloadingProfileImage, setDownloadingProfileImage] = useState(false);
   const profileImageInputRef = useRef<HTMLInputElement | null>(null);
   const { userId } = useParams();
   const navigate = useNavigate()
@@ -109,11 +111,28 @@ export default function ProfilePage() {
     }
   }, [user, userId])
 
+  // Cleanup blob URLs on unmount or when profileImageUrl changes
+  useEffect(() => {
+    return () => {
+      if (profileImageUrl && profileImageUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(profileImageUrl);
+      }
+    };
+  }, [profileImageUrl]);
+
   const loadProfileImage = async (docId: number) => {
     setLoadingProfileImage(true);
     try {
-      const url = await getDocumentDownloadUrl(docId, 'user-doc', false);
-      setProfileImageUrl(url);
+      const blobUrl = await getImageBlobUrl(docId, 'user-doc', false);
+      if (blobUrl) {
+        // Clean up old blob URL if exists
+        if (profileImageUrl && profileImageUrl.startsWith('blob:')) {
+          URL.revokeObjectURL(profileImageUrl);
+        }
+        setProfileImageUrl(blobUrl);
+      } else {
+        setProfileImageUrl(undefined);
+      }
     } catch (error) {
       console.error('Error loading profile image:', error);
       setProfileImageUrl(undefined);
@@ -177,6 +196,10 @@ export default function ProfilePage() {
     
     try {
       await deleteTableRow('user-doc', profileImageDoc.id, () => {
+        // Clean up blob URL before clearing
+        if (profileImageUrl && profileImageUrl.startsWith('blob:')) {
+          URL.revokeObjectURL(profileImageUrl);
+        }
         setProfileImageDoc(null);
         setProfileImageUrl(undefined);
         // Reload docs
@@ -193,7 +216,12 @@ export default function ProfilePage() {
 
   const handleProfileImageDownload = async () => {
     if (!profileImageDoc?.id) return;
-    await downloadDocument(profileImageDoc.id, 'user-doc', 'profile-image', true);
+    setDownloadingProfileImage(true);
+    try {
+      await downloadDocument(profileImageDoc.id, 'user-doc', 'profile-image', true);
+    } finally {
+      setDownloadingProfileImage(false);
+    }
   };
 
   const handleAddDocument = async () => {
@@ -204,28 +232,33 @@ export default function ProfilePage() {
       return;
     }
     setUploading(true);
-    await uploadFile("user-doc", file, [
-      {
-        titleName: 'detail',
-        titleValue: fileInputTitle,
-      },
-      
-    ], user?.id);
-    await getTable("user-doc/profile", (data: UserDoc[]) => {
-      setDocs(data);
-      // Update profile image doc if it exists
-      const profileDoc = data.find(doc => doc.detail && doc.detail === 'profile-image');
-      setProfileImageDoc(profileDoc || null);
-      if (profileDoc?.id) {
-        loadProfileImage(profileDoc.id);
-      } else {
-        setProfileImageUrl(undefined);
+    try {
+      await uploadFile("user-doc", file, [
+        {
+          titleName: 'detail',
+          titleValue: fileInputTitle,
+        },
+        
+      ], user?.id);
+      await getTable("user-doc/profile", (data: UserDoc[]) => {
+        setDocs(data);
+        // Update profile image doc if it exists
+        const profileDoc = data.find(doc => doc.detail && doc.detail === 'profile-image');
+        setProfileImageDoc(profileDoc || null);
+        if (profileDoc?.id) {
+          loadProfileImage(profileDoc.id);
+        } else {
+          setProfileImageUrl(undefined);
+        }
+      });
+      setFileInputTitle('');
+      if(fileInputRef.current) {
+        fileInputRef.current.files = null;
       }
-    });
-    setUploading(false);
-    setFileInputTitle('');
-    if(fileInputRef.current) {
-      fileInputRef.current.files = null;
+    } catch (error) {
+      console.error('Error uploading document:', error);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -486,10 +519,14 @@ export default function ProfilePage() {
                           />
                           {/* Hover overlay with download icon - available to all */}
                           <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-40 transition-opacity duration-200 flex items-center justify-center pointer-events-none group-hover:pointer-events-auto">
-                            <Download 
-                              className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer"
-                              onClick={handleProfileImageDownload}
-                            />
+                            {downloadingProfileImage ? (
+                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                            ) : (
+                              <Download 
+                                className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer"
+                                onClick={handleProfileImageDownload}
+                              />
+                            )}
                           </div>
                           {/* Delete button at bottom - only for admins or user themselves */}
                           {((viewer?.type === 'system' || viewer?.type === 'admin') || (!userId && !user.accepted)) && (
@@ -517,8 +554,11 @@ export default function ProfilePage() {
                             />
                           </div>
                           {uploadingProfileImage && (
-                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                              <div className="text-white">در حال آپلود...</div>
+                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center backdrop-blur-sm">
+                              <div className="flex flex-col items-center gap-2">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                                <div className="text-white text-sm font-medium">در حال آپلود...</div>
+                              </div>
                             </div>
                           )}
                         </div>
@@ -680,20 +720,31 @@ export default function ProfilePage() {
                             placeholder="موضوع فایل (اختیاری)" 
                             onChange={(e) => setFileInputTitle(e.target.value)}
                             className="flex-1 h-11"
+                            disabled={uploading}
                           />
                           <Input 
                             ref={fileInputRef} 
                             type="file" 
                             accept="image/*,application/pdf"
                             className="flex-1 h-11"
+                            disabled={uploading}
                           />
                           <Button 
                             onClick={handleAddDocument} 
                             disabled={uploading}
                             className="gap-2 h-11"
                           >
-                            <Upload className="h-4 w-4" />
-                            {uploading ? "در حال آپلود..." : "افزودن مدرک"}
+                            {uploading ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                در حال آپلود...
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="h-4 w-4" />
+                                افزودن مدرک
+                              </>
+                            )}
                           </Button>
                         </div>
                       </CardContent>
@@ -705,7 +756,7 @@ export default function ProfilePage() {
                       <p>مدرکی ثبت نشده است.</p>
                     </div>
                   ) : (
-                    <DataTable columns={docs_columns} data={docs} tableName="user-doc" />
+                    <DataTable columns={getDocsColumns(downloadingDocs, setDownloadingDocs)} data={docs.filter(doc => doc.detail !== 'profile-image')} tableName="user-doc" />
                   )}
                 </CardContent>
               </Card>
