@@ -15,7 +15,7 @@ export type User = {
     birthDay?: string;
     email?: string;
     homePhone?: string;
-    isargaryPercent?: null | number
+    isargaryPercent?: 'val10_15' | 'val15_20' | 'val20_plus';
     lastName?: string
     mobile?: string;
     name?: string;
@@ -54,6 +54,18 @@ export const getUserType = (type: any) => {
         return 'عضو آزاد';
     } else {
         return type;
+    }
+}
+
+export const getIsargaryPercentLabel = (value: User['isargaryPercent']) => {
+    if(value === 'val10_15') {
+        return '۱۰−۱۵%';
+    } else if(value === 'val15_20') {
+        return '۱۵−۲۰%';
+    } else if(value === 'val20_plus') {
+        return '۲۰%+';
+    } else {
+        return null;
     }
 }
 export const columns: ColumnDef<User>[] = [
@@ -112,8 +124,9 @@ export const columns: ColumnDef<User>[] = [
         accessorKey: "isargary_percent",
         header: "درصد ایثارگری",
         cell: ({ cell }) => {
-            const v = cell.getValue();
-            return v ? `${v} %` : 'ندارد'
+            const v = cell.getValue() as User['isargaryPercent'];
+            const label = getIsargaryPercentLabel(v);
+            return label || 'ندارد';
         }
     },
 ]

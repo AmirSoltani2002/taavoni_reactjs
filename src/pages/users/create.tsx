@@ -21,7 +21,7 @@ const initialState: User = {
   sex: undefined,
   birthDay: undefined,
   type: null,
-  isargaryPercent: null,
+  isargaryPercent: undefined,
   azadeEsaratMonths: 0,
   azadeMonths: 0,
   shahedFamilyNumber: 0,

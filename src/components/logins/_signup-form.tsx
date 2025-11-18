@@ -77,7 +77,7 @@ export function SignupForm({
               sex: formData.get('sex') as User['sex'],
               type: formData.get('type') as User['type'],
               address: formData.get('address') as string,
-              isargaryPercent: formData.get('isargaryPercent') ? Number(formData.get('isargaryPercent')) : null,
+              isargaryPercent: formData.get('isargaryPercent') as User['isargaryPercent'] | undefined,
               azadeMonths: formData.get('azadeMonths') ? Number(formData.get('azadeMonths')) : null,
               azadeEsaratMonths: formData.get('azadeEsaratMonths') ? Number(formData.get('azadeEsaratMonths')) : null,
               shahedFamilyNumber: formData.get('shahedFamilyNumber') ? Number(formData.get('shahedFamilyNumber')) : null,
@@ -197,9 +197,9 @@ export function SignupForm({
                   <SelectContent>
                     <SelectGroup>
                       <SelectLabel>جانبازان</SelectLabel>
-                      <SelectItem value="10-15">۱۰−۱۵%</SelectItem>
-                      <SelectItem value="15-25">۱۵−۲۵%</SelectItem>
-                      <SelectItem value="25">+۲۵%</SelectItem>
+                      <SelectItem value="val10_15">۱۰−۱۵%</SelectItem>
+                      <SelectItem value="val15_20">۱۵−۲۰%</SelectItem>
+                      <SelectItem value="val20_plus">۲۰%+</SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>

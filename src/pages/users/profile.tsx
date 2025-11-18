@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { getDocsColumns, type User, type UserDoc } from "./columns";
+import { getDocsColumns, type User, type UserDoc, getIsargaryPercentLabel } from "./columns";
 import { getTable, updateTableRow, uploadFile, deleteTableRow, getImageBlobUrl, downloadDocument } from "@/general";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -660,7 +660,7 @@ export default function ProfilePage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-1">
                         <Label className={LABEL_CLASS}>درصد ایثارگری</Label>
-                        <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.isargaryPercent ?? "-"}</div>
+                        <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{getIsargaryPercentLabel(user.isargaryPercent) ?? "-"}</div>
                       </div>
                       <div className="space-y-1">
                         <Label className={LABEL_CLASS}>ماه های اسارت</Label>
@@ -850,7 +850,14 @@ export default function ProfilePage() {
                   </div>
                   <div className="space-y-2">
                     <Label className={LABEL_CLASS}>درصد ایثارگری</Label>
-                    <Input name="isargaryPercent" value={form.isargaryPercent ?? ""} onChange={handleChange} type="number" min="0" className="h-11" />
+                    <Select value={form.isargaryPercent ?? ""} onValueChange={v => handleSelect("isargaryPercent", v)}>
+                      <SelectTrigger className="h-11"><SelectValue placeholder="انتخاب کنید" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="val10_15">۱۰−۱۵%</SelectItem>
+                        <SelectItem value="val15_20">۱۵−۲۰%</SelectItem>
+                        <SelectItem value="val20_plus">۲۰%+</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label className={LABEL_CLASS}>ماه های اسارت</Label>
