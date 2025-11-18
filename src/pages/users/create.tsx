@@ -82,7 +82,7 @@ export default function UserCreate({ initialValues, onSubmit, isEdit }: UserCrea
       {
         title: 'ایمیل',
         name: 'email',
-        isRequired: true,
+        isRequired: false,
         type: 'email',
         hideWhenNotAdmin: true,
       },
@@ -103,7 +103,7 @@ export default function UserCreate({ initialValues, onSubmit, isEdit }: UserCrea
       {
         title: 'آدرس',
         name: 'address',
-        isRequired: true,
+        isRequired: false,
         className: "col-span-2",
         hideWhenNotAdmin: true,
       },
@@ -111,7 +111,7 @@ export default function UserCreate({ initialValues, onSubmit, isEdit }: UserCrea
         title: 'تاریخ تولد',
         name: 'birthDay',
         type: 'date',
-        isRequired: true,
+        isRequired: false,
         hideWhenNotAdmin: true,
       }
     ];
