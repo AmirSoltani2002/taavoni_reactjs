@@ -19,8 +19,9 @@ import {
   User as UserIcon, Mail, Phone, MapPin, Calendar, FileText, 
   Edit2, Save, X, ArrowRight, CheckCircle2, Upload, Lock, 
   Award, Users, Home, Briefcase, Hash, CreditCard, Camera, 
-  Download, Trash2
+  Download, Trash2, History
 } from "lucide-react";
+import { getTransactionHistoryColumns, type TransactionHistory } from "./transactionHistory";
 import { FaFaceSmile } from "react-icons/fa6";
 import { Badge } from "@/components/ui/badge";
 import type { Transaction } from "../transactions/columns";
@@ -68,11 +69,13 @@ export default function ProfilePage() {
   const { userId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const [subProjectHistory, setSubProjectHistory] = useState<TransactionHistory[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   
   // Get initial tab from URL hash, default to 'personal'
   const getInitialTab = () => {
     const hash = location.hash.replace('#', '');
-    const validTabs = ['personal', 'contact', 'martyrdom', 'documents', 'projects', 'payments'];
+    const validTabs = ['personal', 'contact', 'martyrdom', 'documents', 'projects', 'payments', 'history'];
     return validTabs.includes(hash) ? hash : 'personal';
   };
   
@@ -119,7 +122,22 @@ export default function ProfilePage() {
         setLoadingTransactions(false);
       });
     }
-  }, [user, userId])
+  }, [user, userId]);
+
+  useEffect(() => {
+    if (user && activeTab === 'history') {
+      setLoadingHistory(true);
+      const endpoint = userId ? `transaction-history/user/${userId}` : 'transaction-history/profile';
+      getTable(endpoint, (data: TransactionHistory[] | {error?: any}) => {
+        if (data && !('error' in data)) {
+          setSubProjectHistory(data as TransactionHistory[] || []);
+        } else {
+          setSubProjectHistory([]);
+        }
+        setLoadingHistory(false);
+      }, false);
+    }
+  }, [user, userId, activeTab]);
 
   // Cleanup blob URLs on unmount or when profileImageUrl changes
   useEffect(() => {
@@ -133,7 +151,7 @@ export default function ProfilePage() {
   // Update tab when hash changes
   useEffect(() => {
     const hash = location.hash.replace('#', '');
-    const validTabs = ['personal', 'contact', 'martyrdom', 'documents', 'projects', 'payments'];
+    const validTabs = ['personal', 'contact', 'martyrdom', 'documents', 'projects', 'payments', 'history'];
     if (validTabs.includes(hash)) {
       setActiveTab(hash);
     }
@@ -500,6 +518,13 @@ export default function ProfilePage() {
                   <CreditCard className="h-4 w-4" />
                   پرداخت ها
                 </TabsTrigger>
+                <TabsTrigger 
+                  value="history" 
+                  className="gap-2 px-4 py-3 text-sm font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-blue-50/50 hover:text-gray-700 hover:bg-gray-50/50 transition-colors"
+                >
+                  <History className="h-4 w-4" />
+                  تاریخچه واحدها
+                </TabsTrigger>
               </TabsList>
             </div>
 
@@ -812,6 +837,40 @@ export default function ProfilePage() {
                     </div>
                   ) : (
                     <DataTable columns={transactionColumns} data={transactions} tableName="transaction" />
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* History Tab */}
+            <TabsContent value="history" className="mt-0">
+              <Card className="shadow-lg border-0 bg-white">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b">
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <History className="h-5 w-5 text-blue-600" />
+                    تاریخچه واحدهای {fullName}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  {loadingHistory ? (
+                    <PageLoader />
+                  ) : subProjectHistory.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500">
+                      <History className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                      <p>تاریخچه‌ای ثبت نشده است.</p>
+                    </div>
+                  ) : (
+                    <DataTable 
+                      columns={getTransactionHistoryColumns()} 
+                      data={subProjectHistory} 
+                      tableName="transaction-history"
+                      _showDeleteButton={false}
+                      onClickRow={(row) => {
+                        if (row.subProjectId) {
+                          navigate(`/unit/${row.subProjectId}`);
+                        }
+                      }}
+                    />
                   )}
                 </CardContent>
               </Card>

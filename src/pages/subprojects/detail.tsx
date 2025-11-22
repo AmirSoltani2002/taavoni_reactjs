@@ -1,30 +1,52 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Building, Camera, FileText, Download, Receipt, MapPin } from "lucide-react";
-import { getTable, getImageBlobUrl, downloadDocument, getToken } from "@/general";
+import { Building, Camera, FileText, Download, MapPin, History } from "lucide-react";
+import { getTable, getImageBlobUrl, downloadDocument } from "@/general";
 import { toast } from "sonner";
 import type { SubProject, ProjectDoc } from "../projects/columns";
 import { PageLoader } from "@/components/ui/loader";
-import { api_base_url } from "@/config";
 import MapView from "@/components/app/MapView";
+import { DataTable } from "@/components/ui/data-table";
+import { getSubProjectHistoryColumns, type TransactionHistory } from "../users/transactionHistory";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export default function SubProjectDetail() {
     const { id } = useParams<{ id: string }>();
+    const location = useLocation();
     const [subProject, setSubProject] = useState<SubProject | null>(null);
     const [projectDocs, setProjectDocs] = useState<ProjectDoc[]>([]);
     const [projectImages, setProjectImages] = useState<Array<{ id: number; url?: string; index: number }>>([]);
     const [imageUrls, setImageUrls] = useState<{ [key: number]: string }>({});
     const [isLoading, setIsLoading] = useState(true);
-    const [invoice, setInvoice] = useState<{
-        id: number;
-        amount?: number;
-        number?: string;
-        detail?: string;
-        document?: string;
-    } | null>(null);
+    const [ownerHistory, setOwnerHistory] = useState<TransactionHistory[]>([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
+    
+    // Get initial tab from URL hash, default to 'info'
+    const getInitialTab = () => {
+        const hash = location.hash.replace('#', '');
+        const validTabs = ['info', 'location', 'images', 'documents', 'invoice', 'history'];
+        return validTabs.includes(hash) ? hash : 'info';
+    };
+    
+    const [activeTab, setActiveTab] = useState<string>(getInitialTab());
+    
+    // Update tab when hash changes
+    useEffect(() => {
+        const hash = location.hash.replace('#', '');
+        const validTabs = ['info', 'location', 'images', 'documents', 'invoice', 'history'];
+        if (validTabs.includes(hash)) {
+            setActiveTab(hash);
+        }
+    }, [location.hash]);
+    
+    // Update URL hash when tab changes
+    const handleTabChange = (value: string) => {
+        setActiveTab(value);
+        window.history.replaceState(null, '', `#${value}`);
+    };
 
     useEffect(() => {
         if (id) {
@@ -70,27 +92,6 @@ export default function SubProjectDetail() {
                         setProjectDocs(docs);
                     }
                 }
-
-                // Load invoice if subproject has a userId
-                const userId = (subProjectData as SubProject).userId;
-                if (userId) {
-                    const invoicesData = await getTable(`invoice/profile`, undefined, false);
-                    if (invoicesData && Array.isArray(invoicesData) && !('error' in invoicesData)) {
-                        console.log({invoicesData});
-                        const foundInvoice = (invoicesData as any[]).find((inv: any) => 
-                            inv.subProjectId?.toString() === subProjectId
-                        );
-                        if (foundInvoice) {
-                            setInvoice({
-                                id: foundInvoice.id,
-                                amount: foundInvoice.amount,
-                                number: foundInvoice.number,
-                                detail: foundInvoice.detail,
-                                document: foundInvoice.document,
-                            });
-                        }
-                    }
-                }
             } else {
                 toast.error('خطا در بارگذاری اطلاعات واحد');
             }
@@ -101,6 +102,20 @@ export default function SubProjectDetail() {
             setIsLoading(false);
         }
     };
+
+    useEffect(() => {
+        if (id) {
+            setLoadingHistory(true);
+            getTable(`transaction-history/subProject/${id}`, (data: TransactionHistory[] | {error?: any}) => {
+                if (data && !('error' in data)) {
+                    setOwnerHistory(data as TransactionHistory[] || []);
+                } else {
+                    setOwnerHistory([]);
+                }
+                setLoadingHistory(false);
+            }, false);
+        }
+    }, [id]);
 
     // Load image URLs when projectImages change
     useEffect(() => {
@@ -167,8 +182,58 @@ export default function SubProjectDetail() {
 
     return (
         <div className="space-y-6">
-            {/* SubProject Info */}
-            <Card className="bg-white/70 backdrop-blur-sm shadow-xl border-0 ring-1 ring-white/20">
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+                <div className="border-b border-gray-200 mb-6">
+                    <TabsList className="w-full h-auto bg-transparent p-0 gap-0 inline-flex flex-wrap">
+                        <TabsTrigger 
+                            value="info" 
+                            className="gap-2 px-4 py-3 text-sm font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-blue-50/50 hover:text-gray-700 hover:bg-gray-50/50 transition-colors"
+                        >
+                            <Building className="h-4 w-4" />
+                            <span className="hidden sm:inline">اطلاعات واحد</span>
+                            <span className="sm:hidden">واحد</span>
+                        </TabsTrigger>
+                        {project && project.latitude != null && project.longitude != null && 
+                         Number.isFinite(project.latitude) && Number.isFinite(project.longitude) && (
+                            <TabsTrigger 
+                                value="location" 
+                                className="gap-2 px-4 py-3 text-sm font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-blue-50/50 hover:text-gray-700 hover:bg-gray-50/50 transition-colors"
+                            >
+                                <MapPin className="h-4 w-4" />
+                                <span className="hidden sm:inline">موقعیت</span>
+                                <span className="sm:hidden">نقشه</span>
+                            </TabsTrigger>
+                        )}
+                        <TabsTrigger 
+                            value="images" 
+                            className="gap-2 px-4 py-3 text-sm font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-blue-50/50 hover:text-gray-700 hover:bg-gray-50/50 transition-colors"
+                        >
+                            <Camera className="h-4 w-4" />
+                            <span className="hidden sm:inline">تصاویر</span>
+                            <span className="sm:hidden">عکس</span>
+                        </TabsTrigger>
+                        <TabsTrigger 
+                            value="documents" 
+                            className="gap-2 px-4 py-3 text-sm font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-blue-50/50 hover:text-gray-700 hover:bg-gray-50/50 transition-colors"
+                        >
+                            <FileText className="h-4 w-4" />
+                            <span className="hidden sm:inline">اسناد</span>
+                            <span className="sm:hidden">سند</span>
+                        </TabsTrigger>
+                        <TabsTrigger 
+                            value="history" 
+                            className="gap-2 px-4 py-3 text-sm font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-blue-50/50 hover:text-gray-700 hover:bg-gray-50/50 transition-colors"
+                        >
+                            <History className="h-4 w-4" />
+                            <span className="hidden sm:inline">تاریخچه</span>
+                            <span className="sm:hidden">تاریخ</span>
+                        </TabsTrigger>
+                    </TabsList>
+                </div>
+
+                {/* Unit Info Tab */}
+                <TabsContent value="info" className="mt-0">
+                    <Card className="bg-white/70 backdrop-blur-sm shadow-xl border-0 ring-1 ring-white/20">
                 <CardHeader className="bg-gradient-to-r from-blue-50/50 to-purple-50/50 border-b border-blue-200/30 pb-6">
                     <CardTitle className="flex items-center gap-4 text-xl">
                         <div className="relative">
@@ -239,12 +304,14 @@ export default function SubProjectDetail() {
                         </div>
                     </div>
                 </CardContent>
-            </Card>
+                    </Card>
+                </TabsContent>
 
-            {/* Project Location Map */}
-            {project && project.latitude != null && project.longitude != null && 
-             Number.isFinite(project.latitude) && Number.isFinite(project.longitude) && (
-                <Card className="bg-white/70 backdrop-blur-sm shadow-xl border-0 ring-1 ring-white/20">
+                {/* Location Tab */}
+                {project && project.latitude != null && project.longitude != null && 
+                 Number.isFinite(project.latitude) && Number.isFinite(project.longitude) && (
+                    <TabsContent value="location" className="mt-0">
+                        <Card className="bg-white/70 backdrop-blur-sm shadow-xl border-0 ring-1 ring-white/20">
                     <CardHeader className="bg-gradient-to-r from-blue-50/50 to-purple-50/50 border-b border-blue-200/30 pb-6">
                         <CardTitle className="flex items-center gap-4 text-xl">
                             <div className="relative">
@@ -293,11 +360,13 @@ export default function SubProjectDetail() {
                             </div>
                         </div>
                     </CardContent>
-                </Card>
-            )}
+                        </Card>
+                    </TabsContent>
+                )}
 
-            {/* Project Images */}
-            <Card className="bg-white/70 backdrop-blur-sm shadow-xl border-0 ring-1 ring-white/20">
+                {/* Images Tab */}
+                <TabsContent value="images" className="mt-0">
+                    <Card className="bg-white/70 backdrop-blur-sm shadow-xl border-0 ring-1 ring-white/20">
                 <CardHeader className="bg-gradient-to-r from-blue-50/50 to-purple-50/50 border-b border-blue-200/30 pb-6">
                     <CardTitle className="flex items-center gap-4 text-xl">
                         <div className="relative">
@@ -364,10 +433,12 @@ export default function SubProjectDetail() {
                         </div>
                     )}
                 </CardContent>
-            </Card>
+                    </Card>
+                </TabsContent>
 
-            {/* Project Documents */}
-            <Card className="bg-white/70 backdrop-blur-sm shadow-xl border-0 ring-1 ring-white/20">
+                {/* Documents Tab */}
+                <TabsContent value="documents" className="mt-0">
+                    <Card className="bg-white/70 backdrop-blur-sm shadow-xl border-0 ring-1 ring-white/20">
                 <CardHeader className="bg-gradient-to-r from-blue-50/50 to-purple-50/50 border-b border-blue-200/30 pb-6">
                     <CardTitle className="flex items-center gap-4 text-xl">
                         <div className="relative">
@@ -431,126 +502,54 @@ export default function SubProjectDetail() {
                         </div>
                     )}
                 </CardContent>
-            </Card>
+                    </Card>
+                </TabsContent>
 
-            {/* Invoice Information */}
-            <Card className="bg-white/70 backdrop-blur-sm shadow-xl border-0 ring-1 ring-white/20">
+                {/* History Tab */}
+                <TabsContent value="history" className="mt-0">
+                    <Card className="bg-white/70 backdrop-blur-sm shadow-xl border-0 ring-1 ring-white/20">
                 <CardHeader className="bg-gradient-to-r from-blue-50/50 to-purple-50/50 border-b border-blue-200/30 pb-6">
                     <CardTitle className="flex items-center gap-4 text-xl">
                         <div className="relative">
-                            <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl blur-sm opacity-30"></div>
-                            <div className="relative p-3 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl">
-                                <Receipt className="w-6 h-6 text-white" />
+                            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl blur-sm opacity-30"></div>
+                            <div className="relative p-3 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl">
+                                <History className="w-6 h-6 text-white" />
                             </div>
                         </div>
                         <div>
-                            <span className="bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent font-bold">
-                                اطلاعات فاکتور
+                            <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent font-bold">
+                                تاریخچه مالکان
                             </span>
                             <p className="text-sm text-slate-500 font-normal mt-1">
-                                اطلاعات فاکتور واحد
+                                تاریخچه کاربرانی که این واحد به آن‌ها اختصاص داده شده است
                             </p>
                         </div>
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6">
-                    {invoice ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {invoice.document && (
-                                <div className="md:col-span-2 lg:col-span-3">
-                                    <Label className="text-slate-700 font-semibold mb-2 block">فایل فاکتور</Label>
-                                    <div className="p-3 bg-slate-50 rounded-md border border-slate-200 flex items-center justify-between">
-                                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                                            <FileText className="h-5 w-5 text-orange-600 flex-shrink-0" />
-                                            <span className="font-medium text-slate-900 truncate">{invoice.document}</span>
-                                        </div>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={async () => {
-                                                if (!invoice.id) return;
-                                                try {
-                                                    const token = getToken();
-                                                    const resp = await fetch(`${api_base_url}/invoice/download/${invoice.id}`, {
-                                                        method: 'GET',
-                                                        headers: {
-                                                            'Authorization': token ? `Bearer ${token}` : ''
-                                                        }
-                                                    });
-                                                    
-                                                    if (resp.ok) {
-                                                        const blob = await resp.blob();
-                                                        const url = window.URL.createObjectURL(blob);
-                                                        const a = document.createElement('a');
-                                                        a.href = url;
-                                                        
-                                                        // Get filename from Content-Disposition header or use document filename
-                                                        const contentDisposition = resp.headers.get('Content-Disposition');
-                                                        let downloadFilename = invoice.document || 'invoice';
-                                                        if (contentDisposition) {
-                                                            const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-                                                            if (filenameMatch && filenameMatch[1]) {
-                                                                downloadFilename = filenameMatch[1].replace(/['"]/g, '');
-                                                            }
-                                                        }
-                                                        
-                                                        a.download = downloadFilename;
-                                                        document.body.appendChild(a);
-                                                        a.click();
-                                                        window.URL.revokeObjectURL(url);
-                                                        document.body.removeChild(a);
-                                                        toast.success('فایل با موفقیت دانلود شد');
-                                                    } else {
-                                                        const err = await resp.json();
-                                                        toast.error(err.message || 'خطا در دانلود فایل');
-                                                    }
-                                                } catch (error: any) {
-                                                    console.error('Download error:', error);
-                                                    toast.error('خطا در دانلود فایل');
-                                                }
-                                            }}
-                                            className="h-8 w-8 p-0 text-blue-600 hover:bg-blue-50 flex-shrink-0"
-                                            title="دانلود فایل"
-                                        >
-                                            <Download className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                </div>
-                            )}
-                            {invoice.amount && (
-                                <div>
-                                    <Label className="text-slate-700 font-semibold mb-2 block">مبلغ (تومان)</Label>
-                                    <div className="p-3 bg-slate-50 rounded-md border border-slate-200">
-                                        <p className="text-slate-900 font-medium">{invoice.amount.toLocaleString('fa-IR')}</p>
-                                    </div>
-                                </div>
-                            )}
-                            {invoice.number && (
-                                <div>
-                                    <Label className="text-slate-700 font-semibold mb-2 block">شماره فاکتور</Label>
-                                    <div className="p-3 bg-slate-50 rounded-md border border-slate-200">
-                                        <p className="text-slate-900 font-medium">{invoice.number}</p>
-                                    </div>
-                                </div>
-                            )}
-                            {invoice.detail && (
-                                <div className="md:col-span-2 lg:col-span-3">
-                                    <Label className="text-slate-700 font-semibold mb-2 block">جزئیات</Label>
-                                    <div className="p-3 bg-slate-50 rounded-md border border-slate-200">
-                                        <p className="text-slate-900 font-medium whitespace-pre-wrap">{invoice.detail}</p>
-                                    </div>
-                                </div>
-                            )}
+                    {loadingHistory ? (
+                        <PageLoader />
+                    ) : ownerHistory.length === 0 ? (
+                        <div className="text-center py-12 text-slate-500 border-2 border-dashed border-slate-200 rounded-lg">
+                            <History className="w-12 h-12 mx-auto mb-4 text-slate-400" />
+                            <p className="text-sm">هیچ تاریخچه‌ای ثبت نشده است</p>
                         </div>
                     ) : (
-                        <div className="text-center py-6 text-slate-500 border-2 border-dashed border-slate-200 rounded-lg">
-                            <Receipt className="w-10 h-10 mx-auto mb-2 text-slate-400" />
-                            <p className="text-sm">هیچ فاکتوری برای این واحد ثبت نشده است</p>
-                        </div>
+                        <DataTable 
+                            columns={getSubProjectHistoryColumns()} 
+                            data={ownerHistory} 
+                            tableName="transaction-history"
+                            onClickRow={(row) => {
+                                if (row.userId) {
+                                    window.location.href = `/users/${row.userId}`;
+                                }
+                            }}
+                        />
                     )}
                 </CardContent>
-            </Card>
+                    </Card>
+                </TabsContent>
+            </Tabs>
         </div>
     );
 }
