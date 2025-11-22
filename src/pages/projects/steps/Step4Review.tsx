@@ -10,7 +10,6 @@ import {
   Users, 
   Star, 
   Navigation,
-  CheckCircle 
 } from "lucide-react";
 import type { Project, Block, SubProject } from "../columns";
 
@@ -237,25 +236,6 @@ export const Step4Review: React.FC<Step4ReviewProps> = ({
                 </CardContent>
               </Card>
             ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Final Confirmation */}
-      <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-green-500 rounded-full">
-              <CheckCircle className="w-8 h-8 text-white" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-green-700 mb-2">
-                آماده برای تایید نهایی
-              </h3>
-              <p className="text-green-600">
-                تمام اطلاعات پروژه بررسی شد. با کلیک روی دکمه "ایجاد پروژه" پروژه شما ایجاد خواهد شد.
-              </p>
-            </div>
           </div>
         </CardContent>
       </Card>

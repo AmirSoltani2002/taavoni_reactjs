@@ -197,6 +197,13 @@ export default function ProjectCreate({
       return;
     }
     
+    // Prevent submission if required fields are not defined
+    if (!project.startDate || !project.endDate || 
+        project.longitude === undefined || project.longitude === null ||
+        project.latitude === undefined || project.latitude === null) {
+      return;
+    }
+    
     setLoading(true);
     
     try {
@@ -357,6 +364,19 @@ export default function ProjectCreate({
     }
   };
 
+  // Check if required fields for submission are defined
+  const canSubmit = () => {
+    return !!(
+      project.startDate &&
+      project.endDate &&
+      project.longitude !== undefined &&
+      project.longitude !== null &&
+      project.latitude !== undefined &&
+      project.latitude !== null &&
+      !hasDuplicateUnits
+    );
+  };
+
   const renderStep = () => {
     switch (step) {
       case 0:
@@ -451,18 +471,20 @@ export default function ProjectCreate({
           <div className="flex flex-col sm:flex-row gap-4 pt-6">
             {step === 3 ? (
               <Button 
-                type={hasDuplicateUnits ? "button" : "submit"}
-                onClick={hasDuplicateUnits ? (e) => {
+                type={hasDuplicateUnits || !canSubmit() ? "button" : "submit"}
+                onClick={hasDuplicateUnits || !canSubmit() ? (e) => {
                   e.preventDefault();
-                  setStep(2);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  if (hasDuplicateUnits) {
+                    setStep(2);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }
                 } : undefined}
                 className={`flex-1 h-14 text-lg gap-2 shadow-lg ${
-                  hasDuplicateUnits 
+                  hasDuplicateUnits || !canSubmit()
                     ? 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 cursor-pointer' 
                     : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'
                 }`}
-                disabled={loading}
+                disabled={loading || !canSubmit()}
               >
                 {loading ? (
                   <>
@@ -474,6 +496,13 @@ export default function ProjectCreate({
                     <div className="w-5 h-5 border-2 border-white rounded-full"></div>
                     <span className="hover:underline">
                       لطفاً شماره واحدهای تکراری را اصلاح کنید
+                    </span>
+                  </>
+                ) : !canSubmit() ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white rounded-full"></div>
+                    <span className="hover:underline">
+                      لطفاً تاریخ شروع، تاریخ پایان و موقعیت جغرافیایی را مشخص کنید
                     </span>
                   </>
                 ) : (

@@ -649,7 +649,7 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
           </div>
 
           {/* Add New Document Form */}
-          {projectId && (
+          {projectId ? (
             <Card className="bg-blue-50/50 border-2 border-dashed border-blue-200">
               <CardContent className="p-4">
                 <Label className="text-sm text-slate-700 font-medium mb-3 block">
@@ -701,6 +701,22 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                         </>
                       )}
                     </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="bg-amber-50/50 border-2 border-dashed border-amber-200">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3 text-amber-700">
+                  <FileText className="w-5 h-5 text-amber-600" />
+                  <div>
+                    <p className="text-sm font-medium mb-1">
+                      برای آپلود اسناد، ابتدا پروژه را ایجاد کنید
+                    </p>
+                    <p className="text-xs text-amber-600">
+                      پس از ایجاد پروژه، می‌توانید اسناد را در این بخش آپلود کنید
+                    </p>
                   </div>
                 </div>
               </CardContent>
