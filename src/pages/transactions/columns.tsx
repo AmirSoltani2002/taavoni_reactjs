@@ -1,11 +1,12 @@
 import { type ColumnDef } from "@tanstack/react-table"
-import { Button } from "@/components/ui/button"
-import { Download, Eye } from "lucide-react"
-import { getToken } from "@/general"
+import { Download, Eye, CheckCircle2, XCircle } from "lucide-react"
+import { getToken, updateTableRow } from "@/general"
 import { api_base_url } from "@/config"
 import { toast } from "sonner"
 import type { User } from "../users/columns"
 import type { SubProject } from "../projects/columns"
+import { Badge } from "@/components/ui/badge"
+import type { ReactNode } from "react"
 
 export type Transaction = {
     id?: number;
@@ -13,16 +14,44 @@ export type Transaction = {
     subProjectId?: number;
     amount?: number;
     bank?: string;
+    targetBank?: string;
     number?: string;
     document?: string;
     detail?: string;
+    isConfirmed?: boolean;
     createdAt?: string;
     updatedAt?: string;
     user?: User;
     subProject?: SubProject;
 }
 
-export const columns: ColumnDef<Transaction>[] = [
+export const getColumns = (): ColumnDef<Transaction>[] => {
+    const baseColumns: ColumnDef<Transaction>[] = [
+    {
+        accessorKey: "isConfirmed",
+        header: "وضعیت",
+        cell: ({ row }) => {
+            const isConfirmed = row.original.isConfirmed ?? false;
+            return (
+                <Badge 
+                    variant={isConfirmed ? "default" : "destructive"}
+                    className={isConfirmed ? "bg-green-500 text-white" : "bg-red-500 text-white"}
+                >
+                    {isConfirmed ? (
+                        <>
+                            <CheckCircle2 className="w-3 h-3 ml-1" />
+                            تایید شده
+                        </>
+                    ) : (
+                        <>
+                            <XCircle className="w-3 h-3 ml-1" />
+                            تایید نشده
+                        </>
+                    )}
+                </Badge>
+            );
+        }
+    },
     {
         accessorKey: "user",
         header: "کاربر",
@@ -33,7 +62,6 @@ export const columns: ColumnDef<Transaction>[] = [
         }
     },
     {
-        accessorKey: "subProject",
         header: "واحد",
         cell: ({ row }) => {
             const subProject = row.original.subProject;
@@ -57,6 +85,10 @@ export const columns: ColumnDef<Transaction>[] = [
         header: "بانک",
     },
     {
+        accessorKey: "targetBank",
+        header: "بانک مقصد",
+    },
+    {
         accessorKey: "number",
         header: "شماره تراکنش",
     },
@@ -66,103 +98,6 @@ export const columns: ColumnDef<Transaction>[] = [
         cell: ({ cell }) => {
             const value = cell.getValue() as string;
             return value ? (value.length > 50 ? value.substring(0, 50) + "..." : value) : "-";
-        }
-    },
-    {
-        accessorKey: "document",
-        header: "مستندات",
-        cell: ({ row }) => {
-            const documentFilename = row.original.document;
-            const transactionId = row.original.id;
-            if (!documentFilename || !transactionId) return "-";
-            
-            const handleDownload = async () => {
-                try {
-                    const token = getToken();
-                    const resp = await fetch(`${api_base_url}/transaction/download/${transactionId}`, {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': token ? `Bearer ${token}` : ''
-                        }
-                    });
-                    
-                    if (resp.ok) {
-                        const blob = await resp.blob();
-                        const url = window.URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        
-                        // Get filename from Content-Disposition header or use document filename
-                        const contentDisposition = resp.headers.get('Content-Disposition');
-                        let downloadFilename = documentFilename;
-                        if (contentDisposition) {
-                            const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-                            if (filenameMatch && filenameMatch[1]) {
-                                downloadFilename = filenameMatch[1].replace(/['"]/g, '');
-                            }
-                        }
-                        
-                        a.download = downloadFilename;
-                        document.body.appendChild(a);
-                        a.click();
-                        window.URL.revokeObjectURL(url);
-                        document.body.removeChild(a);
-                    } else {
-                        const err = await resp.json();
-                        toast.error(err.message || 'خطا در دانلود فایل');
-                    }
-                } catch (error: any) {
-                    console.error('Download error:', error);
-                    toast.error('خطا در دانلود فایل');
-                }
-            };
-
-            const handleView = async () => {
-                try {
-                    const token = getToken();
-                    const resp = await fetch(`${api_base_url}/transaction/download/${transactionId}`, {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': token ? `Bearer ${token}` : ''
-                        }
-                    });
-                    
-                    if (resp.ok) {
-                        const blob = await resp.blob();
-                        const url = window.URL.createObjectURL(blob);
-                        window.open(url, '_blank');
-                        // Clean up the URL after a delay
-                        setTimeout(() => window.URL.revokeObjectURL(url), 100);
-                    } else {
-                        const err = await resp.json();
-                        toast.error(err.message || 'خطا در مشاهده فایل');
-                    }
-                } catch (error: any) {
-                    console.error('View error:', error);
-                    toast.error('خطا در مشاهده فایل');
-                }
-            };
-            
-            return (
-                <div className="flex gap-2">
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={handleView}
-                    >
-                        <Eye className="w-4 h-4 ml-1" />
-                        مشاهده
-                    </Button>
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={handleDownload}
-                    >
-                        <Download className="w-4 h-4 ml-1" />
-                        دانلود
-                    </Button>
-                </div>
-            );
         }
     },
     {
@@ -178,5 +113,162 @@ export const columns: ColumnDef<Transaction>[] = [
             }
         }
     },
-]
+    ];
+
+    return baseColumns;
+};
+
+export const getTransactionOptions = (onRefresh?: () => void, userInfo?: User): ((transaction: Transaction) => { title: string | ReactNode; onClick: () => void }[]) => {
+    const handleToggleConfirmation = async (transaction: Transaction, confirm: boolean) => {
+        if (!transaction.id) return;
+        
+        updateTableRow('transaction', transaction.id, { isConfirmed: confirm }, (data) => {
+            if (data && data.id) {
+                toast.success(confirm ? 'تراکنش تایید شد' : 'تراکنش رد شد');
+                if (onRefresh) {
+                    onRefresh();
+                }
+            }
+        });
+    };
+
+    const handleDownload = async (transaction: Transaction) => {
+        const documentFilename = transaction.document;
+        const transactionId = transaction.id;
+        if (!documentFilename || !transactionId) {
+            toast.error('فایل موجود نیست');
+            return;
+        }
+
+        try {
+            const token = getToken();
+            const resp = await fetch(`${api_base_url}/transaction/download/${transactionId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': token ? `Bearer ${token}` : ''
+                }
+            });
+            
+            if (resp.ok) {
+                const blob = await resp.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                
+                // Get filename from Content-Disposition header or use document filename
+                const contentDisposition = resp.headers.get('Content-Disposition');
+                let downloadFilename = documentFilename;
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                    if (filenameMatch && filenameMatch[1]) {
+                        downloadFilename = filenameMatch[1].replace(/['"]/g, '');
+                    }
+                }
+                
+                a.download = downloadFilename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } else {
+                const err = await resp.json();
+                toast.error(err.message || 'خطا در دانلود فایل');
+            }
+        } catch (error: any) {
+            console.error('Download error:', error);
+            toast.error('خطا در دانلود فایل');
+        }
+    };
+
+    const handleView = async (transaction: Transaction) => {
+        const transactionId = transaction.id;
+        if (!transactionId) {
+            toast.error('فایل موجود نیست');
+            return;
+        }
+
+        try {
+            const token = getToken();
+            const resp = await fetch(`${api_base_url}/transaction/download/${transactionId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': token ? `Bearer ${token}` : ''
+                }
+            });
+            
+            if (resp.ok) {
+                const blob = await resp.blob();
+                const url = window.URL.createObjectURL(blob);
+                window.open(url, '_blank');
+                // Clean up the URL after a delay
+                setTimeout(() => window.URL.revokeObjectURL(url), 100);
+            } else {
+                const err = await resp.json();
+                toast.error(err.message || 'خطا در مشاهده فایل');
+            }
+        } catch (error: any) {
+            console.error('View error:', error);
+            toast.error('خطا در مشاهده فایل');
+        }
+    };
+
+    return (transaction: Transaction) => {
+        const isConfirmed = transaction.isConfirmed ?? false;
+        const hasDocument = transaction.document && transaction.id;
+        const options: { title: string | ReactNode; onClick: () => void }[] = [];
+        
+        // Add document view/download options if document exists
+        if (hasDocument) {
+            options.push({
+                title: (
+                    <>
+                        <Eye className="w-4 h-4 ml-1 inline" />
+                        مشاهده مستندات
+                    </>
+                ),
+                onClick: () => handleView(transaction)
+            });
+            options.push({
+                title: (
+                    <>
+                        <Download className="w-4 h-4 ml-1 inline" />
+                        دانلود مستندات
+                    </>
+                ),
+                onClick: () => handleDownload(transaction)
+            });
+        }
+        
+        // Add confirmation options for admins
+        const isAdmin = ['admin', 'system'].includes(userInfo?.type || '');
+        if (isAdmin) {
+            if (!isConfirmed) {
+                options.push({
+                    title: (
+                        <>
+                            <CheckCircle2 className="w-4 h-4 ml-1 inline" />
+                            تایید
+                        </>
+                    ),
+                    onClick: () => handleToggleConfirmation(transaction, true)
+                });
+            } else {
+                options.push({
+                    title: (
+                        <>
+                            <XCircle className="w-4 h-4 ml-1 inline" />
+                            رد تایید
+                        </>
+                    ),
+                    onClick: () => handleToggleConfirmation(transaction, false)
+                });
+            }
+        }
+        
+        return options;
+    };
+};
+
+// Export default columns for backward compatibility (non-admin)
+export const columns: ColumnDef<Transaction>[] = getColumns();
 

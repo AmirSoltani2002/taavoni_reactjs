@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,21 +6,40 @@ import { getTable, getToken } from "@/general";
 import { toast } from "sonner";
 import type { SubProject } from "../projects/columns";
 import { api_base_url } from "@/config";
-import { Upload, X } from "lucide-react";
+import { Upload, X, Check, ChevronsUpDown } from "lucide-react";
 import type { User } from "../users/columns";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 
 type TransactionFormData = {
     amount: number | '';
     bank: string;
+    targetBank: string;
     number: string;
     detail: string;
     subProjectId: number | '';
+    userId?: number | '';
+    isConfirmed?: boolean;
     file: File | null;
 };
 
 const initialState: TransactionFormData = {
     amount: '',
     bank: '',
+    targetBank: '',
     number: '',
     detail: '',
     subProjectId: '',
@@ -35,27 +54,82 @@ interface TransactionCreateProps {
 }
 
 export default function TransactionCreate({ onSubmit, onCancel, userSubProjects: initialSubProjects, userInfo }: TransactionCreateProps) {
-    const [form, setForm] = useState<TransactionFormData>(initialState);
+    const isAdmin = ['admin', 'system'].includes(userInfo?.type || '');
+    const [form, setForm] = useState<TransactionFormData>(() => ({
+        ...initialState,
+        isConfirmed: isAdmin ? true : undefined
+    }));
     const [subProjects, setSubProjects] = useState<SubProject[]>(initialSubProjects || []);
     const [isLoading, setIsLoading] = useState(false);
+    const [users, setUsers] = useState<User[]>([]);
+    const [userSelectOpen, setUserSelectOpen] = useState(false);
 
     useEffect(() => {
-        if (!initialSubProjects) {
-            // Fetch user's subProjects
-            getTable('subprojects/profile', (data: SubProject[] | { error: { error: string, status: number } }) => {
+        // Fetch all users if admin
+        if (isAdmin) {
+            getTable('users', (data: User[] | { error: { error: string, status: number } }) => {
                 if ('error' in data) {
-                    console.error('Error loading subProjects:', data.error);
-                    toast.error('خطا در بارگذاری واحدها');
+                    console.error('Error loading users:', data.error);
                 } else {
-                    setSubProjects(data as SubProject[]);
+                    setUsers(data as User[]);
                 }
             }, false);
         }
-    }, [initialSubProjects]);
+    }, [isAdmin]);
+
+    useEffect(() => {
+        if (!initialSubProjects) {
+            if (isAdmin && form.userId) {
+                // Fetch subProjects for selected user
+                getTable(`subprojects/user/${form.userId}`, (data: SubProject[] | { error: { error: string, status: number } }) => {
+                    if ('error' in data) {
+                        console.error('Error loading subProjects:', data.error);
+                        toast.error('خطا در بارگذاری واحدها');
+                        setSubProjects([]);
+                    } else {
+                        setSubProjects(data as SubProject[]);
+                    }
+                }, false);
+            } else if (!isAdmin) {
+                // Fetch user's subProjects for regular users
+                getTable('subprojects/profile', (data: SubProject[] | { error: { error: string, status: number } }) => {
+                    if ('error' in data) {
+                        console.error('Error loading subProjects:', data.error);
+                        toast.error('خطا در بارگذاری واحدها');
+                    } else {
+                        setSubProjects(data as SubProject[]);
+                    }
+                }, false);
+            } else {
+                setSubProjects([]);
+            }
+        } else {
+            setSubProjects(initialSubProjects);
+        }
+    }, [initialSubProjects, isAdmin, form.userId]);
+
+    const formatNumberWithSeparator = (value: number | ''): string => {
+        if (value === '' || value === null || value === undefined) return '';
+        return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    };
+
+    const parseNumberFromFormatted = (value: string): number | '' => {
+        // Remove all non-digit characters
+        const numericValue = value.replace(/[^\d]/g, '');
+        if (numericValue === '') return '';
+        const num = parseInt(numericValue, 10);
+        return isNaN(num) ? '' : num;
+    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setForm((prev) => ({ ...prev, [name]: value }));
+        if (name === 'amount') {
+            // Parse the formatted value to get the numeric value
+            const numericValue = parseNumberFromFormatted(value);
+            setForm((prev) => ({ ...prev, [name]: numericValue }));
+        } else {
+            setForm((prev) => ({ ...prev, [name]: value }));
+        }
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,6 +161,11 @@ export default function TransactionCreate({ onSubmit, onCancel, userSubProjects:
             return;
         }
 
+        if (!form.targetBank) {
+            toast.error('لطفا بانک مقصد را وارد کنید');
+            return;
+        }
+
         if (!form.number) {
             toast.error('لطفا شماره تراکنش را وارد کنید');
             return;
@@ -94,6 +173,12 @@ export default function TransactionCreate({ onSubmit, onCancel, userSubProjects:
 
         if (!form.subProjectId) {
             toast.error('لطفا واحد را انتخاب کنید');
+            return;
+        }
+
+        // For admin, require userId selection
+        if (isAdmin && !form.userId) {
+            toast.error('لطفا کاربر را انتخاب کنید');
             return;
         }
 
@@ -105,16 +190,24 @@ export default function TransactionCreate({ onSubmit, onCancel, userSubProjects:
             
             // Append file
             formData.append('file', form.file);
-            formData.append('userId', userInfo?.id?.toString() || '');
+            // Use selected userId for admin, otherwise use userInfo.id
+            const userId = isAdmin ? form.userId : userInfo?.id;
+            formData.append('userId', userId?.toString() || '');
             // Append other fields
             formData.append('amount', form.amount.toString());
             
             formData.append('bank', form.bank);
+            formData.append('targetBank', form.targetBank);
             formData.append('number', form.number);
             if (form.detail) {
                 formData.append('detail', form.detail);
             }
             formData.append('subProjectId', form.subProjectId.toString());
+            
+            // Add isConfirmed for admins (default true)
+            if (isAdmin) {
+                formData.append('isConfirmed', (form.isConfirmed !== false).toString());
+            }
 
             const response = await fetch(`${api_base_url}/transaction`, {
                 method: 'POST',
@@ -131,13 +224,19 @@ export default function TransactionCreate({ onSubmit, onCancel, userSubProjects:
                     if (onSubmit) {
                         onSubmit(form);
                     }
-                    setForm(initialState);
+                    setForm({
+                        ...initialState,
+                        isConfirmed: isAdmin ? true : undefined
+                    });
                 } else {
                     toast.error('خطایی رخ داده است');
                     if (onSubmit) {
                         onSubmit(form);
                     }
-                    setForm(initialState);
+                    setForm({
+                        ...initialState,
+                        isConfirmed: isAdmin ? true : undefined
+                    });
                 }
             } else {
                 const err = await response.json();
@@ -165,9 +264,73 @@ export default function TransactionCreate({ onSubmit, onCancel, userSubProjects:
         return `${projectName}${blockName ? ` - ${blockName}` : ''} - واحد ${unitNumber}`.trim();
     };
 
+    const getUserLabel = (user: User) => {
+        const name = user.name || '';
+        const lastName = user.lastName || '';
+        return `${name} ${lastName}`.trim();
+    };
+
+    const selectedUser = useMemo(() => {
+        if (!isAdmin || !form.userId) return null;
+        return users.find(u => u.id === form.userId) || null;
+    }, [users, form.userId, isAdmin]);
+
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 gap-4">
+                {/* User Selection for Admin */}
+                {isAdmin && (
+                    <div className="space-y-2">
+                        <Label htmlFor="userId">
+                            کاربر <span className="text-red-500">*</span>
+                        </Label>
+                        <Popover open={userSelectOpen} onOpenChange={setUserSelectOpen}>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={userSelectOpen}
+                                    className="w-full justify-between"
+                                >
+                                    {selectedUser
+                                        ? getUserLabel(selectedUser)
+                                        : "انتخاب کاربر..."}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                                <Command>
+                                    <CommandInput placeholder="جستجوی کاربر..." />
+                                    <CommandList>
+                                        <CommandEmpty>کاربری پیدا نشد</CommandEmpty>
+                                        <CommandGroup>
+                                            {users.map((user) => (
+                                                <CommandItem
+                                                    key={user.id}
+                                                    value={`${user.name || ''} ${user.lastName || ''} ${user.nationalNumber || ''}`}
+                                                    onSelect={() => {
+                                                        const newUserId = user.id === form.userId ? '' : user.id;
+                                                        setForm((prev) => ({ ...prev, userId: newUserId || '', subProjectId: '' }));
+                                                        setUserSelectOpen(false);
+                                                    }}
+                                                >
+                                                    <Check
+                                                        className={cn(
+                                                            "ml-2 h-4 w-4",
+                                                            form.userId === user.id ? "opacity-100" : "opacity-0"
+                                                        )}
+                                                    />
+                                                    {getUserLabel(user)}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
+                    </div>
+                )}
+
                 {/* SubProject Selection */}
                 <div className="space-y-2">
                     <Label htmlFor="subProjectId">
@@ -201,13 +364,12 @@ export default function TransactionCreate({ onSubmit, onCancel, userSubProjects:
                     <Input
                         id="amount"
                         name="amount"
-                        type="number"
-                        value={form.amount}
+                        type="text"
+                        value={formatNumberWithSeparator(form.amount)}
                         onChange={handleChange}
-                        placeholder="مثال: 1000000"
+                        placeholder="مثال: 1,000,000"
                         required
-                        min="0"
-                        step="1000"
+                        inputMode="numeric"
                     />
                 </div>
 
@@ -225,6 +387,42 @@ export default function TransactionCreate({ onSubmit, onCancel, userSubProjects:
                         required
                     >
                         <option value="">انتخاب بانک</option>
+                        <option value="بانک ملت">بانک ملت</option>
+                        <option value="بانک پارسیان">بانک پارسیان</option>
+                        <option value="بانک پاسارگاد">بانک پاسارگاد</option>
+                        <option value="بانک سپه">بانک سپه</option>
+                        <option value="بانک سامان">بانک سامان</option>
+                        <option value="بانک اقتصاد نوین">بانک اقتصاد نوین</option>
+                        <option value="بانک شهر">بانک شهر</option>
+                        <option value="بانک سینا">بانک سینا</option>
+                        <option value="بانک دی">بانک دی</option>
+                        <option value="بانک مسکن">بانک مسکن</option>
+                        <option value="موسسه اعتباری ملل">موسسه اعتباری ملل</option>
+                        <option value="بانک قرض الحسنه رسالت">بانک قرض الحسنه رسالت</option>
+                        <option value="بانک قرض الحسنه مهر ایران">بانک قرض الحسنه مهر ایران</option>
+                        <option value="بانک سرمایه">بانک سرمایه</option>
+                        <option value="بانک گردشگری">بانک گردشگری</option>
+                        <option value="بانک رفاه کارگران">بانک رفاه کارگران</option>
+                        <option value="بانک خاورمیانه">بانک خاورمیانه</option>
+                        <option value="بانک کشاورزی ایران">بانک کشاورزی ایران</option>
+                        <option value="بانک توسعه تعاون">بانک توسعه تعاون</option>
+                    </select>
+                </div>
+
+                {/* Target Bank */}
+                <div className="space-y-2">
+                    <Label htmlFor="targetBank">
+                        بانک مقصد <span className="text-red-500">*</span>
+                    </Label>
+                    <select
+                        id="targetBank"
+                        name="targetBank"
+                        value={form.targetBank}
+                        onChange={handleChange}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        required
+                    >
+                        <option value="">انتخاب بانک مقصد</option>
                         <option value="بانک ملت">بانک ملت</option>
                         <option value="بانک پارسیان">بانک پارسیان</option>
                         <option value="بانک پاسارگاد">بانک پاسارگاد</option>
@@ -276,6 +474,22 @@ export default function TransactionCreate({ onSubmit, onCancel, userSubProjects:
                         rows={3}
                     />
                 </div>
+
+                {/* Is Confirmed Checkbox for Admin */}
+                {isAdmin && (
+                    <div className="flex items-center space-x-2 space-x-reverse">
+                        <Checkbox
+                            id="isConfirmed"
+                            checked={form.isConfirmed !== false}
+                            onCheckedChange={(checked) => {
+                                setForm((prev) => ({ ...prev, isConfirmed: checked as boolean }));
+                            }}
+                        />
+                        <Label htmlFor="isConfirmed" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                            تایید شده
+                        </Label>
+                    </div>
+                )}
 
                 {/* File Upload */}
                 <div className="space-y-2">

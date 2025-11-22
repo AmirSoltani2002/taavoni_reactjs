@@ -9,7 +9,7 @@ import {
 } from "@tanstack/react-table"
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Pencil, Trash2, ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { deleteTableRow, updateTableRow } from "@/general";
 import { useMemo, useState } from "react";
@@ -29,6 +29,11 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -40,7 +45,10 @@ interface DataTableProps<TData, TValue> {
   options?: {
     title: string | React.ReactNode;
     onClick: (row: TData) => void;
-  }[]
+  }[] | ((row: TData) => {
+    title: string | React.ReactNode;
+    onClick: (row: TData) => void;
+  }[])
   _showDeleteButton?: boolean;
 }
 
@@ -104,6 +112,97 @@ export function DataTable<TData extends { id?: number }, TValue>({
     });
   }, [columns]);
 
+  // Component for actions cell with popover state
+  const ActionsCell = ({ row }: { row: any }) => {
+    const [popoverOpen, setPopoverOpen] = useState(false);
+    const rowOptions = typeof options === 'function' ? options(row.original) : options;
+    const totalActions = (EditComponent ? 1 : 0) + (rowOptions?.length || 0) + (_showDeleteButton ? 1 : 0);
+    const showMenu = totalActions > 1;
+    
+    return (
+      <div className="flex gap-2">
+        {!showMenu ? (
+          // Show buttons directly if only one action
+          <>
+            {EditComponent && (
+              <>
+                <Button size="sm" variant="outline" onClick={() => setEditRow(row.original)}><Pencil /></Button>
+                {editRow && editRow.id === row.original.id && EditElement}
+              </>
+            )}
+            {rowOptions && rowOptions.map((op, index) => (
+              <Button 
+                key={index}
+                size="sm" 
+                variant="outline" 
+                onClick={() => op.onClick(row.original)}
+              >
+                {op.title}
+              </Button>
+            ))}
+            {_showDeleteButton && <Button size="sm" variant="destructive" onClick={() => setDeleteRow(row.original)}><Trash2 /></Button>}
+          </>
+        ) : (
+          // Show three dots menu if multiple actions
+          <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+            <PopoverTrigger asChild>
+              <Button size="sm" variant="outline">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-1" align="end">
+              <div className="space-y-1">
+                {EditComponent && (
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start"
+                    size="sm"
+                    onClick={() => {
+                      setEditRow(row.original);
+                      setPopoverOpen(false);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4 ml-2" />
+                    ویرایش
+                  </Button>
+                )}
+                {rowOptions && rowOptions.map((op, index) => (
+                  <Button 
+                    key={index}
+                    variant="ghost"
+                    className="w-full justify-start"
+                    size="sm"
+                    onClick={() => {
+                      op.onClick(row.original);
+                      setPopoverOpen(false);
+                    }}
+                  >
+                    {op.title}
+                  </Button>
+                ))}
+                {_showDeleteButton && (
+                  <Button 
+                    variant="ghost"
+                    className="w-full justify-start text-destructive hover:text-destructive"
+                    size="sm"
+                    onClick={() => {
+                      setDeleteRow(row.original);
+                      setPopoverOpen(false);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4 ml-2" />
+                    حذف
+                  </Button>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+        )}
+        {editRow && editRow.id === row.original.id && EditElement}
+      </div>
+    );
+  };
+
   const allColumns = hasId && tableName && (_showDeleteButton || options || EditComponent)
     ? [
         ...columnsWithSorting,
@@ -111,27 +210,7 @@ export function DataTable<TData extends { id?: number }, TValue>({
           id: "actions",
           header: "عملیات",
           enableSorting: false, // Actions column should not be sortable
-          cell: ({ row }: any) => (
-            <div className="flex gap-2">
-              {EditComponent && (
-                <>
-                  <Button size="sm" variant="outline" onClick={() => setEditRow(row.original)}><Pencil /></Button>
-                  {editRow && editRow.id === row.original.id && EditElement}
-                </>
-              )}
-              {options && options.map((op, index) => (
-                <Button 
-                  key={index}
-                  size="sm" 
-                  variant="outline" 
-                  onClick={() => op.onClick(row.original)}
-                >
-                  {op.title}
-                </Button>
-              ))}
-              {_showDeleteButton && <Button size="sm" variant="destructive" onClick={() => setDeleteRow(row.original)}><Trash2 /></Button>}    
-            </div>
-          ),
+          cell: ({ row }: any) => <ActionsCell row={row} />,
         } as ColumnDef<TData, TValue>,
       ]
     : columnsWithSorting;
@@ -211,7 +290,10 @@ export function DataTable<TData extends { id?: number }, TValue>({
                     data-state={row.getIsSelected() && "selected"}
                     className={cn(
                       `bg-${HEADER_COLOR}-100 hover:bg-${HEADER_COLOR}-200`,
-                      onClickRow ? 'cursor-pointer' : '',
+                      (onClickRow || options) ? 'cursor-pointer' : '',
+                      // Check if row has isConfirmed property and it's true
+                      (row.original as any)?.isConfirmed === true && 'bg-green-50 hover:bg-green-100',
+                      (row.original as any)?.isConfirmed === false && 'bg-red-50 hover:bg-red-100',
                     )}
                     aria-label="مشاهده"
                     onClick={() => {
@@ -235,11 +317,18 @@ export function DataTable<TData extends { id?: number }, TValue>({
                   <ContextMenuItem style={{color: 'red'}} onClick={() => setDeleteRow(row.original)}>
                     حذف
                   </ContextMenuItem>
-                  {options && options.map((op) => (
-                    <ContextMenuItem onClick={() => op.onClick(row.original)}>
-                      {op.title}
-                    </ContextMenuItem>
-                  ))}
+                  {options && (typeof options === 'function'
+                    ? options(row.original).map((op, index) => (
+                        <ContextMenuItem key={index} onClick={() => op.onClick(row.original)}>
+                          {op.title}
+                        </ContextMenuItem>
+                      ))
+                    : options.map((op, index) => (
+                        <ContextMenuItem key={index} onClick={() => op.onClick(row.original)}>
+                          {op.title}
+                        </ContextMenuItem>
+                      ))
+                  )}
                 </ContextMenuContent>
               </ContextMenu>
             ))
