@@ -126,7 +126,10 @@ export function DataTable<TData extends { id?: number }, TValue>({
           <>
             {EditComponent && (
               <>
-                <Button size="sm" variant="outline" onClick={() => setEditRow(row.original)}><Pencil /></Button>
+                <Button size="sm" variant="outline" onClick={(e) => {
+                  e.stopPropagation();
+                  setEditRow(row.original);
+                }}><Pencil /></Button>
                 {editRow && editRow.id === row.original.id && EditElement}
               </>
             )}
@@ -135,18 +138,24 @@ export function DataTable<TData extends { id?: number }, TValue>({
                 key={index}
                 size="sm" 
                 variant="outline" 
-                onClick={() => op.onClick(row.original)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  op.onClick(row.original);
+                }}
               >
                 {op.title}
               </Button>
             ))}
-            {_showDeleteButton && <Button size="sm" variant="destructive" onClick={() => setDeleteRow(row.original)}><Trash2 /></Button>}
+            {_showDeleteButton && <Button size="sm" variant="destructive" onClick={(e) => {
+              e.stopPropagation();
+              setDeleteRow(row.original);
+            }}><Trash2 /></Button>}
           </>
         ) : (
           // Show three dots menu if multiple actions
           <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
             <PopoverTrigger asChild>
-              <Button size="sm" variant="outline">
+              <Button size="sm" variant="outline" onClick={(e) => e.stopPropagation()}>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </PopoverTrigger>
@@ -157,7 +166,8 @@ export function DataTable<TData extends { id?: number }, TValue>({
                     variant="ghost" 
                     className="w-full justify-start"
                     size="sm"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setEditRow(row.original);
                       setPopoverOpen(false);
                     }}
@@ -172,7 +182,8 @@ export function DataTable<TData extends { id?: number }, TValue>({
                     variant="ghost"
                     className="w-full justify-start"
                     size="sm"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       op.onClick(row.original);
                       setPopoverOpen(false);
                     }}
@@ -185,7 +196,8 @@ export function DataTable<TData extends { id?: number }, TValue>({
                     variant="ghost"
                     className="w-full justify-start text-destructive hover:text-destructive"
                     size="sm"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setDeleteRow(row.original);
                       setPopoverOpen(false);
                     }}
@@ -311,20 +323,32 @@ export function DataTable<TData extends { id?: number }, TValue>({
                 </ContextMenuTrigger>
                 <ContextMenuContent>
                   {EditComponent && (
-                    <ContextMenuItem onClick={() => setEditRow(row.original)}>ویرایش</ContextMenuItem>
+                    <ContextMenuItem onClick={(e) => {
+                      e.stopPropagation();
+                      setEditRow(row.original);
+                    }}>ویرایش</ContextMenuItem>
                   )}
                   {EditElement}
-                  <ContextMenuItem style={{color: 'red'}} onClick={() => setDeleteRow(row.original)}>
+                  <ContextMenuItem style={{color: 'red'}} onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteRow(row.original);
+                  }}>
                     حذف
                   </ContextMenuItem>
                   {options && (typeof options === 'function'
                     ? options(row.original).map((op, index) => (
-                        <ContextMenuItem key={index} onClick={() => op.onClick(row.original)}>
+                        <ContextMenuItem key={index} onClick={(e) => {
+                          e.stopPropagation();
+                          op.onClick(row.original);
+                        }}>
                           {op.title}
                         </ContextMenuItem>
                       ))
                     : options.map((op, index) => (
-                        <ContextMenuItem key={index} onClick={() => op.onClick(row.original)}>
+                        <ContextMenuItem key={index} onClick={(e) => {
+                          e.stopPropagation();
+                          op.onClick(row.original);
+                        }}>
                           {op.title}
                         </ContextMenuItem>
                       ))

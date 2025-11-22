@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import type { User } from "./columns";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { UserSelectDialog } from "@/components/user-select-dialog";
 
 interface UserProjectsProps {
     user?: User | null;
@@ -21,6 +23,9 @@ const UserProjects = ({ user, isSelf = false, isAdmin = false }: UserProjectsPro
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const { userId } = useParams();
+    const [confirmUnassignDialog, setConfirmUnassignDialog] = useState<SubProject | null>(null);
+    const [showUserSelectDialog, setShowUserSelectDialog] = useState(false);
+    const [pendingSubProjectId, setPendingSubProjectId] = useState<number | null>(null);
 
     const loadProjects = useCallback(() => {
         setIsLoading(true);
@@ -39,28 +44,49 @@ const UserProjects = ({ user, isSelf = false, isAdmin = false }: UserProjectsPro
         loadProjects();
     }, [loadProjects]);
 
+    useEffect(() => {
+        if (!showUserSelectDialog) {
+            setPendingSubProjectId(null);
+        }
+    }, [showUserSelectDialog]);
+
     const handleUnassign = useCallback(async (subProject: SubProject) => {
         if(!subProject.id){
             toast.error('خطا: شناسه واحد یافت نشد');
             return;
         }
+        setConfirmUnassignDialog(subProject);
+    }, []);
+
+    const handleConfirmUnassign = useCallback(async (shouldAssignToAnother: boolean) => {
+        const subProject = confirmUnassignDialog;
+        if(!subProject || !subProject.id){
+            setConfirmUnassignDialog(null);
+            return;
+        }
         
-        updateTableRow('subprojects', subProject.id, {userId: null}, (data: SubProject | {error?: any}) => {
+        const subProjectId = subProject.id;
+        setConfirmUnassignDialog(null);
+        
+        updateTableRow('subprojects', subProjectId, {userId: null}, (data: SubProject | {error?: any}) => {
             if(data && 'id' in data && data.id && data.userId === null){
                 toast.success('واحد با موفقیت واگذار شد');
                 loadProjects();
+                
+                if(shouldAssignToAnother){
+                    setPendingSubProjectId(subProjectId);
+                    setShowUserSelectDialog(true);
+                }
             } else if(data && 'id' in data && data.id && data.userId !== null){
-                toast.success('واحد قابل واگذاری نیست');
+                toast.error('واحد قابل واگذاری نیست');
             } else {
                 toast.error('خطایی رخ داده است ' + JSON.stringify(data));
             }
         });
-    }, [loadProjects]);
+    }, [confirmUnassignDialog, loadProjects]);
 
     const handleRowClick = useCallback((row: SubProject) => {
-        if (isAdmin && !isSelf && row.id && userId) {
-            navigate(`/users/${userId}/assign-project/${row.id}`);
-        } else if(row.id){
+        if(row.id){
             navigate(`/unit/${row.id}`);
         }
     }, [isAdmin, isSelf, navigate, userId]);
@@ -104,6 +130,45 @@ const UserProjects = ({ user, isSelf = false, isAdmin = false }: UserProjectsPro
                 />
             )}
             {isLoading && <PageLoader />}
+
+            {/* Confirmation Dialog */}
+            <Dialog open={!!confirmUnassignDialog} onOpenChange={(open) => !open && setConfirmUnassignDialog(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>واگذاری واحد</DialogTitle>
+                        <DialogDescription>
+                            آیا می‌خواهید این واحد را به کاربر دیگری اختصاص دهید؟
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2">
+                        <Button
+                            variant="ghost"
+                            className="bg-yellow-500 text-white hover:bg-yellow-600 hover:text-white"
+                            onClick={() => handleConfirmUnassign(false)}
+                        >
+                            خیر
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            onClick={() => handleConfirmUnassign(true)}
+                            className="bg-red-500 text-white hover:bg-red-600 hover:text-white"
+                        >
+                            بله
+                        </Button>
+                        <Button variant="outline" onClick={() => setConfirmUnassignDialog(null)}>
+                            انصراف
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* User Select Dialog */}
+            <UserSelectDialog 
+                open={showUserSelectDialog} 
+                onOpenChange={setShowUserSelectDialog}
+                {...(pendingSubProjectId ? { subProjectId: pendingSubProjectId } : {})}
+                onAssignComplete={loadProjects}
+            />
         </div>
     )
 }

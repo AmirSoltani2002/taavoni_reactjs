@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { Project, Block, SubProject } from "../projects/columns";
 import type { User } from "./columns";
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Building, Home, Layers, CheckCircle2, AlertCircle, ArrowRight } from "lucide-react";
+import { Building, Home, Layers, CheckCircle2, AlertCircle, ArrowRight, ArrowLeft } from "lucide-react";
 import { getDirection } from "../projects/general";
 import { toast } from "sonner";
 
@@ -115,7 +115,7 @@ const AssignProject = () => {
 
         // In edit mode, we don't reassign the unit - just navigate back
         if (isEditMode) {
-            navigate(`/users/${userId}`);
+            navigate(`/users/${userId}#projects`);
             return;
         }
 
@@ -123,7 +123,7 @@ const AssignProject = () => {
         updateTableRow(`subprojects`, unitId, {userId: userId}, async (data: SubProject) => {
             if(data && data.id){
                 toast.success('واحد با موفقیت اعطا شد');
-                navigate(`/users/${userId}`);
+                navigate(`/users/${userId}#projects`);
             } else {
                 toast.error('خطایی رخ داده است' + JSON.stringify(data));
             }
@@ -131,19 +131,35 @@ const AssignProject = () => {
         });
     }
 
-    const isFormComplete = selectedProject && selectedBlock && selectedUnit;
+    const isFormComplete = useMemo(() => {
+        return selectedProject && selectedBlock && selectedUnit;
+    }, [selectedProject, selectedBlock, selectedUnit]);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-purple-50 py-10">
             <div className="container mx-auto max-w-6xl px-4">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                        {isEditMode ? 'مشاهده واحد' : `اعطای واحد جدید به ${user?.name && user?.lastName ? `${user.name} ${user.lastName}` : user?.name || user?.lastName || 'کاربر'}`}
-                    </h1>
-                    <p className="text-gray-600">
-                        {isEditMode ? 'اطلاعات واحد اختصاص داده شده' : 'لطفاً پروژه، بلوک و واحد مورد نظر را انتخاب کنید'}
-                    </p>
+                    <div className="flex items-center gap-4 mb-4">
+                        {isEditMode && (
+                            <Button
+                                variant="outline"
+                                onClick={() => navigate(`/users/${userId}`)}
+                                className="gap-2"
+                            >
+                                <ArrowLeft className="h-4 w-4" />
+                                بازگشت
+                            </Button>
+                        )}
+                        <div className="flex-1">
+                            <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                                {isEditMode ? 'مشاهده واحد' : `اعطای واحد جدید به ${user?.name && user?.lastName ? `${user.name} ${user.lastName}` : user?.name || user?.lastName || 'کاربر'}`}
+                            </h1>
+                            <p className="text-gray-600">
+                                {isEditMode ? 'اطلاعات واحد اختصاص داده شده' : 'لطفاً پروژه، بلوک و واحد مورد نظر را انتخاب کنید'}
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Error Display */}
@@ -411,24 +427,26 @@ const AssignProject = () => {
                                         </div>
                                     </div>
 
-                                    {/* Action Button */}
-                                    <Button 
-                                        onClick={handleAssignUnit}
-                                        disabled={!isFormComplete || isAssigning}
-                                        className="w-full h-12 text-base font-semibold shadow-md hover:shadow-lg transition-all"
-                                        size="lg"
-                                    >
-                                        {isAssigning ? (
-                                            'در حال ثبت...'
-                                        ) : isFormComplete ? (
-                                            <>
-                                                {isEditMode ? 'بازگشت' : 'اعطای واحد به کاربر'}
-                                                <ArrowRight className="h-5 w-5 mr-2" />
-                                            </>
-                                        ) : (
-                                            "لطفاً تمام فیلدها را پر کنید"
-                                        )}
-                                    </Button>
+                                    {/* Action Button - Only show in create mode */}
+                                    {!isEditMode && (
+                                        <Button 
+                                            onClick={handleAssignUnit}
+                                            disabled={!isFormComplete || isAssigning}
+                                            className="w-full h-12 text-base font-semibold shadow-md hover:shadow-lg transition-all"
+                                            size="lg"
+                                        >
+                                            {isAssigning ? (
+                                                'در حال ثبت...'
+                                            ) : isFormComplete ? (
+                                                <>
+                                                    اعطای واحد به کاربر
+                                                    <ArrowRight className="h-5 w-5 mr-2" />
+                                                </>
+                                            ) : (
+                                                "لطفاً تمام فیلدها را پر کنید"
+                                            )}
+                                        </Button>
+                                    )}
                                 </CardContent>
                             </Card>
                         </div>

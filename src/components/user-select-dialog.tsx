@@ -4,22 +4,26 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { getTable } from "@/general";
+import { getTable, updateTableRow } from "@/general";
 import { PageLoader } from "@/components/ui/loader";
 import { Search, User as UserIcon } from "lucide-react";
 import type { User } from "@/pages/users/columns";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface UserSelectDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  subProjectId?: number;
+  onAssignComplete?: () => void;
 }
 
-export function UserSelectDialog({ open, onOpenChange }: UserSelectDialogProps) {
+export function UserSelectDialog({ open, onOpenChange, subProjectId, onAssignComplete }: UserSelectDialogProps) {
   const [users, setUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAssigning, setIsAssigning] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -63,9 +67,28 @@ export function UserSelectDialog({ open, onOpenChange }: UserSelectDialogProps) 
   };
 
   const handleAssign = () => {
-    if (selectedUser?.id) {
+    if (!selectedUser?.id) return;
+
+    // If subProjectId is provided, directly assign the unit to the selected user
+    if (subProjectId) {
+      setIsAssigning(true);
+      updateTableRow('subprojects', subProjectId, {userId: selectedUser.id}, (data: any) => {
+        setIsAssigning(false);
+        if(data && 'id' in data && data.id){
+          toast.success(`واحد با موفقیت به ${selectedUser.name} ${selectedUser.lastName} اعطا شد`);
+          onOpenChange(false);
+          if (onAssignComplete) {
+            onAssignComplete();
+          }
+        } else {
+          toast.error('خطایی رخ داده است ' + JSON.stringify(data));
+        }
+      });
+    } else {
+      // Otherwise, navigate to assign-project page
       onOpenChange(false);
-      navigate(`/users/${selectedUser.id}/assign-project`);
+      const assignUrl = `/users/${selectedUser.id}/assign-project`;
+      navigate(assignUrl);
     }
   };
 
@@ -191,10 +214,10 @@ export function UserSelectDialog({ open, onOpenChange }: UserSelectDialogProps) 
             </Button>
             <Button
               onClick={handleAssign}
-              disabled={!selectedUser}
+              disabled={!selectedUser || isAssigning}
               className="min-w-[120px]"
             >
-              ادامه
+              {isAssigning ? 'در حال ثبت...' : 'ادامه'}
             </Button>
           </div>
         </div>

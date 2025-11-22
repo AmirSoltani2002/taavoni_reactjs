@@ -10,7 +10,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { DataTable } from "@/components/ui/data-table";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { PageLoader } from "@/components/ui/loader";
 import FInput from "@/components/ui/functional-input";
 import { cn } from "@/lib/utils";
@@ -66,7 +66,17 @@ export default function ProfilePage() {
   const [downloadingProfileImage, setDownloadingProfileImage] = useState(false);
   const profileImageInputRef = useRef<HTMLInputElement | null>(null);
   const { userId } = useParams();
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get initial tab from URL hash, default to 'personal'
+  const getInitialTab = () => {
+    const hash = location.hash.replace('#', '');
+    const validTabs = ['personal', 'contact', 'martyrdom', 'documents', 'projects', 'payments'];
+    return validTabs.includes(hash) ? hash : 'personal';
+  };
+  
+  const [activeTab, setActiveTab] = useState<string>(getInitialTab());
 
   useEffect(() => {
     getTable(userId ? `users/${userId}` : "users/profile", (data: User) => {
@@ -119,6 +129,22 @@ export default function ProfilePage() {
       }
     };
   }, [profileImageUrl]);
+
+  // Update tab when hash changes
+  useEffect(() => {
+    const hash = location.hash.replace('#', '');
+    const validTabs = ['personal', 'contact', 'martyrdom', 'documents', 'projects', 'payments'];
+    if (validTabs.includes(hash)) {
+      setActiveTab(hash);
+    }
+  }, [location.hash]);
+
+  // Update URL hash when tab changes
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    // Update URL hash without causing a page reload
+    window.history.replaceState(null, '', `#${value}`);
+  };
 
   const loadProfileImage = async (docId: number) => {
     setLoadingProfileImage(true);
@@ -426,7 +452,7 @@ export default function ProfilePage() {
         
         {/* Main Content with Tabs */}
         {!edit ? (
-          <Tabs defaultValue="personal" className="w-full">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <div className="border-b border-gray-200 mb-6">
               <TabsList className="w-full h-auto bg-transparent p-0 gap-0 inline-flex flex-wrap">
                 <TabsTrigger 
