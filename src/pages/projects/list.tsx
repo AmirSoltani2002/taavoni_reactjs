@@ -1,11 +1,11 @@
 import { columns, type Project } from "./columns"
 import { DataTable } from "@/components/ui/data-table"
 import { getTable } from "@/general"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import ProjectCreate from "./newCreate"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Building, Users, Home, Plus, TrendingUp, Trash2 } from "lucide-react"
+import { Building, Users, Home, Plus, TrendingUp, Trash2, List } from "lucide-react"
 import { ImageModal } from "@/components/ui/image-modal"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { deleteTableRow } from "@/general"
@@ -68,6 +68,20 @@ export default function ProjectsList() {
             setData(enhancedData);
         });
     }
+
+    const tableOptions = useMemo(() => [
+        {
+            title: <div className="flex items-center gap-2 text-blue-600">
+                <List className="h-4 w-4" />
+                <span>مشاهده واحدها</span>
+            </div>,
+            onClick: (row: Project) => {
+                if (row.id) {
+                    navigate(`/projects/${row.id}/units`);
+                }
+            },
+        }
+    ], [navigate]);
 
     const handleDelete = async (project: Project) => {
         if(!project?.id){return}
@@ -180,6 +194,7 @@ export default function ProjectsList() {
                                 tableName="projects" 
                                 onRefresh={refreshData}
                                 onClickRow={(row) => row.id && navigate(`/projects/edit/${row.id}`)}
+                                options={tableOptions}
                             />
                         </div>
                 </div>

@@ -78,7 +78,7 @@ export const getSubProjectHistoryColumns = (): ColumnDef<TransactionHistory>[] =
     },
     {
         accessorKey: "createdAt",
-        header: "تاریخ اختصاص",
+        header: "تاریخ واگذاری",
         cell: ({ cell }) => {
             const value = cell.getValue() as string;
             if (!value) return "-";
@@ -95,24 +95,5 @@ export const getSubProjectHistoryColumns = (): ColumnDef<TransactionHistory>[] =
             }
         }
     },
-    {
-        accessorKey: "updatedAt",
-        header: "تاریخ آخرین تغییر",
-        cell: ({ cell }) => {
-            const value = cell.getValue() as string;
-            if (!value) return "-";
-            try {
-                return new Date(value).toLocaleDateString('fa-IR', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-            } catch {
-                return value;
-            }
-        }
-    }
 ];
 

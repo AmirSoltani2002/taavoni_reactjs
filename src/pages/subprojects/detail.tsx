@@ -182,6 +182,19 @@ export default function SubProjectDetail() {
 
     return (
         <div className="space-y-6">
+            {/* Header Section */}
+            <div className="my-6">
+                <h1 className="text-4xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+                    <Building className="h-10 w-10 text-blue-600" />
+                    واحد {subProject.unitNumber}
+                </h1>
+                <p className="text-gray-600 text-lg">
+                    {project?.name && block?.name 
+                        ? `${project.name} - بلوک ${block.name.replace('بلوک ', '')}`
+                        : project?.name || block?.name?.replace('بلوک ', '') || 'جزئیات واحد'}
+                </p>
+            </div>
+
             <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
                 <div className="border-b border-gray-200 mb-6">
                     <TabsList className="w-full h-auto bg-transparent p-0 gap-0 inline-flex flex-wrap">
@@ -539,6 +552,7 @@ export default function SubProjectDetail() {
                             columns={getSubProjectHistoryColumns()} 
                             data={ownerHistory} 
                             tableName="transaction-history"
+                            _showDeleteButton={false}
                             onClickRow={(row) => {
                                 if (row.userId) {
                                     window.location.href = `/users/${row.userId}`;

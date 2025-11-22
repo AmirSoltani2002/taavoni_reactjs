@@ -17,6 +17,7 @@ import { PageLoader } from "./components/ui/loader";
 import ProfilePage from "./pages/users/profile";
 import AssignProject from "./pages/users/assignProject";
 import SubProjectDetail from "./pages/subprojects/detail";
+import ProjectUnits from "./pages/projects/units";
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
                   <Route path="/projects/create" element={<ProjectCreate />} />
                   <Route path="/projects/edit/:projectId" element={<ProjectCreate />} />
                   <Route path="/projects/list" element={<ProjectsList />} />
+                  <Route path="/projects/:projectId/units" element={<ProjectUnits />} />
                   <Route path="/tickets/list" element={<TicketsList />} />
                   <Route path="/tickets/:ticketType/:ticketId" element={<ChatPage />} />
                   <Route path="/transactions/list" element={<TransactionsList />} />
