@@ -198,9 +198,7 @@ export default function ProjectCreate({
     }
     
     // Prevent submission if required fields are not defined
-    if (!project.startDate || !project.endDate || 
-        project.longitude === undefined || project.longitude === null ||
-        project.latitude === undefined || project.latitude === null) {
+    if (!project.startDate) {
       return;
     }
     
@@ -348,7 +346,7 @@ export default function ProjectCreate({
   const canProceedToNext = () => {
     switch (step) {
       case 0:
-        return project.name && project.address && project.landArea && project.startDate;
+        return project.name && project.startDate;
       case 1:
         return blocks.length > 0 && blocks.every(block => 
           block.name && block.floorCount > 0 && block.shareArea >= 0 && block.buildingArea > 0
@@ -368,11 +366,6 @@ export default function ProjectCreate({
   const canSubmit = () => {
     return !!(
       project.startDate &&
-      project.endDate &&
-      project.longitude !== undefined &&
-      project.longitude !== null &&
-      project.latitude !== undefined &&
-      project.latitude !== null &&
       !hasDuplicateUnits
     );
   };
@@ -502,7 +495,7 @@ export default function ProjectCreate({
                   <>
                     <div className="w-5 h-5 border-2 border-white rounded-full"></div>
                     <span className="hover:underline">
-                      لطفاً تاریخ شروع، تاریخ پایان و موقعیت جغرافیایی را مشخص کنید
+                      لطفاً تاریخ شروع را مشخص کنید
                     </span>
                   </>
                 ) : (

@@ -365,10 +365,9 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                 <div className="p-1 rounded-md">
                   <MapPin className="w-4 h-4 text-green-600" />
                 </div>
-                آدرس پروژه *
+                آدرس پروژه
               </Label>
               <Input 
-                required 
                 type='text' 
                 name="address" 
                 value={project.address || ""} 
@@ -440,10 +439,9 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                 <div className="p-1 rounded-md">
                   <Building className="w-4 h-4 text-indigo-600" />
                 </div>
-                مساحت زمین (متر مربع) *
+                مساحت زمین (متر مربع)
               </Label>
               <Input 
-                required 
                 type='number' 
                 name="landArea" 
                 value={project.landArea || ""} 

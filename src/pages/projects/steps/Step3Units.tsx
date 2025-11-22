@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Home, Plus, Trash, Square, Users, Star, Navigation } from "lucide-react";
+import { Home, Plus, Trash, Square, Users, Navigation } from "lucide-react";
 import type { Block, SubProject } from "../columns";
 import { useState, useMemo, useRef, useEffect } from "react";
 
@@ -274,20 +274,6 @@ export const Step3Units: React.FC<Step3UnitsProps> = ({
                                 </Select>
                               </div>
 
-                              <div>
-                                <Label className="flex items-center gap-1 text-slate-700 font-medium text-sm mb-1">
-                                  <Star className="w-3 h-3 text-yellow-600" />
-                                  امتیاز (0-10)
-                                </Label>
-                                 <Input 
-                                   type='number' 
-                                   value={unit.point || ""} 
-                                   onChange={(e) => updateUnit(unit.id!, 'point', e.target.value ? Number(e.target.value) : "")}
-                                   className="h-9"
-                                   min="0"
-                                   max="10"
-                                 />
-                              </div>
 
                               <div>
                                 <Label className="flex items-center gap-1 text-slate-700 font-medium text-sm mb-1">
