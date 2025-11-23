@@ -104,7 +104,7 @@ export default function ProfilePage() {
         setProfileImageUrl(undefined);
       }
     });
-  }, []);
+  }, [userId]);
   useEffect(() => {
     getTable('users/profile', setViewer)
   }, [])

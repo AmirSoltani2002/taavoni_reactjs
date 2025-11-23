@@ -24,9 +24,11 @@ export default function TransactionsList() {
     const [isLoading, setIsLoading] = useState(true)
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
     const [selectedProjectId, setSelectedProjectId] = useState<number | ''>('')
+    const [selectedUserId, setSelectedUserId] = useState<number | ''>('')
     const [selectedIsConfirmed, setSelectedIsConfirmed] = useState<'all' | 'true' | 'false'>('all')
     const [selectedTargetBank, setSelectedTargetBank] = useState<string>('')
     const [projects, setProjects] = useState<Project[]>([])
+    const [allUsers, setAllUsers] = useState<User[]>([])
 
     useEffect(() => {
         getTable('users/profile', (user) => {
@@ -44,6 +46,14 @@ export default function TransactionsList() {
                 getTable('projects/all', (projectsData) => {
                     setProjects(projectsData || []);
                 });
+                // Fetch all users for admin
+                getTable('users', (usersData: User[] | {error?: any}) => {
+                    if (usersData && !('error' in usersData)) {
+                        setAllUsers(Array.isArray(usersData) ? usersData : []);
+                    } else {
+                        setAllUsers([]);
+                    }
+                }, false);
             } else {
                 // Regular user sees only their transactions
                 getTable('transaction/profile', (transactions) => {
@@ -79,6 +89,18 @@ export default function TransactionsList() {
         return Array.from(projectMap.values());
     }, [data]);
 
+    // Get unique users from transactions
+    const uniqueUsers = useMemo(() => {
+        const userMap = new Map<number, User>();
+        data.forEach(transaction => {
+            const user = transaction.user;
+            if (user && user.id) {
+                userMap.set(user.id, user);
+            }
+        });
+        return Array.from(userMap.values());
+    }, [data]);
+
     // Get unique target banks from transactions
     const uniqueTargetBanks = useMemo(() => {
         const banks = new Set<string>();
@@ -102,6 +124,13 @@ export default function TransactionsList() {
             });
         }
 
+        // Filter by user
+        if (selectedUserId) {
+            filtered = filtered.filter(transaction => {
+                return transaction.userId === selectedUserId;
+            });
+        }
+
         // Filter by isConfirmed
         if (selectedIsConfirmed !== 'all') {
             const isConfirmedValue = selectedIsConfirmed === 'true';
@@ -119,7 +148,7 @@ export default function TransactionsList() {
         }
 
         return filtered;
-    }, [data, selectedProjectId, selectedIsConfirmed, selectedTargetBank]);
+    }, [data, selectedProjectId, selectedUserId, selectedIsConfirmed, selectedTargetBank]);
 
     // Calculate sum of transactions per project
     const projectSums = useMemo(() => {
@@ -143,7 +172,7 @@ export default function TransactionsList() {
         });
         
         return Array.from(sums.values());
-    }, [data]);
+    }, [filteredData]);
 
     // Get projects list (use uniqueProjects if admin hasn't loaded projects yet, otherwise use projects)
     const availableProjects = useMemo(() => {
@@ -152,6 +181,14 @@ export default function TransactionsList() {
         }
         return uniqueProjects;
     }, [projects, uniqueProjects, userInfo?.type]);
+
+    // Get users list (use uniqueUsers if admin hasn't loaded users yet, otherwise use uniqueUsers from transactions)
+    const availableUsers = useMemo(() => {
+        if (['admin', 'system'].includes(userInfo?.type || '') && allUsers.length > 0) {
+            return allUsers;
+        }
+        return uniqueUsers;
+    }, [allUsers, uniqueUsers, userInfo?.type]);
 
     
     return (
@@ -217,6 +254,26 @@ export default function TransactionsList() {
                                         {availableProjects.map((project) => (
                                             <option key={project.id} value={project.id}>
                                                 {project.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
+                            {/* User Filter */}
+                            {['admin', 'system'].includes(userInfo?.type || '') && availableUsers.length > 0 && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="userFilter">فیلتر بر اساس کاربر</Label>
+                                    <select
+                                        id="userFilter"
+                                        value={selectedUserId}
+                                        onChange={(e) => setSelectedUserId(e.target.value ? Number(e.target.value) : '')}
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        <option value="">همه کاربران</option>
+                                        {availableUsers.map((user) => (
+                                            <option key={user.id} value={user.id}>
+                                                {user.name || ''} {user.lastName || ''}
                                             </option>
                                         ))}
                                     </select>
