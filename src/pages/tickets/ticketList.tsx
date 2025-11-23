@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { columns, type OtherTicket, type SubProjectTicket } from "./columns"
+import { getColumns, type OtherTicket, type SubProjectTicket } from "./columns"
 import { DataTable } from "@/components/ui/data-table"
-import { getTable, postTable } from "@/general"
+import { getTable, postTable, updateTableRow } from "@/general"
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom";
 import {
@@ -17,6 +17,8 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { MessageSquare, Archive, Lock, Unlock } from "lucide-react"
 import { getUserType, type User } from "../users/columns"
 
 const PREDEFINED_TITLES = {
@@ -155,6 +157,8 @@ export default function TicketsList() {
     const [selectedFields, setSelectedFields] = useState<string[]>([]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<'open' | 'archive'>('open');
+    const [isAdmin, setIsAdmin] = useState(false);
     const navigate = useNavigate();
 
     const resetForm = () => {
@@ -189,21 +193,15 @@ export default function TicketsList() {
         return null;
     };
 
-    useEffect(() => {
-        getTable('users/profile', (userData: User | {error?: any, statusCode?: number, message?: string}) => {
-            if (userData && !('error' in userData) && !('statusCode' in userData)) {
-                setUser(userData as User);
-            } else {
-                setUser(undefined);
-            }
-        }, false);
+    const refreshTickets = () => {
+        const isOpen = activeTab === 'open';
+        const queryParam = `?open=${isOpen}`;
         
-        getTable('other-tickets/profile', (ticketsData: OtherTicket[] | {error?: any, statusCode?: number, message?: string, status?: number}) => {
+        getTable(`other-tickets/profile${queryParam}`, (ticketsData: OtherTicket[] | {error?: any, statusCode?: number, message?: string, status?: number}) => {
             if (ticketsData && !('error' in ticketsData) && !('statusCode' in ticketsData)) {
                 setOtherTickets(Array.isArray(ticketsData) ? ticketsData : []);
             } else {
                 setOtherTickets([]);
-                // Extract error message using helper function
                 const errorMsg = extractErrorMessage(ticketsData);
                 if (errorMsg) {
                     setErrorMessage((prev) => prev || errorMsg);
@@ -211,19 +209,35 @@ export default function TicketsList() {
             }
         }, false);
         
-        getTable('sub-project-tickets/profile', (ticketsData: SubProjectTicket[] | {error?: any, statusCode?: number, message?: string, status?: number}) => {
+        getTable(`sub-project-tickets/profile${queryParam}`, (ticketsData: SubProjectTicket[] | {error?: any, statusCode?: number, message?: string, status?: number}) => {
             if (ticketsData && !('error' in ticketsData) && !('statusCode' in ticketsData)) {
                 setSubProjectsTickets(Array.isArray(ticketsData) ? ticketsData : []);
             } else {
                 setSubProjectsTickets([]);
-                // Extract error message using helper function
                 const errorMsg = extractErrorMessage(ticketsData);
                 if (errorMsg) {
                     setErrorMessage((prev) => prev || errorMsg);
                 }
             }
         }, false);
+    };
+
+    useEffect(() => {
+        getTable('users/profile', (userData: User | {error?: any, statusCode?: number, message?: string}) => {
+            if (userData && !('error' in userData) && !('statusCode' in userData)) {
+                const user = userData as User;
+                setUser(user);
+                setIsAdmin(['admin', 'system'].includes(user?.type || ''));
+            } else {
+                setUser(undefined);
+                setIsAdmin(false);
+            }
+        }, false);
     }, []);
+
+    useEffect(() => {
+        refreshTickets();
+    }, [activeTab]);
     
     useEffect(() => {
         setData([
@@ -235,9 +249,45 @@ export default function TicketsList() {
             setErrorMessage(null);
         }
     }, [otherTickets, subProjectsTickets])
+
+    const handleToggleClosed = async (ticket: OtherTicket | SubProjectTicket) => {
+        if (!ticket.id) return;
+        
+        // Determine table name based on ticket type
+        const tableName = (ticket.type === 'buy' || ticket.type === 'sell') 
+            ? 'sub-project-tickets' 
+            : 'other-tickets';
+        
+        const newClosedStatus = !ticket.closed;
+        
+        await updateTableRow(tableName, ticket.id, { closed: newClosedStatus }, () => {
+            refreshTickets();
+        });
+    };
     return (
         <div className="container mx-auto py-10 px-4">
-            <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'open' | 'archive')} className="w-full">
+                <div className="border-b border-gray-200 mb-6">
+                    <TabsList className="w-full h-auto bg-transparent p-0 gap-0 inline-flex flex-wrap">
+                        <TabsTrigger 
+                            value="open" 
+                            className="gap-2 px-4 py-3 text-sm font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-blue-50/50 hover:text-gray-700 hover:bg-gray-50/50 transition-colors"
+                        >
+                            <MessageSquare className="h-4 w-4" />
+                            <span>تیکت‌های باز</span>
+                        </TabsTrigger>
+                        <TabsTrigger 
+                            value="archive" 
+                            className="gap-2 px-4 py-3 text-sm font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-blue-50/50 hover:text-gray-700 hover:bg-gray-50/50 transition-colors"
+                        >
+                            <Archive className="h-4 w-4" />
+                            <span>آرشیو</span>
+                        </TabsTrigger>
+                    </TabsList>
+                </div>
+
+                <TabsContent value="open" className="mt-0">
+                    <Dialog open={isDialogOpen} onOpenChange={(open) => {
                 setIsDialogOpen(open);
                 if (!open) {
                     resetForm();
@@ -403,19 +453,78 @@ export default function TicketsList() {
                         )}
                     </DialogFooter>
                 </DialogContent>
-            </Dialog>
-            <DataTable 
-                columns={columns} 
-                data={data} 
-                errorMessage={errorMessage}
-                onClickRow={(row) => {
-                    if(row.id){
-                        navigate(`/tickets/${
-                            row.type === 'buy' || row.type === 'sell' ? 'subproject' : 'other'
-                        }/${row.id}`)
-                    }
-                }} 
-            />
+                    </Dialog>
+                    <DataTable 
+                        columns={getColumns(isAdmin)} 
+                        data={data} 
+                        errorMessage={errorMessage}
+                        onRefresh={refreshTickets}
+                        options={(row) => [
+                            {
+                                title: (
+                                    <div className="flex items-center gap-2">
+                                        {row.closed ? (
+                                            <>
+                                                <Unlock className="h-4 w-4" />
+                                                <span>باز کردن تیکت</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Lock className="h-4 w-4" />
+                                                <span>بستن تیکت</span>
+                                            </>
+                                        )}
+                                    </div>
+                                ),
+                                onClick: () => handleToggleClosed(row)
+                            }
+                        ]}
+                        onClickRow={(row) => {
+                            if(row.id){
+                                navigate(`/tickets/${
+                                    row.type === 'buy' || row.type === 'sell' ? 'subproject' : 'other'
+                                }/${row.id}`)
+                            }
+                        }} 
+                    />
+                </TabsContent>
+
+                <TabsContent value="archive" className="mt-0">
+                    <DataTable 
+                        columns={getColumns(isAdmin)} 
+                        data={data} 
+                        errorMessage={errorMessage}
+                        onRefresh={refreshTickets}
+                        options={(row) => [
+                            {
+                                title: (
+                                    <div className="flex items-center gap-2">
+                                        {row.closed ? (
+                                            <>
+                                                <Unlock className="h-4 w-4" />
+                                                <span>باز کردن تیکت</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Lock className="h-4 w-4" />
+                                                <span>بستن تیکت</span>
+                                            </>
+                                        )}
+                                    </div>
+                                ),
+                                onClick: () => handleToggleClosed(row)
+                            }
+                        ]}
+                        onClickRow={(row) => {
+                            if(row.id){
+                                navigate(`/tickets/${
+                                    row.type === 'buy' || row.type === 'sell' ? 'subproject' : 'other'
+                                }/${row.id}`)
+                            }
+                        }} 
+                    />
+                </TabsContent>
+            </Tabs>
         </div>
     )
 }

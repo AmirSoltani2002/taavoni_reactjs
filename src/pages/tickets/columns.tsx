@@ -40,22 +40,46 @@ export type OtherChat = {
     ticketId?: number;
 }
 
-export const columns: ColumnDef<SubProjectTicket | OtherTicket>[] = [
-    {
-        accessorKey: 'type',
-        header: 'موضوع'
-    },
-    {
-        accessorFn: (row) => {
-            if(!row.createdAt){
-                return 'نامشخص'
-            }
-            const d = new Date(row.createdAt);
-            return d.toLocaleDateString('fa-IR')
+export const getColumns = (isAdmin: boolean = false): ColumnDef<SubProjectTicket | OtherTicket>[] => {
+    const baseColumns: ColumnDef<SubProjectTicket | OtherTicket>[] = [
+        {
+            accessorKey: 'type',
+            header: 'موضوع'
         },
-        header: 'تاریخ ایجاد'
-    },
-    {
+        {
+            accessorFn: (row) => {
+                if(!row.createdAt){
+                    return 'نامشخص'
+                }
+                const d = new Date(row.createdAt);
+                return d.toLocaleDateString('fa-IR')
+            },
+            header: 'تاریخ ایجاد'
+        },
+    ];
+
+    // Add sender column for admins
+    if (isAdmin) {
+        baseColumns.push({
+            header: 'ارسال کننده',
+            cell: ({ row }) => {
+                const ticket = row.original;
+                const sender = ticket.user;
+                if (!sender) {
+                    return <span className="text-gray-400">نامشخص</span>;
+                }
+                return (
+                    <div className="flex flex-col">
+                        <a href={`/users/${sender.id}`} className="font-medium text-blue-600 hover:underline">
+                            {sender.name || ''} {sender.lastName || ''}
+                        </a>
+                    </div>
+                );
+            }
+        });
+    }
+
+    baseColumns.push({
         header: 'وضعیت',
         cell: ({ row }) => {
             const ticket = row.original;
@@ -71,6 +95,11 @@ export const columns: ColumnDef<SubProjectTicket | OtherTicket>[] = [
             }
             return <Badge variant="outline">باز</Badge>
         }
-    }
-]
+    });
+
+    return baseColumns;
+};
+
+// Keep backward compatibility
+export const columns: ColumnDef<SubProjectTicket | OtherTicket>[] = getColumns(false);
 
