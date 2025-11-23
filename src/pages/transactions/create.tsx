@@ -78,7 +78,7 @@ export default function TransactionCreate({ onSubmit, onCancel, userInfo }: Tran
 
     useEffect(() => {
         // Fetch all projects
-        getTable('projects/all', (data: Project[] | { error: { error: string, status: number } }) => {
+        getTable('projects/all/name', (data: Project[] | { error: { error: string, status: number } }) => {
             if ('error' in data) {
                 console.error('Error loading projects:', data.error);
                 toast.error('خطا در بارگذاری پروژه‌ها');
