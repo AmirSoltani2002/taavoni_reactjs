@@ -2,17 +2,16 @@ import { useEffect, useState } from "react"
 import { Chat, ChatHeader, ChatContent, ChatMessage, ChatInput } from "@/components/ui/chat"
 import { useParams } from "react-router-dom"
 import type { OtherChat, OtherTicket, SubProjectTicket } from "./columns";
-import { getTable, postTable } from "@/general";
+import { getTable, postTable, updateTableRow } from "@/general";
 import { type User } from "../users/columns";
+import { PageLoader } from "@/components/ui/loader";
 
 const TicketNotFound = <div>
       تیکت مورد نظر پیدا نشد
     </div>
 export default function ChatPage() {
   const { ticketId, ticketType } = useParams();
-  if(!ticketId){
-    return TicketNotFound;
-  }
+  const [isLoading, setIsLoading] = useState(true);
   const [ticket, setTicket] = useState<OtherTicket | SubProjectTicket>();
   const [chat, setChat] = useState<OtherChat[]>();
   const [self, setSelf] = useState<User>();
@@ -20,6 +19,10 @@ export default function ChatPage() {
 
 
   useEffect(() => {
+    if(!ticketId){
+      return;
+    }
+    setIsLoading(true);
     getTable(
       ticketType === 'other' 
       ? `other-tickets/chat/${ticketId}`
@@ -27,25 +30,50 @@ export default function ChatPage() {
       (d) => {
         setTicket(d[0]);
         setChat(d[0]?.chats);
+        setIsLoading(false);
       }
     );
   }, []);
 
   useEffect(() => {
-    getTable(`users/profile`, setSelf);
+    setIsLoading(true);
+    getTable(`users/profile`, (d) => {
+      setSelf(d);
+      setIsLoading(false);
+    });
   }, []);
 
   useEffect(() => {
     if(!self || !ticket){
       return;
     }
-    if(self.type === 'admin') {
-      getTable(`users/${ticket.userId}`, setOtherGuy);
+    if(self.type === 'admin' || self.type === 'system') {
+      setIsLoading(true);
+      getTable(`users/${ticket.userId}`, (d) => {
+        setOtherGuy(d);
+        setIsLoading(false);
+      });
     }
-  }, [self, ticket])
+    
+    // Update read status when ticket is opened
+    const isSender = self.id === ticket.userId;
+    const tableName = ticketType === 'other' ? 'other-tickets' : 'sub-project-tickets';
+    
+    if (isSender) {
+      // If current user is the sender, mark senderRead as true
+      if (!ticket.senderRead && ticket.id) {
+        updateTableRow(tableName, ticket.id, { senderRead: true });
+      }
+    } else {
+      // If current user is the receiver, mark recieverRead as true
+      if (!ticket.recieverRead && ticket.id) {
+        updateTableRow(tableName, ticket.id, { recieverRead: true });
+      }
+    }
+  }, [self, ticket, ticketType])
   
   const handleSend = async(content: string) => {
-    if(!ticket){return};
+    if(!ticket || !self || !ticketId){return};
     const msg = {
       ticketId: ticket.id,
       message: content,
@@ -56,6 +84,20 @@ export default function ChatPage() {
       : `subproject-chats`,
       msg,
     );
+    
+    // Update read status: when someone sends a message, set the other person's read status to false
+    const isSender = self.id === ticket.userId;
+    const tableName = ticketType === 'other' ? 'other-tickets' : 'sub-project-tickets';
+    
+    if (isSender && ticket.id) {
+      // Sender sent a message, receiver hasn't read it yet
+      await updateTableRow(tableName, ticket.id, { recieverRead: false });
+    } else if (!isSender && ticket.id) {
+      // Receiver sent a message, sender hasn't read it yet
+      await updateTableRow(tableName, ticket.id, { senderRead: false });
+    }
+    
+    setIsLoading(true);
     await getTable(
       ticketType === 'other' 
       ? `other-tickets/chat/${ticketId}`
@@ -63,11 +105,15 @@ export default function ChatPage() {
       (d) => {
         setTicket(d[0]);
         setChat(d[0]?.chats);
+        setIsLoading(false);
       }
     );
   }
 
-  if(!ticket || !ticket.type || !chat) {
+  if(isLoading) {
+    return <PageLoader />;
+  }
+  if(!ticketId || !ticket || !ticket.type || !chat) {
     return TicketNotFound;
   }
   return (

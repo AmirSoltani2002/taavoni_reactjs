@@ -86,14 +86,29 @@ export const getColumns = (isAdmin: boolean = false): ColumnDef<SubProjectTicket
             if(ticket.closed){
                 return <Badge variant="outline">بسته شده</Badge>
             }
-            console.log({reciever: ticket.reciever});
             const recieverIsAdmin = ticket.reciever?.type === 'admin' || ticket.reciever?.type === 'system';
-            if(recieverIsAdmin && !ticket.recieverRead){
-                return <Badge variant="outline">در انتظار پاسخ ادمین</Badge>
-            } else if(!ticket.senderRead){
-                return <Badge variant="outline">در انتظار پاسخ شما</Badge>
+            
+            if (isAdmin) {
+                // Admin view: show status from admin's perspective
+                if (!ticket.recieverRead) {
+                    return <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">نیاز به بررسی</Badge>
+                } else if (!ticket.senderRead) {
+                    return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">در انتظار خواندن کاربر</Badge>
+                } else {
+                    return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">خوانده شده</Badge>
+                }
+            } else {
+                // User view: show status from user's perspective
+                if (!ticket.senderRead) {
+                    return <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">پیام جدید</Badge>
+                } else if (recieverIsAdmin && !ticket.recieverRead) {
+                    return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">در انتظار پاسخ ادمین</Badge>
+                } else if (recieverIsAdmin && ticket.recieverRead) {
+                    return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">پاسخ داده شده</Badge>
+                } else {
+                    return <Badge variant="outline">باز</Badge>
+                }
             }
-            return <Badge variant="outline">باز</Badge>
         }
     });
 

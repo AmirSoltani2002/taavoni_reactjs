@@ -240,15 +240,57 @@ export default function TicketsList() {
     }, [activeTab]);
     
     useEffect(() => {
-        setData([
+        const allTickets = [
             ...otherTickets,
             ...subProjectsTickets,
-        ]);
+        ];
+        
+        // Sort tickets: prioritize ones that need to be read
+        const sortedTickets = [...allTickets].sort((a, b) => {
+            // Closed tickets go to the bottom
+            if (a.closed !== b.closed) {
+                return a.closed ? 1 : -1;
+            }
+            
+            // Calculate priority score (higher = more urgent)
+            const getPriority = (ticket: OtherTicket | SubProjectTicket): number => {
+                if (ticket.closed) return 0;
+                
+                const recieverIsAdmin = ticket.reciever?.type === 'admin' || ticket.reciever?.type === 'system';
+                
+                if (isAdmin) {
+                    // Admin view: prioritize tickets that need admin review
+                    if (!ticket.recieverRead) return 3; // Needs review - highest priority
+                    if (!ticket.senderRead) return 2; // Waiting for user to read
+                    return 1; // Both read
+                } else {
+                    // User view: prioritize new messages for user
+                    if (!ticket.senderRead) return 3; // New message - highest priority
+                    if (recieverIsAdmin && !ticket.recieverRead) return 2; // Waiting for admin response
+                    return 1; // Others
+                }
+            };
+            
+            const priorityA = getPriority(a);
+            const priorityB = getPriority(b);
+            
+            // Sort by priority (descending), then by updatedAt (most recent first)
+            if (priorityA !== priorityB) {
+                return priorityB - priorityA;
+            }
+            
+            // If same priority, sort by most recently updated
+            const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+            const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+            return dateB - dateA;
+        });
+        
+        setData(sortedTickets);
         // Clear error message if we have data
         if (otherTickets.length > 0 || subProjectsTickets.length > 0) {
             setErrorMessage(null);
         }
-    }, [otherTickets, subProjectsTickets])
+    }, [otherTickets, subProjectsTickets, isAdmin])
 
     const handleToggleClosed = async (ticket: OtherTicket | SubProjectTicket) => {
         if (!ticket.id) return;
