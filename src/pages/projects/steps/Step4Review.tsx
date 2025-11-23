@@ -8,7 +8,6 @@ import {
   Blocks, 
   Home, 
   Users, 
-  Star, 
   Navigation,
 } from "lucide-react";
 import type { Project, Block, SubProject } from "../columns";
@@ -218,12 +217,6 @@ export const Step4Review: React.FC<Step4ReviewProps> = ({
                          unit.direction === 'south-east' ? 'جنوب-شرق' :
                          unit.direction === 'south-west' ? 'جنوب-غرب' : unit.direction}
                       </span>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <Star className="w-4 h-4 text-yellow-600" />
-                      <span className="text-slate-600">امتیاز:</span>
-                      <span className="font-semibold">{unit.point}/10</span>
                     </div>
                     
                     {unit.options && (

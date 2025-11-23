@@ -346,9 +346,6 @@ const AssignProject = () => {
                                                             <div className="text-xs text-gray-500 pr-6">
                                                                 {getDirection(subProject.direction)} {subProject.options ? '•' : ''} {subProject.options || ''}
                                                             </div>
-                                                            <div className="text-xs text-blue-600 pr-6">
-                                                                امتیاز: {subProject.point} / 10
-                                                            </div>
                                                         </div>
                                                     </SelectItem>
                                                 )) : (

@@ -539,27 +539,121 @@ export default function SubProjectDetail() {
                         </div>
                     </CardTitle>
                 </CardHeader>
-                <CardContent className="p-6">
+                <CardContent className="p-6 space-y-6">
+                    {/* Current Owner Section */}
                     {loadingHistory ? (
                         <PageLoader />
-                    ) : ownerHistory.length === 0 ? (
-                        <div className="text-center py-12 text-slate-500 border-2 border-dashed border-slate-200 rounded-lg">
-                            <History className="w-12 h-12 mx-auto mb-4 text-slate-400" />
-                            <p className="text-sm">هیچ تاریخچه‌ای ثبت نشده است</p>
-                        </div>
-                    ) : (
-                        <DataTable 
-                            columns={getSubProjectHistoryColumns()} 
-                            data={ownerHistory} 
-                            tableName="transaction-history"
-                            _showDeleteButton={false}
-                            onClickRow={(row) => {
-                                if (row.userId) {
-                                    window.location.href = `/users/${row.userId}`;
-                                }
-                            }}
-                        />
-                    )}
+                    ) : (() => {
+                        // Find current owner (most recent transaction)
+                        const sortedHistory = [...ownerHistory].sort((a, b) => {
+                            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                            return dateB - dateA;
+                        });
+                        const currentOwner = sortedHistory.length > 0 ? sortedHistory[0] : null;
+                        
+                        return (
+                            <>
+                                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border-2 border-indigo-200 p-6">
+                                    <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                        <Building className="w-5 h-5 text-indigo-600" />
+                                        مالک فعلی واحد
+                                    </h3>
+                                    {currentOwner && currentOwner.user ? (
+                                        <div className="space-y-3">
+                                            <div className="bg-white rounded-lg p-4 border border-indigo-100">
+                                                <div className="flex items-start justify-between">
+                                                    <div className="flex-1">
+                                                        <p className="text-lg font-semibold text-slate-900 mb-2">
+                                                            {currentOwner.user.name || ''} {currentOwner.user.lastName || ''}
+                                                        </p>
+                                                        <div className="space-y-1 text-sm text-slate-600">
+                                                            {currentOwner.user.email && (
+                                                                <p className="flex items-center gap-2">
+                                                                    <span className="font-medium">ایمیل:</span>
+                                                                    <span>{currentOwner.user.email}</span>
+                                                                </p>
+                                                            )}
+                                                            {currentOwner.user.mobile && (
+                                                                <p className="flex items-center gap-2">
+                                                                    <span className="font-medium">موبایل:</span>
+                                                                    <span>{currentOwner.user.mobile}</span>
+                                                                </p>
+                                                            )}
+                                                            {currentOwner.user.nationalNumber && (
+                                                                <p className="flex items-center gap-2">
+                                                                    <span className="font-medium">کد ملی:</span>
+                                                                    <span>{currentOwner.user.nationalNumber}</span>
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    {currentOwner.userId && (
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => {
+                                                                window.location.href = `/users/${currentOwner.userId}`;
+                                                            }}
+                                                            className="text-indigo-600 border-indigo-300 hover:bg-indigo-50"
+                                                        >
+                                                            مشاهده پروفایل
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            {currentOwner.createdAt && (
+                                                <div className="text-sm text-slate-600 bg-white/70 rounded-lg p-3 border border-indigo-100">
+                                                    <span className="font-medium">تاریخ واگذاری: </span>
+                                                    <span>
+                                                        {new Date(currentOwner.createdAt).toLocaleDateString('fa-IR', {
+                                                            year: 'numeric',
+                                                            month: 'long',
+                                                            day: 'numeric',
+                                                            hour: '2-digit',
+                                                            minute: '2-digit'
+                                                        })}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="bg-white rounded-lg p-6 border-2 border-dashed border-slate-300 text-center">
+                                            <Building className="w-12 h-12 mx-auto mb-3 text-slate-400" />
+                                            <p className="text-slate-700 font-medium text-base">
+                                                این واحد در حال حاضر به هیچ کاربری اختصاص داده نشده است
+                                            </p>
+                                            <p className="text-slate-500 text-sm mt-2">
+                                                واحد آماده واگذاری می‌باشد
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* History Table */}
+                                {ownerHistory.length > 0 && (
+                                    <div>
+                                        <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                            <History className="w-5 h-5 text-indigo-600" />
+                                            تاریخچه کامل واگذاری‌ها
+                                        </h3>
+                                        <DataTable 
+                                            columns={getSubProjectHistoryColumns()} 
+                                            data={ownerHistory} 
+                                            tableName="transaction-history"
+                                            _showDeleteButton={false}
+                                            onClickRow={(row) => {
+                                                if (row.userId) {
+                                                    window.location.href = `/users/${row.userId}`;
+                                                }
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                            </>
+                        );
+                    })()}
                 </CardContent>
                     </Card>
                 </TabsContent>
