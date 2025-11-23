@@ -12,6 +12,7 @@ import MapView from "@/components/app/MapView";
 import { DataTable } from "@/components/ui/data-table";
 import { getSubProjectHistoryColumns, type TransactionHistory } from "../users/transactionHistory";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import type { User } from "../users/columns";
 
 export default function SubProjectDetail() {
     const { id } = useParams<{ id: string }>();
@@ -23,24 +24,31 @@ export default function SubProjectDetail() {
     const [isLoading, setIsLoading] = useState(true);
     const [ownerHistory, setOwnerHistory] = useState<TransactionHistory[]>([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [activeTab, setActiveTab] = useState<string>('info');
     
-    // Get initial tab from URL hash, default to 'info'
-    const getInitialTab = () => {
-        const hash = location.hash.replace('#', '');
-        const validTabs = ['info', 'location', 'images', 'documents', 'invoice', 'history'];
-        return validTabs.includes(hash) ? hash : 'info';
-    };
+    // Load user info to check admin status
+    useEffect(() => {
+        getTable('users/profile', (user: User | {error?: any}) => {
+            if (user && !('error' in user)) {
+                setIsAdmin(['admin', 'system'].includes((user as User)?.type || ''));
+            }
+        }, false);
+    }, []);
     
-    const [activeTab, setActiveTab] = useState<string>(getInitialTab());
-    
-    // Update tab when hash changes
+    // Update active tab when admin status or hash changes
     useEffect(() => {
         const hash = location.hash.replace('#', '');
-        const validTabs = ['info', 'location', 'images', 'documents', 'invoice', 'history'];
+        const validTabs = isAdmin 
+            ? ['info', 'location', 'images', 'documents', 'invoice', 'history']
+            : ['info', 'location', 'images', 'documents', 'invoice'];
         if (validTabs.includes(hash)) {
             setActiveTab(hash);
+        } else {
+            setActiveTab('info');
+            window.history.replaceState(null, '', '#info');
         }
-    }, [location.hash]);
+    }, [location.hash, isAdmin]);
     
     // Update URL hash when tab changes
     const handleTabChange = (value: string) => {
@@ -104,7 +112,7 @@ export default function SubProjectDetail() {
     };
 
     useEffect(() => {
-        if (id) {
+        if (id && isAdmin) {
             setLoadingHistory(true);
             getTable(`transaction-history/subProject/${id}`, (data: TransactionHistory[] | {error?: any}) => {
                 if (data && !('error' in data)) {
@@ -115,7 +123,7 @@ export default function SubProjectDetail() {
                 setLoadingHistory(false);
             }, false);
         }
-    }, [id]);
+    }, [id, isAdmin]);
 
     // Load image URLs when projectImages change
     useEffect(() => {
@@ -233,14 +241,16 @@ export default function SubProjectDetail() {
                             <span className="hidden sm:inline">اسناد</span>
                             <span className="sm:hidden">سند</span>
                         </TabsTrigger>
-                        <TabsTrigger 
-                            value="history" 
-                            className="gap-2 px-4 py-3 text-sm font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-blue-50/50 hover:text-gray-700 hover:bg-gray-50/50 transition-colors"
-                        >
-                            <History className="h-4 w-4" />
-                            <span className="hidden sm:inline">تاریخچه</span>
-                            <span className="sm:hidden">تاریخ</span>
-                        </TabsTrigger>
+                        {isAdmin && (
+                            <TabsTrigger 
+                                value="history" 
+                                className="gap-2 px-4 py-3 text-sm font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-blue-50/50 hover:text-gray-700 hover:bg-gray-50/50 transition-colors"
+                            >
+                                <History className="h-4 w-4" />
+                                <span className="hidden sm:inline">تاریخچه</span>
+                                <span className="sm:hidden">تاریخ</span>
+                            </TabsTrigger>
+                        )}
                     </TabsList>
                 </div>
 
@@ -518,8 +528,9 @@ export default function SubProjectDetail() {
                     </Card>
                 </TabsContent>
 
-                {/* History Tab */}
-                <TabsContent value="history" className="mt-0">
+                {/* History Tab - Only visible to admins */}
+                {isAdmin && (
+                    <TabsContent value="history" className="mt-0">
                     <Card className="bg-white/70 backdrop-blur-sm shadow-xl border-0 ring-1 ring-white/20">
                 <CardHeader className="bg-gradient-to-r from-blue-50/50 to-purple-50/50 border-b border-blue-200/30 pb-6">
                     <CardTitle className="flex items-center gap-4 text-xl">
@@ -656,7 +667,8 @@ export default function SubProjectDetail() {
                     })()}
                 </CardContent>
                     </Card>
-                </TabsContent>
+                    </TabsContent>
+                )}
             </Tabs>
         </div>
     );
