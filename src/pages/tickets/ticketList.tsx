@@ -309,7 +309,6 @@ export default function TicketsList() {
                                 
                                 const newTicket = await postTable('other-tickets', {
                                     type: title,
-                                    recieverId: 1,
                                     userId: user.id,
                                 });
                                 
