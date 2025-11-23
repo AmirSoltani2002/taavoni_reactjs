@@ -154,6 +154,7 @@ export default function TicketsList() {
     const [editedContent, setEditedContent] = useState<string>('');
     const [selectedFields, setSelectedFields] = useState<string[]>([]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const navigate = useNavigate();
 
     const resetForm = () => {
@@ -163,16 +164,76 @@ export default function TicketsList() {
         setSelectedFields([]);
     };
 
+    const extractErrorMessage = (data: any): string | null => {
+        if (!data) return null;
+        
+        // Check if it's an error response
+        if ('statusCode' in data || 'error' in data) {
+            // Try to get message first (from API response)
+            if (data.message && typeof data.message === 'string') {
+                return data.message;
+            }
+            // Try to get error (from getTable wrapper)
+            if (data.error) {
+                const errorValue = data.error;
+                if (typeof errorValue === 'string') {
+                    return errorValue;
+                }
+                // If error is an object, try to stringify it safely
+                if (typeof errorValue === 'object') {
+                    return errorValue.message || JSON.stringify(errorValue);
+                }
+            }
+            return 'خطا در بارگذاری تیکت‌ها';
+        }
+        return null;
+    };
+
     useEffect(() => {
-        getTable('users/profile', setUser);
-        getTable('other-tickets/profile', setOtherTickets);
-        getTable('sub-project-tickets/profile', setSubProjectsTickets);
+        getTable('users/profile', (userData: User | {error?: any, statusCode?: number, message?: string}) => {
+            if (userData && !('error' in userData) && !('statusCode' in userData)) {
+                setUser(userData as User);
+            } else {
+                setUser(undefined);
+            }
+        }, false);
+        
+        getTable('other-tickets/profile', (ticketsData: OtherTicket[] | {error?: any, statusCode?: number, message?: string, status?: number}) => {
+            if (ticketsData && !('error' in ticketsData) && !('statusCode' in ticketsData)) {
+                setOtherTickets(Array.isArray(ticketsData) ? ticketsData : []);
+            } else {
+                setOtherTickets([]);
+                // Extract error message using helper function
+                const errorMsg = extractErrorMessage(ticketsData);
+                if (errorMsg) {
+                    setErrorMessage((prev) => prev || errorMsg);
+                }
+            }
+        }, false);
+        
+        getTable('sub-project-tickets/profile', (ticketsData: SubProjectTicket[] | {error?: any, statusCode?: number, message?: string, status?: number}) => {
+            if (ticketsData && !('error' in ticketsData) && !('statusCode' in ticketsData)) {
+                setSubProjectsTickets(Array.isArray(ticketsData) ? ticketsData : []);
+            } else {
+                setSubProjectsTickets([]);
+                // Extract error message using helper function
+                const errorMsg = extractErrorMessage(ticketsData);
+                if (errorMsg) {
+                    setErrorMessage((prev) => prev || errorMsg);
+                }
+            }
+        }, false);
     }, []);
+    
     useEffect(() => {
         setData([
             ...otherTickets,
             ...subProjectsTickets,
-        ])
+        ]);
+        // Clear error message if we have data
+        if (otherTickets.length > 0 || subProjectsTickets.length > 0) {
+            setErrorMessage(null);
+        }
     }, [otherTickets, subProjectsTickets])
     return (
         <div className="container mx-auto py-10 px-4">
@@ -343,13 +404,18 @@ export default function TicketsList() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-            <DataTable columns={columns} data={data} onClickRow={(row) => {
-                if(row.id){
-                    navigate(`/tickets/${
-                        row.type === 'buy' || row.type === 'sell' ? 'subproject' : 'other'
-                    }/${row.id}`)
-                }
-            }} />
+            <DataTable 
+                columns={columns} 
+                data={data} 
+                errorMessage={errorMessage}
+                onClickRow={(row) => {
+                    if(row.id){
+                        navigate(`/tickets/${
+                            row.type === 'buy' || row.type === 'sell' ? 'subproject' : 'other'
+                        }/${row.id}`)
+                    }
+                }} 
+            />
         </div>
     )
 }

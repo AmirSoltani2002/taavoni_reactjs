@@ -50,6 +50,7 @@ interface DataTableProps<TData, TValue> {
     onClick: (row: TData) => void;
   }[])
   _showDeleteButton?: boolean;
+  errorMessage?: string | null;
 }
 
 
@@ -62,6 +63,7 @@ export function DataTable<TData extends { id?: number }, TValue>({
   onClickRow,
   options,
   _showDeleteButton = true,
+  errorMessage,
 }: DataTableProps<TData, TValue>) {
   // Add actions column if tableName and id are present
   const hasId = data.length > 0 && data[0].id !== undefined;
@@ -359,7 +361,13 @@ export function DataTable<TData extends { id?: number }, TValue>({
           ) : (
             <TableRow>
               <TableCell colSpan={allColumns.length} className="h-24 text-center">
-                نتیجه ای یافت نشد.
+                {errorMessage ? (
+                  <div className="text-red-600 font-medium px-4 py-2 max-h-32 overflow-y-auto break-words whitespace-pre-wrap">
+                    {typeof errorMessage === 'string' ? errorMessage : String(errorMessage)}
+                  </div>
+                ) : (
+                  "نتیجه ای یافت نشد."
+                )}
               </TableCell>
             </TableRow>
           )}
