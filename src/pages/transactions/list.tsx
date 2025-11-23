@@ -17,6 +17,7 @@ import {
 import TransactionCreate from "./create"
 import { Label } from "@/components/ui/label"
 import type { Project } from "../projects/columns"
+import { UserSelect } from "@/components/user-select"
 
 export default function TransactionsList() {
     const [data, setData] = useState<Transaction[]>([])
@@ -266,22 +267,14 @@ export default function TransactionsList() {
 
                             {/* User Filter */}
                             {['admin', 'system'].includes(userInfo?.type || '') && availableUsers.length > 0 && (
-                                <div className="space-y-2">
-                                    <Label htmlFor="userFilter">فیلتر بر اساس کاربر</Label>
-                                    <select
-                                        id="userFilter"
-                                        value={selectedUserId}
-                                        onChange={(e) => setSelectedUserId(e.target.value ? Number(e.target.value) : '')}
-                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                    >
-                                        <option value="">همه کاربران</option>
-                                        {availableUsers.map((user) => (
-                                            <option key={user.id} value={user.id}>
-                                                {user.name || ''} {user.lastName || ''}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+                                <UserSelect
+                                    users={availableUsers}
+                                    selectedUserId={selectedUserId}
+                                    onUserSelect={(userId) => setSelectedUserId(userId)}
+                                    placeholder="همه کاربران"
+                                    label="فیلتر بر اساس کاربر"
+                                    showAllOption={true}
+                                />
                             )}
 
                             {/* IsConfirmed Filter */}

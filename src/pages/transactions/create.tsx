@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,23 +6,10 @@ import { getTable, getToken } from "@/general";
 import { toast } from "sonner";
 import type { Project } from "../projects/columns";
 import { api_base_url } from "@/config";
-import { Upload, X, Check, ChevronsUpDown } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import type { User } from "../users/columns";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-    Command,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem,
-    CommandList,
-} from "@/components/ui/command";
-import { cn } from "@/lib/utils";
+import { UserSelect } from "@/components/user-select";
 
 type TransactionFormData = {
     amount: number | '';
@@ -61,7 +48,6 @@ export default function TransactionCreate({ onSubmit, onCancel, userInfo }: Tran
     const [projects, setProjects] = useState<Project[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [users, setUsers] = useState<User[]>([]);
-    const [userSelectOpen, setUserSelectOpen] = useState(false);
 
     useEffect(() => {
         // Fetch all users if admin
@@ -236,75 +222,21 @@ export default function TransactionCreate({ onSubmit, onCancel, userInfo }: Tran
     };
 
 
-    const getUserLabel = (user: User) => {
-        const name = user.name || '';
-        const lastName = user.lastName || '';
-        return `${name} ${lastName}`.trim();
-    };
-
-    const selectedUser = useMemo(() => {
-        if (!isAdmin || !form.userId) return null;
-        return users.find(u => u.id === form.userId) || null;
-    }, [users, form.userId, isAdmin]);
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 gap-4">
                 {/* User Selection for Admin */}
                 {isAdmin && (
-                    <div className="space-y-2">
-                        <Label htmlFor="userId">
-                            کاربر <span className="text-red-500">*</span>
-                        </Label>
-                        <Popover open={userSelectOpen} onOpenChange={setUserSelectOpen}>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    role="combobox"
-                                    aria-expanded={userSelectOpen}
-                                    className="w-full justify-between"
-                                >
-                                    {selectedUser
-                                        ? getUserLabel(selectedUser)
-                                        : "انتخاب کاربر..."}
-                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent 
-                                className="w-[var(--radix-popover-trigger-width)] p-0 z-[9999]" 
-                                align="start"
-                                style={{ pointerEvents: 'auto' }}
-                            >
-                                <Command>
-                                    <CommandInput placeholder="جستجوی کاربر..." />
-                                    <CommandList>
-                                        <CommandEmpty>کاربری پیدا نشد</CommandEmpty>
-                                        <CommandGroup>
-                                            {users.map((user) => (
-                                                <CommandItem
-                                                    key={user.id}
-                                                    value={`${user.name || ''} ${user.lastName || ''} ${user.nationalNumber || ''}`}
-                                                    onSelect={() => {
-                                                        const newUserId = user.id === form.userId ? '' : user.id;
-                                                        setForm((prev) => ({ ...prev, userId: newUserId || '', projectId: '' }));
-                                                        setUserSelectOpen(false);
-                                                    }}
-                                                >
-                                                    <Check
-                                                        className={cn(
-                                                            "ml-2 h-4 w-4",
-                                                            form.userId === user.id ? "opacity-100" : "opacity-0"
-                                                        )}
-                                                    />
-                                                    {getUserLabel(user)}
-                                                </CommandItem>
-                                            ))}
-                                        </CommandGroup>
-                                    </CommandList>
-                                </Command>
-                            </PopoverContent>
-                        </Popover>
-                    </div>
+                    <UserSelect
+                        users={users}
+                        selectedUserId={form.userId}
+                        onUserSelect={(userId) => {
+                            setForm((prev) => ({ ...prev, userId: userId || '', projectId: '' }));
+                        }}
+                        label="کاربر"
+                        required
+                    />
                 )}
 
                 {/* Project Selection */}
