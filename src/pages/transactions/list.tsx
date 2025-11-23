@@ -210,7 +210,11 @@ export default function TransactionsList() {
                         </div>
                         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                             <DialogTrigger asChild>
-                                <Button className="gap-2 shadow-md">
+                                <Button 
+                                    className="gap-2 shadow-md"
+                                    disabled={!['admin', 'system'].includes(userInfo?.type || '') && !userInfo?.accepted}
+                                    title={!['admin', 'system'].includes(userInfo?.type || '') && !userInfo?.accepted ? 'برای ثبت رسید پرداخت، ابتدا باید حساب کاربری شما تایید شود' : ''}
+                                >
                                     <Plus className="w-4 h-4" />
                                     ثبت رسید پرداخت جدید
                                 </Button>
