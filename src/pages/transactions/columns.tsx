@@ -4,14 +4,14 @@ import { getToken, updateTableRow } from "@/general"
 import { api_base_url } from "@/config"
 import { toast } from "sonner"
 import type { User } from "../users/columns"
-import type { SubProject } from "../projects/columns"
+import type { Project } from "../projects/columns"
 import { Badge } from "@/components/ui/badge"
 import type { ReactNode } from "react"
 
 export type Transaction = {
     id?: number;
     userId?: number;
-    subProjectId?: number;
+    projectId?: number;
     amount?: number;
     bank?: string;
     targetBank?: string;
@@ -22,7 +22,7 @@ export type Transaction = {
     createdAt?: string;
     updatedAt?: string;
     user?: User;
-    subProject?: SubProject;
+    project?: Project;
 }
 
 export const getColumns = (): ColumnDef<Transaction>[] => {
@@ -62,14 +62,11 @@ export const getColumns = (): ColumnDef<Transaction>[] => {
         }
     },
     {
-        header: "واحد",
+        header: "پروژه",
         cell: ({ row }) => {
-            const subProject = row.original.subProject;
-            if (!subProject) return "-";
-            const projectName = subProject.block?.project?.name || "";
-            const blockName = subProject.block?.name || "";
-            const unitNumber = subProject.unitNumber || "";
-            return `${projectName} - ${blockName} - واحد ${unitNumber}`.replace(/^ - | - $/g, "").trim() || "-";
+            const project = row.original.project;
+            if (!project) return "-";
+            return project.name || "-";
         }
     },
     {

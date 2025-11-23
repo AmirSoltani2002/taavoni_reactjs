@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getTable, getToken } from "@/general";
 import { toast } from "sonner";
-import type { SubProject } from "../projects/columns";
+import type { Project } from "../projects/columns";
 import { api_base_url } from "@/config";
 import { Upload, X, Check, ChevronsUpDown } from "lucide-react";
 import type { User } from "../users/columns";
@@ -30,7 +30,7 @@ type TransactionFormData = {
     targetBank: string;
     number: string;
     detail: string;
-    subProjectId: number | '';
+    projectId: number | '';
     userId?: number | '';
     isConfirmed?: boolean;
     file: File | null;
@@ -42,24 +42,23 @@ const initialState: TransactionFormData = {
     targetBank: '',
     number: '',
     detail: '',
-    subProjectId: '',
+    projectId: '',
     file: null,
 };
 
 interface TransactionCreateProps {
     onSubmit?: (data: TransactionFormData) => void;
     onCancel?: () => void;
-    userSubProjects?: SubProject[];
     userInfo?: User;
 }
 
-export default function TransactionCreate({ onSubmit, onCancel, userSubProjects: initialSubProjects, userInfo }: TransactionCreateProps) {
+export default function TransactionCreate({ onSubmit, onCancel, userInfo }: TransactionCreateProps) {
     const isAdmin = ['admin', 'system'].includes(userInfo?.type || '');
     const [form, setForm] = useState<TransactionFormData>(() => ({
         ...initialState,
         isConfirmed: isAdmin ? true : undefined
     }));
-    const [subProjects, setSubProjects] = useState<SubProject[]>(initialSubProjects || []);
+    const [projects, setProjects] = useState<Project[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [users, setUsers] = useState<User[]>([]);
     const [userSelectOpen, setUserSelectOpen] = useState(false);
@@ -78,35 +77,17 @@ export default function TransactionCreate({ onSubmit, onCancel, userSubProjects:
     }, [isAdmin]);
 
     useEffect(() => {
-        if (!initialSubProjects) {
-            if (isAdmin && form.userId) {
-                // Fetch subProjects for selected user
-                getTable(`subprojects/user/${form.userId}`, (data: SubProject[] | { error: { error: string, status: number } }) => {
-                    if ('error' in data) {
-                        console.error('Error loading subProjects:', data.error);
-                        toast.error('خطا در بارگذاری واحدها');
-                        setSubProjects([]);
-                    } else {
-                        setSubProjects(data as SubProject[]);
-                    }
-                }, false);
-            } else if (!isAdmin) {
-                // Fetch user's subProjects for regular users
-                getTable('subprojects/profile', (data: SubProject[] | { error: { error: string, status: number } }) => {
-                    if ('error' in data) {
-                        console.error('Error loading subProjects:', data.error);
-                        toast.error('خطا در بارگذاری واحدها');
-                    } else {
-                        setSubProjects(data as SubProject[]);
-                    }
-                }, false);
+        // Fetch all projects
+        getTable('projects/all', (data: Project[] | { error: { error: string, status: number } }) => {
+            if ('error' in data) {
+                console.error('Error loading projects:', data.error);
+                toast.error('خطا در بارگذاری پروژه‌ها');
+                setProjects([]);
             } else {
-                setSubProjects([]);
+                setProjects(data as Project[]);
             }
-        } else {
-            setSubProjects(initialSubProjects);
-        }
-    }, [initialSubProjects, isAdmin, form.userId]);
+        }, false);
+    }, []);
 
     const formatNumberWithSeparator = (value: number | ''): string => {
         if (value === '' || value === null || value === undefined) return '';
@@ -145,11 +126,6 @@ export default function TransactionCreate({ onSubmit, onCancel, userSubProjects:
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
-        if (!form.file) {
-            toast.error('لطفا فایل رسید پرداخت را آپلود کنید');
-            return;
-        }
 
         if (!form.amount || form.amount <= 0) {
             toast.error('لطفا مبلغ را وارد کنید');
@@ -171,8 +147,8 @@ export default function TransactionCreate({ onSubmit, onCancel, userSubProjects:
             return;
         }
 
-        if (!form.subProjectId) {
-            toast.error('لطفا واحد را انتخاب کنید');
+        if (!form.projectId) {
+            toast.error('لطفا پروژه را انتخاب کنید');
             return;
         }
 
@@ -188,8 +164,10 @@ export default function TransactionCreate({ onSubmit, onCancel, userSubProjects:
             const token = getToken();
             const formData = new FormData();
             
-            // Append file
-            formData.append('file', form.file);
+            // Append file if provided
+            if (form.file) {
+                formData.append('file', form.file);
+            }
             // Use selected userId for admin, otherwise use userInfo.id
             const userId = isAdmin ? form.userId : userInfo?.id;
             formData.append('userId', userId?.toString() || '');
@@ -202,7 +180,7 @@ export default function TransactionCreate({ onSubmit, onCancel, userSubProjects:
             if (form.detail) {
                 formData.append('detail', form.detail);
             }
-            formData.append('subProjectId', form.subProjectId.toString());
+            formData.append('projectId', form.projectId.toString());
             
             // Add isConfirmed for admins (default true)
             if (isAdmin) {
@@ -257,12 +235,6 @@ export default function TransactionCreate({ onSubmit, onCancel, userSubProjects:
         }
     };
 
-    const getSubProjectLabel = (subProject: SubProject) => {
-        const projectName = subProject.block?.project?.name || '';
-        const blockName = subProject.block?.name || '';
-        const unitNumber = subProject.unitNumber || '';
-        return `${projectName}${blockName ? ` - ${blockName}` : ''} - واحد ${unitNumber}`.trim();
-    };
 
     const getUserLabel = (user: User) => {
         const name = user.name || '';
@@ -298,7 +270,11 @@ export default function TransactionCreate({ onSubmit, onCancel, userSubProjects:
                                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                 </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                            <PopoverContent 
+                                className="w-[var(--radix-popover-trigger-width)] p-0 z-[9999]" 
+                                align="start"
+                                style={{ pointerEvents: 'auto' }}
+                            >
                                 <Command>
                                     <CommandInput placeholder="جستجوی کاربر..." />
                                     <CommandList>
@@ -310,7 +286,7 @@ export default function TransactionCreate({ onSubmit, onCancel, userSubProjects:
                                                     value={`${user.name || ''} ${user.lastName || ''} ${user.nationalNumber || ''}`}
                                                     onSelect={() => {
                                                         const newUserId = user.id === form.userId ? '' : user.id;
-                                                        setForm((prev) => ({ ...prev, userId: newUserId || '', subProjectId: '' }));
+                                                        setForm((prev) => ({ ...prev, userId: newUserId || '', projectId: '' }));
                                                         setUserSelectOpen(false);
                                                     }}
                                                 >
@@ -331,28 +307,28 @@ export default function TransactionCreate({ onSubmit, onCancel, userSubProjects:
                     </div>
                 )}
 
-                {/* SubProject Selection */}
+                {/* Project Selection */}
                 <div className="space-y-2">
-                    <Label htmlFor="subProjectId">
-                        واحد <span className="text-red-500">*</span>
+                    <Label htmlFor="projectId">
+                        پروژه <span className="text-red-500">*</span>
                     </Label>
                     <select
-                        id="subProjectId"
-                        name="subProjectId"
-                        value={form.subProjectId}
+                        id="projectId"
+                        name="projectId"
+                        value={form.projectId}
                         onChange={handleChange}
                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         required
                     >
-                        <option value="">انتخاب واحد</option>
-                        {subProjects.map((subProject) => (
-                            <option key={subProject.id} value={subProject.id}>
-                                {getSubProjectLabel(subProject)}
+                        <option value="">انتخاب پروژه</option>
+                        {projects.map((project) => (
+                            <option key={project.id} value={project.id}>
+                                {project.name || 'بدون نام'}
                             </option>
                         ))}
                     </select>
-                    {subProjects.length === 0 && (
-                        <p className="text-sm text-gray-500">هیچ واحدی برای شما ثبت نشده است</p>
+                    {projects.length === 0 && (
+                        <p className="text-sm text-gray-500">هیچ پروژه‌ای ثبت نشده است</p>
                     )}
                 </div>
 
@@ -376,7 +352,7 @@ export default function TransactionCreate({ onSubmit, onCancel, userSubProjects:
                 {/* Bank */}
                 <div className="space-y-2">
                     <Label htmlFor="bank">
-                        بانک <span className="text-red-500">*</span>
+                        بانک مبدا <span className="text-red-500">*</span>
                     </Label>
                     <select
                         id="bank"
@@ -494,7 +470,7 @@ export default function TransactionCreate({ onSubmit, onCancel, userSubProjects:
                 {/* File Upload */}
                 <div className="space-y-2">
                     <Label htmlFor="file">
-                        فایل رسید پرداخت <span className="text-red-500">*</span>
+                        فایل رسید پرداخت
                     </Label>
                     {!form.file ? (
                         <div className="flex items-center gap-2">
@@ -504,7 +480,6 @@ export default function TransactionCreate({ onSubmit, onCancel, userSubProjects:
                                 type="file"
                                 onChange={handleFileChange}
                                 accept="image/*,.pdf"
-                                required
                                 className="cursor-pointer"
                             />
                         </div>
