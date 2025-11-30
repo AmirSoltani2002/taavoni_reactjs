@@ -12,6 +12,8 @@ import UserCreate from "./pages/users/create";
 import ChatPage from "./pages/tickets/chat";
 import TicketsList from "./pages/tickets/ticketList";
 import TransactionsList from "./pages/transactions/list";
+import PresellingTransactionsList from "./pages/transactions/preselling-list";
+import FinalTransactionsList from "./pages/transactions/final-list";
 import { Suspense } from "react";
 import { PageLoader } from "./components/ui/loader";
 import ProfilePage from "./pages/users/profile";
@@ -42,6 +44,8 @@ function App() {
                   <Route path="/tickets/list" element={<TicketsList />} />
                   <Route path="/tickets/:ticketType/:ticketId" element={<ChatPage />} />
                   <Route path="/transactions/list" element={<TransactionsList />} />
+                  <Route path="/transactions/preselling/list" element={<PresellingTransactionsList />} />
+                  <Route path="/transactions/final/list" element={<FinalTransactionsList />} />
                   <Route path="/users/list" element={<UsersList />} />
                   <Route path="/users/create" element={<UserCreate />} />
                   <Route path="/users/:userId" element={<ProfilePage />} />

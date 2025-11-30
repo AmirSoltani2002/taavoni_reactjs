@@ -107,7 +107,18 @@ export function AppSidebar() {
         },
         {
           title: "رسیدهای پرداخت",
-          url: "/transactions/list",
+          options: [
+            {
+              title: "رسیدهای پیش‌فروش",
+              url: '/transactions/preselling/list',
+            },
+            {
+              title: "رسیدهای نهایی",
+              url: '/transactions/final/list',
+            },
+            
+          ],
+          url: "/transactions",
           icon: CreditCard,
         },
         {
@@ -131,7 +142,18 @@ export function AppSidebar() {
         },
         {
           title: "رسیدهای پرداخت",
-          url: "/transactions/list",
+          options: [
+            {
+              title: "رسیدهای پیش‌فروش",
+              url: '/transactions/preselling/list',
+            },
+            {
+              title: "رسیدهای نهایی",
+              url: '/transactions/final/list',
+            },
+            
+          ],
+          url: "/transactions",
           icon: CreditCard,
         },
         {
