@@ -70,6 +70,10 @@ export const getIsargaryPercentLabel = (value: User['isargaryPercent']) => {
 }
 export const columns: ColumnDef<User>[] = [
     {
+        accessorKey: "id",
+        header: "شناسه",
+    },
+    {
         accessorKey: "name",
         header: "نام",
         cell: ({row}) => {
