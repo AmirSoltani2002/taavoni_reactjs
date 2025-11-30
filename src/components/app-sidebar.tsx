@@ -96,6 +96,10 @@ export function AppSidebar() {
               title: "مشاهده همه پروژه‌ها",
               url: '/projects/list',
             },
+            {
+              title: "پیش‌فروش‌ها",
+              url: '/projects/preselling/list',
+            },
             
           ],
           url: "/projects",
