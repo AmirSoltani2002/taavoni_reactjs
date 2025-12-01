@@ -7,6 +7,7 @@ export type Project = {
     name: string;
     address: string;
     landArea: number;
+    pricePerMeter?: number;
     startDate: string;
     endDate?: string;
     createdAt?: string;
@@ -34,6 +35,7 @@ export type Block = {
 export type SubProject = {
     id?: number;
     area: number;
+    pricePerMeter?: number;
     floor: number;
     point: number;
     roomCount: number;

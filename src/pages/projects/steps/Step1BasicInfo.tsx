@@ -434,22 +434,41 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
               </div>
             </div>
 
-            <div>
-              <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-3">
-                <div className="p-1 rounded-md">
-                  <Building className="w-4 h-4 text-indigo-600" />
-                </div>
-                مساحت زمین (متر مربع)
-              </Label>
-              <Input 
-                type='number' 
-                name="landArea" 
-                value={project.landArea || ""} 
-                onChange={(e) => handleProjectChange(e.target.name, e.target.value ? Number(e.target.value) : "")}
-                className="h-12 bg-white/50 border-slate-200 focus:bg-white focus:border-indigo-400 focus:ring-indigo-400/20 transition-all duration-200"
-                placeholder="مساحت زمین را وارد کنید..."
-                min="1"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-3">
+                  <div className="p-1 rounded-md">
+                    <Building className="w-4 h-4 text-indigo-600" />
+                  </div>
+                  مساحت زمین (متر مربع)
+                </Label>
+                <Input 
+                  type='number' 
+                  name="landArea" 
+                  value={project.landArea || ""} 
+                  onChange={(e) => handleProjectChange(e.target.name, e.target.value ? Number(e.target.value) : "")}
+                  className="h-12 bg-white/50 border-slate-200 focus:bg-white focus:border-indigo-400 focus:ring-indigo-400/20 transition-all duration-200"
+                  placeholder="مساحت زمین را وارد کنید..."
+                  min="1"
+                />
+              </div>
+              <div>
+                <Label className="flex items-center gap-2 text-slate-700 font-semibold mb-3">
+                  <div className="p-1 rounded-md">
+                    <Building className="w-4 h-4 text-green-600" />
+                  </div>
+                  قیمت هر متر مربع زمین (تومان)
+                </Label>
+                <Input 
+                  type='number' 
+                  name="pricePerMeter" 
+                  value={project.pricePerMeter || ""} 
+                  onChange={(e) => handleProjectChange(e.target.name, e.target.value ? Number(e.target.value) : undefined)}
+                  className="h-12 bg-white/50 border-slate-200 focus:bg-white focus:border-green-400 focus:ring-green-400/20 transition-all duration-200"
+                  placeholder="قیمت هر متر مربع را وارد کنید..."
+                  min="0"
+                />
+              </div>
             </div>
           </div>
 

@@ -107,7 +107,7 @@ export const Step3Units: React.FC<Step3UnitsProps> = ({
     setNextId(nextId + 1);
   };
 
-  const updateUnit = (id: number, field: keyof SubProject, value: string | number) => {
+  const updateUnit = (id: number, field: keyof SubProject, value: string | number | undefined) => {
     setUnits(units.map(unit => 
       unit.id === id ? { ...unit, [field]: value } : unit
     ));
@@ -221,7 +221,7 @@ export const Step3Units: React.FC<Step3UnitsProps> = ({
                               </Button>
                             </div>
                             
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                               <div>
                                 <Label className="flex items-center gap-1 text-slate-700 font-medium text-sm mb-1">
                                   <Square className="w-3 h-3 text-blue-600" />
@@ -234,6 +234,20 @@ export const Step3Units: React.FC<Step3UnitsProps> = ({
                                    onChange={(e) => updateUnit(unit.id!, 'area', e.target.value ? Number(e.target.value) : "")}
                                    className="h-9"
                                    min="1"
+                                 />
+                              </div>
+
+                              <div>
+                                <Label className="flex items-center gap-1 text-slate-700 font-medium text-sm mb-1">
+                                  <Square className="w-3 h-3 text-green-600" />
+                                  قیمت هر متر (تومان)
+                                </Label>
+                                 <Input 
+                                   type='number' 
+                                   value={unit.pricePerMeter || ""} 
+                                   onChange={(e) => updateUnit(unit.id!, 'pricePerMeter', e.target.value ? Number(e.target.value) : undefined)}
+                                   className="h-9"
+                                   min="0"
                                  />
                               </div>
 
