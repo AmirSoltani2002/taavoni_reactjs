@@ -24,10 +24,11 @@ import {
 import { getTransactionHistoryColumns, type TransactionHistory } from "./transactionHistory";
 import { FaFaceSmile } from "react-icons/fa6";
 import { Badge } from "@/components/ui/badge";
-import type { Transaction } from "../transactions/columns";
+import type { Transaction, FinalTransaction } from "../transactions/columns";
 import { columns as transactionColumns } from "../transactions/columns";
 import type { PreSelling } from "../preselling/columns";
 import { columns as presellingColumns } from "../preselling/columns";
+import type { SubProject } from "../projects/columns";
 import {
   Dialog,
   DialogContent,
@@ -76,6 +77,8 @@ export default function ProfilePage() {
   const [projectScores, setProjectScores] = useState<{ id: string; score: string; projectName: string; area?: number }[]>([]);
   const [presellings, setPresellings] = useState<PreSelling[]>([]);
   const [loadingPresellings, setLoadingPresellings] = useState(false);
+  const [subProjects, setSubProjects] = useState<SubProject[]>([]);
+  const [finalTransactions, setFinalTransactions] = useState<FinalTransaction[]>([]);
   
   // Get initial tab from URL hash, default to 'personal'
   const getInitialTab = () => {
@@ -181,6 +184,32 @@ export default function ProfilePage() {
           setPresellings([]);
         }
         setLoadingPresellings(false);
+      }, false);
+    }
+  }, [user, userId]);
+
+  useEffect(() => {
+    if (user) {
+      const endpoint = userId ? `subprojects/user/${userId}` : 'subprojects/profile';
+      getTable(endpoint, (data: SubProject[] | {error?: any}) => {
+        if (data && !('error' in data)) {
+          setSubProjects(Array.isArray(data) ? data : []);
+        } else {
+          setSubProjects([]);
+        }
+      }, false);
+    }
+  }, [user, userId]);
+
+  useEffect(() => {
+    if (user) {
+      const endpoint = userId ? `final-transaction/user/${userId}` : 'final-transaction/profile';
+      getTable(endpoint, (data: FinalTransaction[] | {error?: any}) => {
+        if (data && !('error' in data)) {
+          setFinalTransactions(Array.isArray(data) ? data : []);
+        } else {
+          setFinalTransactions([]);
+        }
       }, false);
     }
   }, [user, userId]);
@@ -863,8 +892,8 @@ export default function ProfilePage() {
             <TabsContent value="projects" className="mt-0">
               {/* Payment Summary Per Project Section */}
               {(() => {
-                // Group presellings by project
-                const projectPayments = new Map<number, {
+                // Group presellings by project (Land payments)
+                const landProjectPayments = new Map<number, {
                   projectName: string;
                   projectId: number;
                   totalToPay: number;
@@ -872,18 +901,18 @@ export default function ProfilePage() {
                   remaining: number;
                 }>();
 
-                // Calculate total to pay per project from presellings
+                // Calculate total to pay per project from presellings (Land)
                 presellings.forEach(preselling => {
                   const projectId = preselling.projectId || preselling.project?.id;
                   if (!projectId) return;
                   
                   const projectName = preselling.project?.name || 'پروژه بدون نام';
-                  const existing = projectPayments.get(projectId);
+                  const existing = landProjectPayments.get(projectId);
                   
                   if (existing) {
                     existing.totalToPay += preselling.totalPrice || 0;
                   } else {
-                    projectPayments.set(projectId, {
+                    landProjectPayments.set(projectId, {
                       projectName,
                       projectId,
                       totalToPay: preselling.totalPrice || 0,
@@ -893,19 +922,19 @@ export default function ProfilePage() {
                   }
                 });
 
-                // Calculate total paid per project from transactions
+                // Calculate total paid per project from transactions (Land)
                 transactions.forEach(transaction => {
                   const preselling = transaction.preselling;
                   const projectId = preselling?.projectId || preselling?.project?.id;
                   if (!projectId) return;
                   
-                  const existing = projectPayments.get(projectId);
+                  const existing = landProjectPayments.get(projectId);
                   if (existing) {
                     existing.totalPaid += transaction.amount || 0;
                   } else {
                     // If project not in presellings but has transactions, add it
                     const projectName = preselling?.project?.name || 'پروژه بدون نام';
-                    projectPayments.set(projectId, {
+                    landProjectPayments.set(projectId, {
                       projectName,
                       projectId,
                       totalToPay: 0,
@@ -915,73 +944,115 @@ export default function ProfilePage() {
                   }
                 });
 
-                // Calculate remaining for each project
-                projectPayments.forEach(payment => {
+                // Calculate remaining for each land project
+                landProjectPayments?.forEach(payment => {
                   payment.remaining = payment.totalToPay - payment.totalPaid;
                 });
 
-                const paymentArray = Array.from(projectPayments.values());
+                // Calculate property (subProject) totals
+                const propertyTotalToPay = subProjects.reduce((sum, subProject) => {
+                  const area = subProject.area || 0;
+                  const pricePerMeter = subProject.pricePerMeter || 0;
+                  return sum + (area * pricePerMeter);
+                }, 0);
+
+                const propertyTotalPaid = finalTransactions.reduce((sum, transaction) => {
+                  return sum + (transaction.amount || 0);
+                }, 0);
+
+                // Calculate land totals
+                const landTotalToPay = landProjectPayments.size > 0 
+                  ? Array.from(landProjectPayments.values()).reduce((sum, payment) => sum + payment.totalToPay, 0)
+                  : 0;
+                const landTotalPaid = landProjectPayments.size > 0
+                  ? Array.from(landProjectPayments.values()).reduce((sum, payment) => sum + payment.totalPaid, 0)
+                  : 0;
+
+                // Calculate combined totals
+                const totalToPay = landTotalToPay + propertyTotalToPay;
+                const totalPaid = landTotalPaid + propertyTotalPaid;
+                const totalRemaining = totalToPay - totalPaid;
+
+                const landPaymentArray = Array.from(landProjectPayments.values());
                 
-                if (paymentArray.length === 0) return null;
+                // Show summary if there are land payments or property payments
+                if (landPaymentArray.length === 0 && propertyTotalToPay === 0 && propertyTotalPaid === 0) return null;
                 
                 return (
-                  <Card className="shadow-lg border-0 bg-white mb-6">
-                    <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b">
-                      <CardTitle className="text-xl flex items-center gap-2">
-                        <CreditCard className="h-5 w-5 text-green-600" />
-                        خلاصه پرداخت‌ها به تفکیک پروژه
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {paymentArray.map((payment) => (
-                          <div key={payment.projectId} className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow">
-                            <h3 className="font-semibold text-gray-900 mb-4 text-sm border-b pb-2">
-                              {payment.projectName}
-                            </h3>
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs text-gray-600">قابل پرداخت:</span>
-                                <span className="text-sm font-semibold text-blue-700">
-                                  {payment.totalToPay.toLocaleString('fa-IR')} تومان
-                                </span>
+                  <>
+                    {/* Payment Summary */}
+                    {(landPaymentArray.length > 0 || propertyTotalToPay > 0 || propertyTotalPaid > 0) && (
+                      <Card className="shadow-lg border-0 bg-white mb-6">
+                        <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b">
+                          <CardTitle className="text-xl flex items-center gap-2">
+                            <CreditCard className="h-5 w-5 text-green-600" />
+                            جزئیات پرداخت‌های زمین به تفکیک پروژه
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="pt-6">
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {landPaymentArray.map((payment) => (
+                              <div key={payment.projectId} className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow">
+                                <h3 className="font-semibold text-gray-900 mb-4 text-sm border-b pb-2">
+                                  {payment.projectName}
+                                </h3>
+                                <div className="space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs text-gray-600">قابل پرداخت (زمین):</span>
+                                    <span className="text-sm font-semibold text-blue-700">
+                                      {payment.totalToPay.toLocaleString('fa-IR')} تومان
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs text-gray-600">قابل پرداخت (ملک):</span>
+                                    <span className="text-sm font-semibold text-blue-700">
+                                      {propertyTotalToPay.toLocaleString('fa-IR')} تومان
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs text-gray-600">پرداخت شده (زمین):</span>
+                                    <span className="text-sm font-semibold text-green-700">
+                                      {payment.totalPaid.toLocaleString('fa-IR')} تومان
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs text-gray-600">پرداخت شده (ملک):</span>
+                                    <span className="text-sm font-semibold text-green-700">
+                                      {propertyTotalPaid.toLocaleString('fa-IR')} تومان
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center justify-between pt-2 border-t">
+                                    <span className={`text-xs font-medium ${
+                                      totalRemaining > 0 
+                                        ? 'text-orange-600' 
+                                        : totalRemaining < 0
+                                        ? 'text-purple-600'
+                                        : 'text-gray-600'
+                                    }`}>
+                                      {totalRemaining > 0 
+                                        ? 'باقیمانده:' 
+                                        : totalRemaining < 0
+                                        ? 'اضافه پرداخت:'
+                                        : 'تسویه شده'}
+                                    </span>
+                                    <span className={`text-base font-bold ${
+                                      totalRemaining > 0 
+                                        ? 'text-orange-700' 
+                                        : totalRemaining < 0
+                                        ? 'text-purple-700'
+                                        : 'text-gray-700'
+                                    }`}>
+                                      {Math.abs(totalRemaining).toLocaleString('fa-IR')} تومان
+                                    </span>
+                                  </div>
+                                </div>
                               </div>
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs text-gray-600">پرداخت شده:</span>
-                                <span className="text-sm font-semibold text-green-700">
-                                  {payment.totalPaid.toLocaleString('fa-IR')} تومان
-                                </span>
-                              </div>
-                              <div className="flex items-center justify-between pt-2 border-t">
-                                <span className={`text-xs font-medium ${
-                                  payment.remaining > 0 
-                                    ? 'text-orange-600' 
-                                    : payment.remaining < 0
-                                    ? 'text-purple-600'
-                                    : 'text-gray-600'
-                                }`}>
-                                  {payment.remaining > 0 
-                                    ? 'باقیمانده:' 
-                                    : payment.remaining < 0
-                                    ? 'اضافه پرداخت:'
-                                    : 'تسویه شده'}
-                                </span>
-                                <span className={`text-base font-bold ${
-                                  payment.remaining > 0 
-                                    ? 'text-orange-700' 
-                                    : payment.remaining < 0
-                                    ? 'text-purple-700'
-                                    : 'text-gray-700'
-                                }`}>
-                                  {Math.abs(payment.remaining).toLocaleString('fa-IR')} تومان
-                                </span>
-                              </div>
-                            </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </>
                 );
               })()}
               
