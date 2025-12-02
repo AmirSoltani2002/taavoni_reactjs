@@ -861,6 +861,130 @@ export default function ProfilePage() {
 
             {/* Projects Tab */}
             <TabsContent value="projects" className="mt-0">
+              {/* Payment Summary Per Project Section */}
+              {(() => {
+                // Group presellings by project
+                const projectPayments = new Map<number, {
+                  projectName: string;
+                  projectId: number;
+                  totalToPay: number;
+                  totalPaid: number;
+                  remaining: number;
+                }>();
+
+                // Calculate total to pay per project from presellings
+                presellings.forEach(preselling => {
+                  const projectId = preselling.projectId || preselling.project?.id;
+                  if (!projectId) return;
+                  
+                  const projectName = preselling.project?.name || 'پروژه بدون نام';
+                  const existing = projectPayments.get(projectId);
+                  
+                  if (existing) {
+                    existing.totalToPay += preselling.totalPrice || 0;
+                  } else {
+                    projectPayments.set(projectId, {
+                      projectName,
+                      projectId,
+                      totalToPay: preselling.totalPrice || 0,
+                      totalPaid: 0,
+                      remaining: 0,
+                    });
+                  }
+                });
+
+                // Calculate total paid per project from transactions
+                transactions.forEach(transaction => {
+                  const preselling = transaction.preselling;
+                  const projectId = preselling?.projectId || preselling?.project?.id;
+                  if (!projectId) return;
+                  
+                  const existing = projectPayments.get(projectId);
+                  if (existing) {
+                    existing.totalPaid += transaction.amount || 0;
+                  } else {
+                    // If project not in presellings but has transactions, add it
+                    const projectName = preselling?.project?.name || 'پروژه بدون نام';
+                    projectPayments.set(projectId, {
+                      projectName,
+                      projectId,
+                      totalToPay: 0,
+                      totalPaid: transaction.amount || 0,
+                      remaining: 0,
+                    });
+                  }
+                });
+
+                // Calculate remaining for each project
+                projectPayments.forEach(payment => {
+                  payment.remaining = payment.totalToPay - payment.totalPaid;
+                });
+
+                const paymentArray = Array.from(projectPayments.values());
+                
+                if (paymentArray.length === 0) return null;
+                
+                return (
+                  <Card className="shadow-lg border-0 bg-white mb-6">
+                    <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b">
+                      <CardTitle className="text-xl flex items-center gap-2">
+                        <CreditCard className="h-5 w-5 text-green-600" />
+                        خلاصه پرداخت‌ها به تفکیک پروژه
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {paymentArray.map((payment) => (
+                          <div key={payment.projectId} className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow">
+                            <h3 className="font-semibold text-gray-900 mb-4 text-sm border-b pb-2">
+                              {payment.projectName}
+                            </h3>
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-gray-600">قابل پرداخت:</span>
+                                <span className="text-sm font-semibold text-blue-700">
+                                  {payment.totalToPay.toLocaleString('fa-IR')} تومان
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-gray-600">پرداخت شده:</span>
+                                <span className="text-sm font-semibold text-green-700">
+                                  {payment.totalPaid.toLocaleString('fa-IR')} تومان
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between pt-2 border-t">
+                                <span className={`text-xs font-medium ${
+                                  payment.remaining > 0 
+                                    ? 'text-orange-600' 
+                                    : payment.remaining < 0
+                                    ? 'text-purple-600'
+                                    : 'text-gray-600'
+                                }`}>
+                                  {payment.remaining > 0 
+                                    ? 'باقیمانده:' 
+                                    : payment.remaining < 0
+                                    ? 'اضافه پرداخت:'
+                                    : 'تسویه شده'}
+                                </span>
+                                <span className={`text-base font-bold ${
+                                  payment.remaining > 0 
+                                    ? 'text-orange-700' 
+                                    : payment.remaining < 0
+                                    ? 'text-purple-700'
+                                    : 'text-gray-700'
+                                }`}>
+                                  {Math.abs(payment.remaining).toLocaleString('fa-IR')} تومان
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })()}
+              
               {/* Scores Section */}
               {projectScores.length > 0 && (
                 <Card className="shadow-lg border-0 bg-white mb-6">

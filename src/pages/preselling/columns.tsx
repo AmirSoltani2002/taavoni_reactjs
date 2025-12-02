@@ -20,17 +20,6 @@ export const columns: ColumnDef<PreSelling>[] = [
         header: "شناسه",
     },
     {
-        accessorKey: "user",
-        header: "کاربر",
-        cell: ({ row }) => {
-            const user = row.original.user;
-            if (user) {
-                return `${user.name || ''} ${user.lastName || ''}`.trim() || 'بدون نام';
-            }
-            return 'بدون کاربر';
-        }
-    },
-    {
         accessorKey: "project",
         header: "پروژه",
         cell: ({ row }) => {
