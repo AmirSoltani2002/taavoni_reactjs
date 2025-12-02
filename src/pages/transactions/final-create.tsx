@@ -287,9 +287,16 @@ export default function FinalTransactionCreate({ onSubmit, onCancel, userInfo }:
                         title=""
                         date={form.date ? new Date(form.date) : new Date()}
                         setDate={(date) => {
+                            // Format date in local timezone to avoid timezone conversion issues
+                            const formatDateLocal = (d: Date): string => {
+                                const year = d.getFullYear();
+                                const month = String(d.getMonth() + 1).padStart(2, '0');
+                                const day = String(d.getDate()).padStart(2, '0');
+                                return `${year}-${month}-${day}`;
+                            };
                             setForm((prev) => ({
                                 ...prev,
-                                date: date ? date.toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+                                date: date ? formatDateLocal(date) : formatDateLocal(new Date())
                             }));
                         }}
                     />

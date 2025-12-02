@@ -1166,7 +1166,17 @@ export default function ProfilePage() {
                   </div>
                   <div className="space-y-2">
                     <Label className={LABEL_CLASS}><Calendar className="h-4 w-4 inline ml-2" />تاریخ تولد</Label>
-                    <Calendar22 date={birthDate} setDate={d => { setBirthDate(d); setForm(f => ({ ...f, birthDay: d ? d.toISOString().split("T")[0] : undefined })); }} />
+                    <Calendar22 date={birthDate} setDate={d => { 
+                        setBirthDate(d); 
+                        // Format date in local timezone to avoid timezone conversion issues
+                        const formatDateLocal = (date: Date): string => {
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(2, '0');
+                            const day = String(date.getDate()).padStart(2, '0');
+                            return `${year}-${month}-${day}`;
+                        };
+                        setForm(f => ({ ...f, birthDay: d ? formatDateLocal(d) : undefined })); 
+                    }} />
                   </div>
                   <div className="space-y-2">
                     <Label className={LABEL_CLASS}>درصد ایثارگری</Label>

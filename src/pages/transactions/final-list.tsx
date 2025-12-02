@@ -354,7 +354,7 @@ export default function FinalTransactionsList() {
                             data={filteredData} 
                             tableName="final-transaction"
                             onRefresh={refreshData}
-                            options={getFinalTransactionOptions()}
+                            options={getFinalTransactionOptions(refreshData, userInfo)}
                         />
                     </div>
                 </div>

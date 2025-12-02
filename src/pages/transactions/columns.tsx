@@ -38,6 +38,7 @@ export type FinalTransaction = {
     document?: string;
     detail?: string;
     date?: string;
+    isConfirmed?: boolean;
     createdAt?: string;
     updatedAt?: string;
     user?: User;
@@ -297,6 +298,31 @@ export const columns: ColumnDef<Transaction>[] = getColumns();
 export const getFinalTransactionColumns = (): ColumnDef<FinalTransaction>[] => {
     return [
         {
+            accessorKey: "isConfirmed",
+            header: "وضعیت",
+            cell: ({ row }) => {
+                const isConfirmed = row.original.isConfirmed ?? false;
+                return (
+                    <Badge 
+                        variant={isConfirmed ? "default" : "destructive"}
+                        className={isConfirmed ? "bg-green-500 text-white" : "bg-red-500 text-white"}
+                    >
+                        {isConfirmed ? (
+                            <>
+                                <CheckCircle2 className="w-3 h-3 ml-1" />
+                                تایید شده
+                            </>
+                        ) : (
+                            <>
+                                <XCircle className="w-3 h-3 ml-1" />
+                                تایید نشده
+                            </>
+                        )}
+                    </Badge>
+                );
+            }
+        },
+        {
             accessorKey: "user",
             header: "کاربر",
             cell: ({ row }) => {
@@ -361,7 +387,7 @@ export const getFinalTransactionColumns = (): ColumnDef<FinalTransaction>[] => {
     ];
 };
 
-export const getFinalTransactionOptions = (): ((transaction: FinalTransaction) => { title: string | ReactNode; onClick: () => void }[]) => {
+export const getFinalTransactionOptions = (onRefresh?: () => void, userInfo?: User): ((transaction: FinalTransaction) => { title: string | ReactNode; onClick: () => void }[]) => {
     const handleDownload = async (transaction: FinalTransaction) => {
         const documentFilename = transaction.document;
         const transactionId = transaction.id;
@@ -440,7 +466,21 @@ export const getFinalTransactionOptions = (): ((transaction: FinalTransaction) =
         }
     };
 
+    const handleToggleConfirmation = async (transaction: FinalTransaction, confirm: boolean) => {
+        if (!transaction.id) return;
+        
+        updateTableRow('final-transaction', transaction.id, { isConfirmed: confirm }, (data) => {
+            if (data && data.id) {
+                toast.success(confirm ? 'تراکنش تایید شد' : 'تراکنش رد شد');
+                if (onRefresh) {
+                    onRefresh();
+                }
+            }
+        });
+    };
+
     return (transaction: FinalTransaction) => {
+        const isConfirmed = transaction.isConfirmed ?? false;
         const hasDocument = transaction.document && transaction.id;
         const options: { title: string | ReactNode; onClick: () => void }[] = [];
         
@@ -463,6 +503,32 @@ export const getFinalTransactionOptions = (): ((transaction: FinalTransaction) =
                 ),
                 onClick: () => handleDownload(transaction)
             });
+        }
+        
+        // Add confirmation options for admins
+        const isAdmin = ['admin', 'system'].includes(userInfo?.type || '');
+        if (isAdmin) {
+            if (!isConfirmed) {
+                options.push({
+                    title: (
+                        <>
+                            <CheckCircle2 className="w-4 h-4 ml-1 inline" />
+                            تایید
+                        </>
+                    ),
+                    onClick: () => handleToggleConfirmation(transaction, true)
+                });
+            } else {
+                options.push({
+                    title: (
+                        <>
+                            <XCircle className="w-4 h-4 ml-1 inline" />
+                            رد تایید
+                        </>
+                    ),
+                    onClick: () => handleToggleConfirmation(transaction, false)
+                });
+            }
         }
         
         return options;
