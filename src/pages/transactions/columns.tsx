@@ -82,6 +82,11 @@ export const getColumns = (): ColumnDef<Transaction>[] => {
     },
     {
         header: "پروژه",
+        accessorFn: (row) => {
+            const preselling = row.preselling;
+            const project = preselling?.project;
+            return project?.name || "";
+        },
         cell: ({ row }) => {
             const preselling = row.original.preselling;
             const project = preselling?.project;
