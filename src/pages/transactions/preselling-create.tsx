@@ -18,6 +18,7 @@ type PresellingTransactionFormData = {
     targetBank: string;
     number: string;
     detail: string;
+    date: string;
     presellingId: number | '';
     userId?: number | '';
     isConfirmed?: boolean;
@@ -30,6 +31,7 @@ const initialState: PresellingTransactionFormData = {
     targetBank: '',
     number: '',
     detail: '',
+    date: new Date().toISOString().split('T')[0], // Default to today
     presellingId: '',
     file: null,
 };
@@ -44,7 +46,8 @@ export default function PresellingTransactionCreate({ onSubmit, onCancel, userIn
     const isAdmin = ['admin', 'system'].includes(userInfo?.type || '');
     const [form, setForm] = useState<PresellingTransactionFormData>(() => ({
         ...initialState,
-        isConfirmed: isAdmin ? true : undefined
+        isConfirmed: isAdmin ? true : undefined,
+        date: new Date().toISOString().split('T')[0] // Ensure date is set to today
     }));
     const [preSellings, setPreSellings] = useState<PreSelling[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -162,6 +165,11 @@ export default function PresellingTransactionCreate({ onSubmit, onCancel, userIn
             return;
         }
 
+        if (!form.date) {
+            toast.error('لطفا تاریخ پرداخت را وارد کنید');
+            return;
+        }
+
         // For admin, require userId selection
         if (isAdmin && !form.userId) {
             toast.error('لطفا کاربر را انتخاب کنید');
@@ -187,6 +195,7 @@ export default function PresellingTransactionCreate({ onSubmit, onCancel, userIn
                 formData.append('detail', form.detail);
             }
             formData.append('presellingId', form.presellingId.toString());
+            formData.append('date', form.date);
             
             if (isAdmin) {
                 formData.append('isConfirmed', (form.isConfirmed !== false).toString());
@@ -209,7 +218,8 @@ export default function PresellingTransactionCreate({ onSubmit, onCancel, userIn
                     }
                     setForm({
                         ...initialState,
-                        isConfirmed: isAdmin ? true : undefined
+                        isConfirmed: isAdmin ? true : undefined,
+                        date: new Date().toISOString().split('T')[0] // Reset to today
                     });
                 } else {
                     toast.error('خطایی رخ داده است');
@@ -332,6 +342,21 @@ export default function PresellingTransactionCreate({ onSubmit, onCancel, userIn
                         value={form.number}
                         onChange={handleChange}
                         placeholder="شماره تراکنش بانکی"
+                        required
+                    />
+                </div>
+
+                {/* Date */}
+                <div className="space-y-2">
+                    <Label htmlFor="date">
+                        تاریخ پرداخت <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                        id="date"
+                        name="date"
+                        type="date"
+                        value={form.date}
+                        onChange={handleChange}
                         required
                     />
                 </div>

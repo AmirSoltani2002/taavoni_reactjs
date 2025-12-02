@@ -280,7 +280,7 @@ export default function FinalTransactionCreate({ onSubmit, onCancel, userInfo }:
                 {/* Date */}
                 <div className="space-y-2">
                     <Label htmlFor="date">
-                        تاریخ <span className="text-red-500">*</span>
+                        تاریخ پرداخت <span className="text-red-500">*</span>
                     </Label>
                     <Input
                         id="date"

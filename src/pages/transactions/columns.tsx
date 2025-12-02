@@ -97,7 +97,7 @@ export const getColumns = (): ColumnDef<Transaction>[] => {
     },
     {
         accessorKey: "bank",
-        header: "بانک",
+        header: "بانک مبدا",
     },
     {
         accessorKey: "targetBank",
@@ -320,7 +320,7 @@ export const getFinalTransactionColumns = (): ColumnDef<FinalTransaction>[] => {
         },
         {
             accessorKey: "bank",
-            header: "بانک",
+            header: "بانک مبدا",
         },
         {
             accessorKey: "targetBank",

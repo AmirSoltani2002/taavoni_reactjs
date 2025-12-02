@@ -165,6 +165,19 @@ export default function FinalTransactionsList() {
         return Array.from(sums.values());
     }, [filteredData]);
 
+    // Calculate stats for filtered data
+    const stats = useMemo(() => {
+        const totalAmount = filteredData.reduce((sum, t) => sum + (t.amount || 0), 0);
+        const transactionCount = filteredData.length;
+        const averageAmount = transactionCount > 0 ? totalAmount / transactionCount : 0;
+        
+        return {
+            totalAmount,
+            transactionCount,
+            averageAmount
+        };
+    }, [filteredData]);
+
     // Get users list (use uniqueUsers if admin hasn't loaded users yet, otherwise use uniqueUsers from transactions)
     const availableUsers = useMemo(() => {
         if (['admin', 'system'].includes(userInfo?.type || '') && allUsers.length > 0) {
@@ -288,6 +301,33 @@ export default function FinalTransactionsList() {
                         </div>
                     </div>
 
+                    {/* Stats Section */}
+                    {filteredData.length > 0 && (
+                        <div className="bg-white rounded-xl shadow-sm border p-6">
+                            <h2 className="text-xl font-bold text-slate-900 mb-4">آمار تراکنش‌های فیلتر شده</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="border rounded-lg p-4 bg-gradient-to-br from-blue-50 to-blue-100">
+                                    <div className="text-sm text-slate-600 mb-1">تعداد تراکنش‌ها</div>
+                                    <div className="text-2xl font-bold text-blue-700">
+                                        {stats.transactionCount.toLocaleString('fa-IR')}
+                                    </div>
+                                </div>
+                                <div className="border rounded-lg p-4 bg-gradient-to-br from-green-50 to-green-100">
+                                    <div className="text-sm text-slate-600 mb-1">مجموع مبلغ پرداختی</div>
+                                    <div className="text-2xl font-bold text-green-700">
+                                        {stats.totalAmount.toLocaleString('fa-IR')} تومان
+                                    </div>
+                                </div>
+                                <div className="border rounded-lg p-4 bg-gradient-to-br from-purple-50 to-purple-100">
+                                    <div className="text-sm text-slate-600 mb-1">میانگین مبلغ هر تراکنش</div>
+                                    <div className="text-2xl font-bold text-purple-700">
+                                        {Math.round(stats.averageAmount).toLocaleString('fa-IR')} تومان
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* SubProject Sums Summary */}
                     {subProjectSums.length > 0 && (
                         <div className="bg-white rounded-xl shadow-sm border p-6">
@@ -305,13 +345,6 @@ export default function FinalTransactionsList() {
                                     </div>
                                 ))}
                             </div>
-                            {selectedSubProjectId && (
-                                <div className="mt-4 pt-4 border-t">
-                                    <div className="font-semibold text-slate-900">
-                                        مجموع تراکنش‌های فیلتر شده: {filteredData.reduce((sum, t) => sum + (t.amount || 0), 0).toLocaleString('fa-IR')} تومان
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     )}
 

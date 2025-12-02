@@ -26,6 +26,7 @@ export default function PresellingTransactionsList() {
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
     const [selectedProjectId, setSelectedProjectId] = useState<number | ''>('')
     const [selectedUserId, setSelectedUserId] = useState<number | ''>('')
+    const [selectedTargetBank, setSelectedTargetBank] = useState<string>('')
     const [projects, setProjects] = useState<Project[]>([])
     const [allUsers, setAllUsers] = useState<User[]>([])
 
@@ -100,6 +101,17 @@ export default function PresellingTransactionsList() {
         return Array.from(userMap.values());
     }, [data]);
 
+    // Get unique target banks from transactions
+    const uniqueTargetBanks = useMemo(() => {
+        const banks = new Set<string>();
+        data.forEach(transaction => {
+            if (transaction.targetBank) {
+                banks.add(transaction.targetBank);
+            }
+        });
+        return Array.from(banks).sort();
+    }, [data]);
+
     // Filter transactions by selected filters
     const filteredData = useMemo(() => {
         let filtered = data;
@@ -119,8 +131,28 @@ export default function PresellingTransactionsList() {
             });
         }
 
+        // Filter by targetBank
+        if (selectedTargetBank) {
+            filtered = filtered.filter(transaction => {
+                return transaction.targetBank === selectedTargetBank;
+            });
+        }
+
         return filtered;
-    }, [data, selectedProjectId, selectedUserId]);
+    }, [data, selectedProjectId, selectedUserId, selectedTargetBank]);
+
+    // Calculate stats for filtered data
+    const stats = useMemo(() => {
+        const totalAmount = filteredData.reduce((sum, t) => sum + (t.amount || 0), 0);
+        const transactionCount = filteredData.length;
+        const averageAmount = transactionCount > 0 ? totalAmount / transactionCount : 0;
+        
+        return {
+            totalAmount,
+            transactionCount,
+            averageAmount
+        };
+    }, [filteredData]);
 
     // Get projects list (use uniqueProjects if admin hasn't loaded projects yet, otherwise use projects)
     const availableProjects = useMemo(() => {
@@ -191,7 +223,7 @@ export default function PresellingTransactionsList() {
                 <div className="space-y-6">
                     {/* Filters */}
                     <div className="bg-white rounded-xl shadow-sm border p-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {/* Project Filter */}
                             {availableProjects.length > 0 && (
                                 <div className="space-y-2">
@@ -223,8 +255,55 @@ export default function PresellingTransactionsList() {
                                     showAllOption={true}
                                 />
                             )}
+
+                            {/* TargetBank Filter */}
+                            {uniqueTargetBanks.length > 0 && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="targetBankFilter">فیلتر بر اساس بانک مقصد</Label>
+                                    <select
+                                        id="targetBankFilter"
+                                        value={selectedTargetBank}
+                                        onChange={(e) => setSelectedTargetBank(e.target.value)}
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        <option value="">همه بانک‌ها</option>
+                                        {uniqueTargetBanks.map((bank) => (
+                                            <option key={bank} value={bank}>
+                                                {bank}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
                         </div>
                     </div>
+
+                    {/* Stats Section */}
+                    {filteredData.length > 0 && (
+                        <div className="bg-white rounded-xl shadow-sm border p-6">
+                            <h2 className="text-xl font-bold text-slate-900 mb-4">آمار تراکنش‌های فیلتر شده</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="border rounded-lg p-4 bg-gradient-to-br from-blue-50 to-blue-100">
+                                    <div className="text-sm text-slate-600 mb-1">تعداد تراکنش‌ها</div>
+                                    <div className="text-2xl font-bold text-blue-700">
+                                        {stats.transactionCount.toLocaleString('fa-IR')}
+                                    </div>
+                                </div>
+                                <div className="border rounded-lg p-4 bg-gradient-to-br from-green-50 to-green-100">
+                                    <div className="text-sm text-slate-600 mb-1">مجموع مبلغ پرداختی</div>
+                                    <div className="text-2xl font-bold text-green-700">
+                                        {stats.totalAmount.toLocaleString('fa-IR')} تومان
+                                    </div>
+                                </div>
+                                <div className="border rounded-lg p-4 bg-gradient-to-br from-purple-50 to-purple-100">
+                                    <div className="text-sm text-slate-600 mb-1">میانگین مبلغ هر تراکنش</div>
+                                    <div className="text-2xl font-bold text-purple-700">
+                                        {Math.round(stats.averageAmount).toLocaleString('fa-IR')} تومان
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="bg-white rounded-xl shadow-sm border">
                         <DataTable 

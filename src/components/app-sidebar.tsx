@@ -1,4 +1,4 @@
-import { Building, ChevronDown, Home, User, Clipboard, CreditCard, KeyRound, LogOut, Crown } from "lucide-react"
+import { Building, ChevronDown, Home, User, Clipboard, CreditCard, KeyRound, LogOut, Crown, Award } from "lucide-react"
 import { NavLink, useLocation, useNavigate } from "react-router-dom"
 import { useEffect, useState } from "react";
 import { type User as UserType } from "@/pages/users/columns";
@@ -125,6 +125,11 @@ export function AppSidebar() {
           title: "پشتیبانی",
           url: "/tickets/list",
           icon: Clipboard
+        },
+        {
+          title: "امتیازات",
+          url: "/scores/list",
+          icon: Award
         },
         {
           title: "اعطای واحد به کاربر",
