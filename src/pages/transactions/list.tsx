@@ -71,7 +71,7 @@ export default function TransactionsList() {
     const uniqueProjects = useMemo(() => {
         const projectMap = new Map<number, Project>();
         data.forEach(transaction => {
-            const project = transaction.project;
+            const project = transaction.preselling?.project;
             if (project && project.id) {
                 projectMap.set(project.id, project);
             }
@@ -109,7 +109,7 @@ export default function TransactionsList() {
         // Filter by project
         if (selectedProjectId) {
             filtered = filtered.filter(transaction => {
-                const projectId = transaction.project?.id;
+                const projectId = transaction.preselling?.project?.id;
                 return projectId === selectedProjectId;
             });
         }
@@ -145,7 +145,7 @@ export default function TransactionsList() {
         const sums = new Map<number, { projectName: string; total: number; count: number }>();
         
         filteredData.forEach(transaction => {
-            const project = transaction.project;
+            const project = transaction.preselling?.project;
             if (project && project.id && transaction.amount) {
                 const existing = sums.get(project.id);
                 if (existing) {

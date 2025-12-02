@@ -4,26 +4,27 @@ import { getToken, updateTableRow } from "@/general"
 import { api_base_url } from "@/config"
 import { toast } from "sonner"
 import type { User } from "../users/columns"
-import type { Project } from "../projects/columns"
 import type { SubProject } from "../projects/columns"
+import type { PreSelling } from "../preselling/columns"
 import { Badge } from "@/components/ui/badge"
 import type { ReactNode } from "react"
 
 export type Transaction = {
     id?: number;
     userId?: number;
-    projectId?: number;
+    presellingId?: number;
     amount?: number;
     bank?: string;
     targetBank?: string;
     number?: string;
     document?: string;
     detail?: string;
+    date?: string;
     isConfirmed?: boolean;
     createdAt?: string;
     updatedAt?: string;
     user?: User;
-    project?: Project;
+    preselling?: PreSelling;
 }
 
 export type FinalTransaction = {
@@ -82,9 +83,23 @@ export const getColumns = (): ColumnDef<Transaction>[] => {
     {
         header: "پروژه",
         cell: ({ row }) => {
-            const project = row.original.project;
+            const preselling = row.original.preselling;
+            const project = preselling?.project;
             if (!project) return "-";
             return project.name || "-";
+        }
+    },
+    {
+        accessorKey: "date",
+        header: "تاریخ پرداخت",
+        cell: ({ cell }) => {
+            const value = cell.getValue() as string;
+            if (!value) return "-";
+            try {
+                return new Date(value).toLocaleDateString('fa-IR');
+            } catch {
+                return value;
+            }
         }
     },
     {
@@ -113,19 +128,6 @@ export const getColumns = (): ColumnDef<Transaction>[] => {
         cell: ({ cell }) => {
             const value = cell.getValue() as string;
             return value ? (value.length > 50 ? value.substring(0, 50) + "..." : value) : "-";
-        }
-    },
-    {
-        accessorKey: "createdAt",
-        header: "تاریخ ایجاد",
-        cell: ({ cell }) => {
-            const value = cell.getValue() as string;
-            if (!value) return "-";
-            try {
-                return new Date(value).toLocaleDateString('fa-IR');
-            } catch {
-                return value;
-            }
         }
     },
     ];

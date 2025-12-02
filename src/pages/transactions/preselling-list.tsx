@@ -81,7 +81,7 @@ export default function PresellingTransactionsList() {
     const uniqueProjects = useMemo(() => {
         const projectMap = new Map<number, Project>();
         data.forEach(transaction => {
-            const project = transaction.project;
+            const project = transaction.preselling?.project;
             if (project && project.id) {
                 projectMap.set(project.id, project);
             }
@@ -119,7 +119,7 @@ export default function PresellingTransactionsList() {
         // Filter by project
         if (selectedProjectId) {
             filtered = filtered.filter(transaction => {
-                const projectId = transaction.project?.id;
+                const projectId = transaction.preselling?.project?.id;
                 return projectId === selectedProjectId;
             });
         }
@@ -137,7 +137,6 @@ export default function PresellingTransactionsList() {
                 return transaction.targetBank === selectedTargetBank;
             });
         }
-
         return filtered;
     }, [data, selectedProjectId, selectedUserId, selectedTargetBank]);
 

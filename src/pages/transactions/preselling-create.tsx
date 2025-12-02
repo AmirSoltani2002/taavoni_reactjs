@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { UserSelect } from "@/components/user-select";
 import type { PreSelling } from "../preselling/columns";
 import { BankSelect } from "@/components/BankSelect";
+import { Calendar22 } from "@/components/calendars/calendar";
 
 type PresellingTransactionFormData = {
     amount: number | '';
@@ -348,16 +349,18 @@ export default function PresellingTransactionCreate({ onSubmit, onCancel, userIn
 
                 {/* Date */}
                 <div className="space-y-2">
-                    <Label htmlFor="date">
+                    <Label>
                         تاریخ پرداخت <span className="text-red-500">*</span>
                     </Label>
-                    <Input
-                        id="date"
-                        name="date"
-                        type="date"
-                        value={form.date}
-                        onChange={handleChange}
-                        required
+                    <Calendar22
+                        title=""
+                        date={form.date ? new Date(form.date) : new Date()}
+                        setDate={(date) => {
+                            setForm((prev) => ({
+                                ...prev,
+                                date: date ? date.toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+                            }));
+                        }}
                     />
                 </div>
 
