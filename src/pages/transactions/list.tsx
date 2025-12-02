@@ -3,18 +3,8 @@ import { DataTable } from "@/components/ui/data-table"
 import { getTable } from "@/general"
 import { useEffect, useState, useMemo } from "react"
 import type { User } from "../users/columns"
-import { CreditCard, Plus } from "lucide-react"
+import { CreditCard } from "lucide-react"
 import { PageLoader } from "@/components/ui/loader"
-import { Button } from "@/components/ui/button"
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog"
-import TransactionCreate from "./create"
 import { Label } from "@/components/ui/label"
 import type { Project } from "../projects/columns"
 import { UserSelect } from "@/components/user-select"
@@ -23,7 +13,6 @@ export default function TransactionsList() {
     const [data, setData] = useState<Transaction[]>([])
     const [userInfo, setUserInfo] = useState<User>()
     const [isLoading, setIsLoading] = useState(true)
-    const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
     const [selectedProjectId, setSelectedProjectId] = useState<number | ''>('')
     const [selectedUserId, setSelectedUserId] = useState<number | ''>('')
     const [selectedIsConfirmed, setSelectedIsConfirmed] = useState<'all' | 'true' | 'false'>('all')
@@ -209,34 +198,6 @@ export default function TransactionsList() {
                                     : 'رسیدهای پرداخت شما'}
                             </p>
                         </div>
-                        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-                            <DialogTrigger asChild>
-                                <Button 
-                                    className="gap-2 shadow-md"
-                                    disabled={!['admin', 'system'].includes(userInfo?.type || '') && !userInfo?.accepted}
-                                    title={!['admin', 'system'].includes(userInfo?.type || '') && !userInfo?.accepted ? 'برای ثبت رسید پرداخت، ابتدا باید حساب کاربری شما تایید شود' : ''}
-                                >
-                                    <Plus className="w-4 h-4" />
-                                    ثبت رسید پرداخت جدید
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                                <DialogHeader>
-                                    <DialogTitle>ثبت رسید پرداخت جدید</DialogTitle>
-                                    <DialogDescription>
-                                        اطلاعات رسید پرداخت خود را وارد کنید
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <TransactionCreate
-                                    onSubmit={() => {
-                                        setIsCreateDialogOpen(false);
-                                        refreshData();
-                                    }}
-                                    onCancel={() => setIsCreateDialogOpen(false)}
-                                    userInfo={userInfo}
-                                />
-                            </DialogContent>
-                        </Dialog>
                     </div>
                 </div>
 

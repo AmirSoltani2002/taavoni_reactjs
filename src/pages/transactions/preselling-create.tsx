@@ -10,6 +10,7 @@ import type { User } from "../users/columns";
 import { Checkbox } from "@/components/ui/checkbox";
 import { UserSelect } from "@/components/user-select";
 import type { PreSelling } from "../preselling/columns";
+import { BankSelect } from "@/components/BankSelect";
 
 type PresellingTransactionFormData = {
     amount: number | '';
@@ -108,11 +109,17 @@ export default function PresellingTransactionCreate({ onSubmit, onCancel, userIn
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
+
         if (name === 'amount') {
+            // مبلغ: عدد با فرمت جداکننده سه‌رقمی
             const numericValue = parseNumberFromFormatted(value);
             setForm((prev) => ({ ...prev, [name]: numericValue }));
-        } else {
+        } else if (name === 'preSellingId' || name === 'userId') {
+            // شناسه‌ها: عدد
             setForm((prev) => ({ ...prev, [name]: value ? Number(value) : '' }));
+        } else {
+            // سایر فیلدها مثل bank، targetBank، number، detail: رشته
+            setForm((prev) => ({ ...prev, [name]: value }));
         }
     };
 
@@ -296,76 +303,22 @@ export default function PresellingTransactionCreate({ onSubmit, onCancel, userIn
                 </div>
 
                 {/* Bank */}
-                <div className="space-y-2">
-                    <Label htmlFor="bank">
-                        بانک مبدا <span className="text-red-500">*</span>
-                    </Label>
-                    <select
-                        id="bank"
-                        name="bank"
-                        value={form.bank}
-                        onChange={handleChange}
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        required
-                    >
-                        <option value="">انتخاب بانک</option>
-                        <option value="بانک ملت">بانک ملت</option>
-                        <option value="بانک پارسیان">بانک پارسیان</option>
-                        <option value="بانک پاسارگاد">بانک پاسارگاد</option>
-                        <option value="بانک سپه">بانک سپه</option>
-                        <option value="بانک سامان">بانک سامان</option>
-                        <option value="بانک اقتصاد نوین">بانک اقتصاد نوین</option>
-                        <option value="بانک شهر">بانک شهر</option>
-                        <option value="بانک سینا">بانک سینا</option>
-                        <option value="بانک دی">بانک دی</option>
-                        <option value="بانک مسکن">بانک مسکن</option>
-                        <option value="موسسه اعتباری ملل">موسسه اعتباری ملل</option>
-                        <option value="بانک قرض الحسنه رسالت">بانک قرض الحسنه رسالت</option>
-                        <option value="بانک قرض الحسنه مهر ایران">بانک قرض الحسنه مهر ایران</option>
-                        <option value="بانک سرمایه">بانک سرمایه</option>
-                        <option value="بانک گردشگری">بانک گردشگری</option>
-                        <option value="بانک رفاه کارگران">بانک رفاه کارگران</option>
-                        <option value="بانک خاورمیانه">بانک خاورمیانه</option>
-                        <option value="بانک کشاورزی ایران">بانک کشاورزی ایران</option>
-                        <option value="بانک توسعه تعاون">بانک توسعه تعاون</option>
-                    </select>
-                </div>
+                <BankSelect
+                    id="bank"
+                    label="بانک مبدا"
+                    required
+                    value={form.bank}
+                    onChange={(bank) => setForm((prev) => ({ ...prev, bank }))}
+                />
 
                 {/* Target Bank */}
-                <div className="space-y-2">
-                    <Label htmlFor="targetBank">
-                        بانک مقصد <span className="text-red-500">*</span>
-                    </Label>
-                    <select
-                        id="targetBank"
-                        name="targetBank"
-                        value={form.targetBank}
-                        onChange={handleChange}
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        required
-                    >
-                        <option value="">انتخاب بانک مقصد</option>
-                        <option value="بانک ملت">بانک ملت</option>
-                        <option value="بانک پارسیان">بانک پارسیان</option>
-                        <option value="بانک پاسارگاد">بانک پاسارگاد</option>
-                        <option value="بانک سپه">بانک سپه</option>
-                        <option value="بانک سامان">بانک سامان</option>
-                        <option value="بانک اقتصاد نوین">بانک اقتصاد نوین</option>
-                        <option value="بانک شهر">بانک شهر</option>
-                        <option value="بانک سینا">بانک سینا</option>
-                        <option value="بانک دی">بانک دی</option>
-                        <option value="بانک مسکن">بانک مسکن</option>
-                        <option value="موسسه اعتباری ملل">موسسه اعتباری ملل</option>
-                        <option value="بانک قرض الحسنه رسالت">بانک قرض الحسنه رسالت</option>
-                        <option value="بانک قرض الحسنه مهر ایران">بانک قرض الحسنه مهر ایران</option>
-                        <option value="بانک سرمایه">بانک سرمایه</option>
-                        <option value="بانک گردشگری">بانک گردشگری</option>
-                        <option value="بانک رفاه کارگران">بانک رفاه کارگران</option>
-                        <option value="بانک خاورمیانه">بانک خاورمیانه</option>
-                        <option value="بانک کشاورزی ایران">بانک کشاورزی ایران</option>
-                        <option value="بانک توسعه تعاون">بانک توسعه تعاون</option>
-                    </select>
-                </div>
+                <BankSelect
+                    id="targetBank"
+                    label="بانک مقصد"
+                    required
+                    value={form.targetBank}
+                    onChange={(bank) => setForm((prev) => ({ ...prev, targetBank: bank }))}
+                />
 
                 {/* Transaction Number */}
                 <div className="space-y-2">
