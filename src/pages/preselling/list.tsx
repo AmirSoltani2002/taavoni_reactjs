@@ -18,6 +18,7 @@ import PreSellingCreate from "./create"
 import { Label } from "@/components/ui/label"
 import type { Project } from "../projects/columns"
 import { UserSelect } from "@/components/user-select"
+import type { Transaction } from "../transactions/columns"
 
 export default function PreSellingList() {
     const [data, setData] = useState<PreSelling[]>([])
@@ -28,6 +29,7 @@ export default function PreSellingList() {
     const [selectedUserId, setSelectedUserId] = useState<number | ''>('')
     const [projects, setProjects] = useState<Project[]>([])
     const [allUsers, setAllUsers] = useState<User[]>([])
+    const [transactions, setTransactions] = useState<Transaction[]>([])
 
     useEffect(() => {
         getTable('users/profile', (user) => {
@@ -60,6 +62,15 @@ export default function PreSellingList() {
                     setIsLoading(false);
                 });
             }
+
+            // Fetch transactions to calculate paid amounts
+            getTable('transaction', (transactionsData: Transaction[] | {error?: any}) => {
+                if (transactionsData && !('error' in transactionsData)) {
+                    setTransactions(transactionsData as Transaction[] || []);
+                } else {
+                    setTransactions([]);
+                }
+            }, false);
         });
     }, [])
 
@@ -137,6 +148,41 @@ export default function PreSellingList() {
         }
         return uniqueUsers;
     }, [allUsers, uniqueUsers, userInfo?.type]);
+
+    // Calculate stats for filtered data
+    const stats = useMemo(() => {
+        // Get unique users/people count
+        const uniqueUserIds = new Set<number>();
+        filteredData.forEach(preselling => {
+            if (preselling.userId) {
+                uniqueUserIds.add(preselling.userId);
+            }
+        });
+        const peopleCount = uniqueUserIds.size;
+
+        // Calculate total price of all presellings
+        const totalPrice = filteredData.reduce((sum, preselling) => {
+            return sum + (preselling.totalPrice || 0);
+        }, 0);
+
+        // Calculate total paid (sum of transaction amounts for these presellings)
+        const filteredPresellingIds = new Set(filteredData.map(p => p.id).filter((id): id is number => id !== undefined));
+        const totalPaid = transactions.reduce((sum, transaction) => {
+            // Check if transaction is related to any of the filtered presellings
+            // Transactions have presellingId field (even if not in TypeScript type)
+            const transactionPresellingId = (transaction as any).presellingId;
+            if (transactionPresellingId && filteredPresellingIds.has(transactionPresellingId)) {
+                return sum + (transaction.amount || 0);
+            }
+            return sum;
+        }, 0);
+
+        return {
+            peopleCount,
+            totalPrice,
+            totalPaid
+        };
+    }, [filteredData, transactions]);
 
     const isAdmin = ['admin', 'system'].includes(userInfo?.type || '');
 
@@ -239,6 +285,40 @@ export default function PreSellingList() {
                                         showAllOption={true}
                                     />
                                 )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Stats Section */}
+                    {filteredData.length > 0 && (
+                        <div className="bg-white rounded-xl shadow-sm border p-6">
+                            <h2 className="text-xl font-bold text-slate-900 mb-4">آمار پیش‌فروش‌های فیلتر شده</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="border rounded-lg p-4 bg-gradient-to-br from-blue-50 to-blue-100">
+                                    <div className="text-sm text-slate-600 mb-1">تعداد افراد</div>
+                                    <div className="text-2xl font-bold text-blue-700">
+                                        {stats.peopleCount.toLocaleString('fa-IR')}
+                                    </div>
+                                    <div className="text-xs text-slate-500 mt-1">نفر در این پروژه‌ها</div>
+                                </div>
+                                <div className="border rounded-lg p-4 bg-gradient-to-br from-green-50 to-green-100">
+                                    <div className="text-sm text-slate-600 mb-1">قیمت کل پیش‌فروش‌ها</div>
+                                    <div className="text-2xl font-bold text-green-700">
+                                        {stats.totalPrice.toLocaleString('fa-IR')} تومان
+                                    </div>
+                                    <div className="text-xs text-slate-500 mt-1">مجموع قیمت تمام پیش‌فروش‌ها</div>
+                                </div>
+                                <div className="border rounded-lg p-4 bg-gradient-to-br from-purple-50 to-purple-100">
+                                    <div className="text-sm text-slate-600 mb-1">مبلغ پرداخت شده</div>
+                                    <div className="text-2xl font-bold text-purple-700">
+                                        {stats.totalPaid.toLocaleString('fa-IR')} تومان
+                                    </div>
+                                    <div className="text-xs text-slate-500 mt-1">
+                                        {stats.totalPrice > 0 
+                                            ? `${Math.round((stats.totalPaid / stats.totalPrice) * 100).toLocaleString('fa-IR')}% از کل`
+                                            : 'هیچ پرداختی ثبت نشده'}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}
