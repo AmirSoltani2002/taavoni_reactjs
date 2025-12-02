@@ -56,7 +56,7 @@ export default function PresellingTransactionsList() {
                 }, false);
             } else {
                 // Regular user sees only their transactions
-                getTable('users/transaction', (transactions) => {
+                getTable('transaction/profile', (transactions) => {
                     setData(transactions || []);
                     setIsLoading(false);
                 });
