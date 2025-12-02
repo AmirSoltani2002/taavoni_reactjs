@@ -26,6 +26,8 @@ import { FaFaceSmile } from "react-icons/fa6";
 import { Badge } from "@/components/ui/badge";
 import type { Transaction } from "../transactions/columns";
 import { columns as transactionColumns } from "../transactions/columns";
+import type { PreSelling } from "../preselling/columns";
+import { columns as presellingColumns } from "../preselling/columns";
 import {
   Dialog,
   DialogContent,
@@ -71,6 +73,9 @@ export default function ProfilePage() {
   const location = useLocation();
   const [subProjectHistory, setSubProjectHistory] = useState<TransactionHistory[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [projectScores, setProjectScores] = useState<{ id: string; score: string; projectName: string; area?: number }[]>([]);
+  const [presellings, setPresellings] = useState<PreSelling[]>([]);
+  const [loadingPresellings, setLoadingPresellings] = useState(false);
   
   // Get initial tab from URL hash, default to 'personal'
   const getInitialTab = () => {
@@ -104,6 +109,32 @@ export default function ProfilePage() {
         setProfileImageUrl(undefined);
       }
     });
+
+    // Load project scores
+    const endpoint = userId ? `transaction/score?userId=${userId}` : "transaction/profile/score";
+    getTable(endpoint, (data: any) => {
+      try {
+        if (!data || typeof data !== "object") return;
+        const entries = Object.entries(data) as [string, any][];
+        const scores = entries
+          .filter(([key]) => key !== "userInfo")
+          .map(([key, value]) => {
+            const v = value as any;
+            const projectName = v?.presellingInfo?.project?.name || "پروژه";
+            const area = v?.presellingInfo?.area as number | undefined;
+            return {
+              id: key,
+              score: typeof v?.score === "string" ? v.score : String(v?.score ?? ""),
+              projectName,
+              area,
+            };
+          })
+          .filter((x) => x.score);
+        setProjectScores(scores);
+      } catch {
+        setProjectScores([]);
+      }
+    }, false);
   }, [userId]);
   useEffect(() => {
     getTable('users/profile', setViewer)
@@ -138,6 +169,21 @@ export default function ProfilePage() {
       }, false);
     }
   }, [user, userId, activeTab]);
+
+  useEffect(() => {
+    if (user) {
+      setLoadingPresellings(true);
+      const endpoint = userId ? `pre-selling/user/${userId}` : 'users/pre-selling';
+      getTable(endpoint, (data: PreSelling[] | {error?: any}) => {
+        if (data && !('error' in data)) {
+          setPresellings(data as PreSelling[] || []);
+        } else {
+          setPresellings([]);
+        }
+        setLoadingPresellings(false);
+      }, false);
+    }
+  }, [user, userId]);
 
   // Cleanup blob URLs on unmount or when profileImageUrl changes
   useEffect(() => {
@@ -815,6 +861,71 @@ export default function ProfilePage() {
 
             {/* Projects Tab */}
             <TabsContent value="projects" className="mt-0">
+              {/* Scores Section */}
+              {projectScores.length > 0 && (
+                <Card className="shadow-lg border-0 bg-white mb-6">
+                  <CardHeader className="bg-gradient-to-r from-yellow-50 to-orange-50 border-b">
+                    <CardTitle className="text-xl flex items-center gap-2">
+                      <Award className="h-5 w-5 text-yellow-600" />
+                      امتیازات پروژه‌ها
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {projectScores.map((item) => (
+                        <div
+                          key={item.id}
+                          className="bg-gradient-to-br from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-semibold text-gray-900 text-sm">{item.projectName}</h3>
+                            <Award className="h-5 w-5 text-yellow-600" />
+                          </div>
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-2xl font-bold text-yellow-700">
+                              {item.score}
+                            </span>
+                            <span className="text-sm text-gray-600">امتیاز</span>
+                          </div>
+                          {item.area && (
+                            <div className="mt-2 text-xs text-gray-600">
+                              مساحت: {item.area.toLocaleString('fa-IR')} متر مربع
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                    </Card>
+                  )}
+              
+              {/* Pre-selling Projects Section */}
+              <Card className="shadow-lg border-0 bg-white mb-6">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b">
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <Home className="h-5 w-5 text-blue-600" />
+                    پروژه‌های پیش‌فروش {fullName}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  {loadingPresellings ? (
+                    <PageLoader />
+                  ) : presellings.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500">
+                      <Home className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                      <p>پروژه پیش‌فروشی ثبت نشده است.</p>
+                    </div>
+                  ) : (
+                    <DataTable 
+                      columns={presellingColumns} 
+                      data={presellings} 
+                      tableName="pre-selling"
+                      _showDeleteButton={false}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+
               <UserProjects user={user} isSelf={userId ? false : true} isAdmin={['system', 'admin'].includes(viewer?.type || '')} />
             </TabsContent>
 

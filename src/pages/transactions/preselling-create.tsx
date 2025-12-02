@@ -18,7 +18,7 @@ type PresellingTransactionFormData = {
     targetBank: string;
     number: string;
     detail: string;
-    preSellingId: number | '';
+    presellingId: number | '';
     userId?: number | '';
     isConfirmed?: boolean;
     file: File | null;
@@ -30,7 +30,7 @@ const initialState: PresellingTransactionFormData = {
     targetBank: '',
     number: '',
     detail: '',
-    preSellingId: '',
+    presellingId: '',
     file: null,
 };
 
@@ -73,7 +73,7 @@ export default function PresellingTransactionCreate({ onSubmit, onCancel, userIn
             loadPreSellings(form.userId);
         } else if (isAdmin && !form.userId) {
             setPreSellings([]);
-            setForm((prev) => ({ ...prev, preSellingId: '' }));
+            setForm((prev) => ({ ...prev, presellingId: '' }));
         }
     }, [form.userId, isAdmin]);
 
@@ -114,7 +114,7 @@ export default function PresellingTransactionCreate({ onSubmit, onCancel, userIn
             // مبلغ: عدد با فرمت جداکننده سه‌رقمی
             const numericValue = parseNumberFromFormatted(value);
             setForm((prev) => ({ ...prev, [name]: numericValue }));
-        } else if (name === 'preSellingId' || name === 'userId') {
+        } else if (name === 'presellingId' || name === 'userId') {
             // شناسه‌ها: عدد
             setForm((prev) => ({ ...prev, [name]: value ? Number(value) : '' }));
         } else {
@@ -157,7 +157,7 @@ export default function PresellingTransactionCreate({ onSubmit, onCancel, userIn
             return;
         }
 
-        if (!form.preSellingId) {
+        if (!form.presellingId) {
             toast.error('لطفا پیش‌فروش را انتخاب کنید');
             return;
         }
@@ -186,7 +186,7 @@ export default function PresellingTransactionCreate({ onSubmit, onCancel, userIn
             if (form.detail) {
                 formData.append('detail', form.detail);
             }
-            formData.append('preSellingId', form.preSellingId.toString());
+            formData.append('presellingId', form.presellingId.toString());
             
             if (isAdmin) {
                 formData.append('isConfirmed', (form.isConfirmed !== false).toString());
@@ -242,7 +242,7 @@ export default function PresellingTransactionCreate({ onSubmit, onCancel, userIn
                         users={users}
                         selectedUserId={form.userId}
                         onUserSelect={(userId) => {
-                            setForm((prev) => ({ ...prev, userId: userId || '', preSellingId: '' }));
+                            setForm((prev) => ({ ...prev, userId: userId || '', presellingId: '' }));
                         }}
                         label="کاربر"
                         required
@@ -251,13 +251,13 @@ export default function PresellingTransactionCreate({ onSubmit, onCancel, userIn
 
                 {/* PreSelling Selection */}
                 <div className="space-y-2">
-                    <Label htmlFor="preSellingId">
+                    <Label htmlFor="presellingId">
                         پیش‌فروش <span className="text-red-500">*</span>
                     </Label>
                     <select
-                        id="preSellingId"
-                        name="preSellingId"
-                        value={form.preSellingId}
+                        id="presellingId"
+                        name="presellingId"
+                        value={form.presellingId}
                         onChange={handleChange}
                         disabled={loadingPreSellings || (isAdmin && !form.userId)}
                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"

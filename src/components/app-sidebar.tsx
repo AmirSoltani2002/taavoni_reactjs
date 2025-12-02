@@ -27,7 +27,7 @@ import logo from '@/assets/logo-nobg.png';
 export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-    const [items, setItems] = useState<{
+  const [items, setItems] = useState<{
     title: string;
     options?: {
       title?: string;
