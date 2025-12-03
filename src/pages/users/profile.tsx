@@ -25,7 +25,7 @@ import { getTransactionHistoryColumns, type TransactionHistory } from "./transac
 import { FaFaceSmile } from "react-icons/fa6";
 import { Badge } from "@/components/ui/badge";
 import type { Transaction, FinalTransaction } from "../transactions/columns";
-import { columns as transactionColumns } from "../transactions/columns";
+import { columns as transactionColumns, getFinalTransactionColumns } from "../transactions/columns";
 import type { PreSelling } from "../preselling/columns";
 import { columns as presellingColumns } from "../preselling/columns";
 import type { SubProject } from "../projects/columns";
@@ -61,6 +61,7 @@ export default function ProfilePage() {
   const [showPasswordChange, setShowPasswordChange] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
+  const [loadingFinalTransactions, setLoadingFinalTransactions] = useState(false);
   const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
   const [profileImageDoc, setProfileImageDoc] = useState<UserDoc | null>(null);
   const [profileImageUrl, setProfileImageUrl] = useState<string | undefined>(undefined);
@@ -203,6 +204,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (user) {
+      setLoadingFinalTransactions(true);
       const endpoint = userId ? `final-transaction/user/${userId}` : 'final-transaction/profile';
       getTable(endpoint, (data: FinalTransaction[] | {error?: any}) => {
         if (data && !('error' in data)) {
@@ -210,6 +212,7 @@ export default function ProfilePage() {
         } else {
           setFinalTransactions([]);
         }
+        setLoadingFinalTransactions(false);
       }, false);
     }
   }, [user, userId]);
@@ -1125,12 +1128,91 @@ export default function ProfilePage() {
             </TabsContent>
 
             {/* Payments Tab */}
-            <TabsContent value="payments" className="mt-0">
+            <TabsContent value="payments" className="mt-0 space-y-6">
+              {/* Summary Cards */}
+              {(() => {
+                const transactionsTotal = transactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+                const finalTransactionsTotal = finalTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+                const totalSum = transactionsTotal + finalTransactionsTotal;
+
+                if (transactionsTotal === 0 && finalTransactionsTotal === 0 && !loadingTransactions && !loadingFinalTransactions) {
+                  return null;
+                }
+
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Card className="shadow-md border-0 bg-gradient-to-br from-green-50 to-emerald-50">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                          <CreditCard className="h-4 w-4 text-green-600" />
+                          پرداخت‌های زمین
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold text-green-700">
+                          {loadingTransactions ? (
+                            <div className="animate-pulse">...</div>
+                          ) : (
+                            `${transactionsTotal.toLocaleString('fa-IR')} تومان`
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-600 mt-1">
+                          {transactions.length} تراکنش
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="shadow-md border-0 bg-gradient-to-br from-blue-50 to-indigo-50">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                          <Home className="h-4 w-4 text-blue-600" />
+                          پرداخت‌های ملک
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold text-blue-700">
+                          {loadingFinalTransactions ? (
+                            <div className="animate-pulse">...</div>
+                          ) : (
+                            `${finalTransactionsTotal.toLocaleString('fa-IR')} تومان`
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-600 mt-1">
+                          {finalTransactions.length} تراکنش
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="shadow-md border-0 bg-gradient-to-br from-purple-50 to-pink-50">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                          <CreditCard className="h-4 w-4 text-purple-600" />
+                          مجموع کل
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold text-purple-700">
+                          {loadingTransactions || loadingFinalTransactions ? (
+                            <div className="animate-pulse">...</div>
+                          ) : (
+                            `${totalSum.toLocaleString('fa-IR')} تومان`
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-600 mt-1">
+                          {transactions.length + finalTransactions.length} تراکنش
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                );
+              })()}
+
+              {/* Preselling Transactions */}
               <Card className="shadow-lg border-0 bg-white">
-                <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b">
+                <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b">
                   <CardTitle className="text-xl flex items-center gap-2">
-                    <CreditCard className="h-5 w-5 text-blue-600" />
-                    پرداخت‌های {fullName}
+                    <CreditCard className="h-5 w-5 text-green-600" />
+                    پرداخت‌های زمین
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-6">
@@ -1139,10 +1221,32 @@ export default function ProfilePage() {
                   ) : transactions.length === 0 ? (
                     <div className="text-center py-12 text-gray-500">
                       <CreditCard className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                      <p>پرداختی ثبت نشده است.</p>
+                      <p>پرداخت زمینی ثبت نشده است.</p>
                     </div>
                   ) : (
                     <DataTable columns={transactionColumns} data={transactions} tableName="transaction" />
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Final Transactions */}
+              <Card className="shadow-lg border-0 bg-white">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <Home className="h-5 w-5 text-blue-600" />
+                    پرداخت‌های ملک
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  {loadingFinalTransactions ? (
+                    <PageLoader />
+                  ) : finalTransactions.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500">
+                      <Home className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                      <p>پرداخت ملکی ثبت نشده است.</p>
+                    </div>
+                  ) : (
+                    <DataTable columns={getFinalTransactionColumns()} data={finalTransactions} tableName="final-transaction" />
                   )}
                 </CardContent>
               </Card>
