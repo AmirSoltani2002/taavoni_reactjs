@@ -205,7 +205,7 @@ export default function ProfilePage() {
   useEffect(() => {
     if (user) {
       setLoadingFinalTransactions(true);
-      const endpoint = userId ? `final-transaction/user/${userId}` : 'final-transaction/profile';
+      const endpoint = userId ? `final-transaction/users/${userId}` : 'final-transaction/profile';
       getTable(endpoint, (data: FinalTransaction[] | {error?: any}) => {
         if (data && !('error' in data)) {
           setFinalTransactions(Array.isArray(data) ? data : []);
