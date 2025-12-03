@@ -39,7 +39,7 @@ export function AppSidebar() {
     onClick?: () => void;
   }[]>([
     {
-      title: "داشبورد",
+      title: "پروفایل",
       url: "/dashboard",
       icon: Home,
     },
@@ -61,7 +61,7 @@ export function AppSidebar() {
     if(isAdmin) {
       setItems([
         {
-          title: "داشبورد",
+          title: "پروفایل",
           url: "/dashboard",
           icon: Home,
         },
@@ -141,7 +141,7 @@ export function AppSidebar() {
     } else {
       setItems([
         {
-          title: "داشبورد",
+          title: "پروفایل",
           url: "/dashboard",
           icon: Home,
         },
