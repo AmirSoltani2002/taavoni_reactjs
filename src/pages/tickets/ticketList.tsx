@@ -501,6 +501,7 @@ export default function TicketsList() {
                         data={data} 
                         errorMessage={errorMessage}
                         onRefresh={refreshTickets}
+                        _showDeleteButton={false}
                         options={(row) => [
                             {
                                 title: (
@@ -537,6 +538,7 @@ export default function TicketsList() {
                         data={data} 
                         errorMessage={errorMessage}
                         onRefresh={refreshTickets}
+                        _showDeleteButton={false}
                         options={(row) => [
                             {
                                 title: (

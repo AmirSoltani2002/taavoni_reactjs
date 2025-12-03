@@ -331,12 +331,12 @@ export function DataTable<TData extends { id?: number }, TValue>({
                     }}>ویرایش</ContextMenuItem>
                   )}
                   {EditElement}
-                  <ContextMenuItem style={{color: 'red'}} onClick={(e) => {
+                  {_showDeleteButton && <ContextMenuItem style={{color: 'red'}} onClick={(e) => {
                     e.stopPropagation();
                     setDeleteRow(row.original);
                   }}>
                     حذف
-                  </ContextMenuItem>
+                  </ContextMenuItem>}
                   {options && (typeof options === 'function'
                     ? options(row.original).map((op, index) => (
                         <ContextMenuItem key={index} onClick={(e) => {
