@@ -171,7 +171,7 @@ export default function PresellingTransactionsList() {
 
     
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100" data-tour="preselling-transactions">
             <div className="container mx-auto py-8 px-4">
                 {/* Header Section */}
                 <div className="mb-8">

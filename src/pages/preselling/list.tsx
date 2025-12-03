@@ -223,6 +223,7 @@ export default function PreSellingList() {
                                     className="gap-2 shadow-md"
                                     disabled={!isAdmin && !userInfo?.accepted}
                                     title={!isAdmin && !userInfo?.accepted ? 'برای ثبت پیش‌فروش، ابتدا باید حساب کاربری شما تایید شود' : ''}
+                                    data-tour="create-preselling-button"
                                 >
                                     <Plus className="w-4 h-4" />
                                     ثبت پیش‌فروش جدید

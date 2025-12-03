@@ -22,6 +22,7 @@ import SubProjectDetail from "./pages/subprojects/detail";
 import ProjectUnits from "./pages/projects/units";
 import PreSellingList from "./pages/preselling/list";
 import ScoresList from "./pages/scores/list";
+import GuidePage from "./pages/guide";
 
 function App() {
   return (
@@ -54,6 +55,7 @@ function App() {
                   <Route path="/users/:userId/assign-project/:subProjectId" element={<AssignProject />} />
                   <Route path="/unit/:id" element={<SubProjectDetail />} />
                   <Route path="/scores/list" element={<ScoresList />} />
+                  <Route path="/guide" element={<GuidePage />} />
                   <Route path="/*" element={<LockedPage />} />
                 </Routes>
               </Layout>

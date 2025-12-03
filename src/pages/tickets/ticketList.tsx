@@ -307,7 +307,7 @@ export default function TicketsList() {
         });
     };
     return (
-        <div className="container mx-auto py-10 px-4">
+        <div className="container mx-auto py-10 px-4" data-tour="tickets-page">
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'open' | 'archive')} className="w-full">
                 <div className="border-b border-gray-200 mb-6">
                     <TabsList className="w-full h-auto bg-transparent p-0 gap-0 inline-flex flex-wrap">

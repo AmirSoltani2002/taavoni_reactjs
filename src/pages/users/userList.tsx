@@ -46,7 +46,7 @@ export default function UsersList() {
     }, [data, searchQuery]);
 
     return (
-        <div className="container mx-auto py-10">
+        <div className="container mx-auto py-10" data-tour="users-list">
             <div className="flex items-center justify-between mb-6">
                 <h1 className="text-3xl font-bold">لیست کاربران</h1>
             </div>

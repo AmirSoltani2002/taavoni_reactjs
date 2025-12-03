@@ -176,9 +176,10 @@ export function AppSidebar() {
           {/* Header Section */}
           <div className="mb-6 pb-6 border-b border-gray-200/50">
             <div className="flex items-center gap-3 mb-4">
-              <div className="relative">
-                <div className="absolute -inset-1 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg blur opacity-20"></div>
-                <img src={logo} className="relative size-12 rounded-lg shadow-md" />
+              <div className="relative cursor-pointer group" onClick={() => navigate('/guide')}>
+                <div className="absolute -inset-1 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg blur opacity-20 group-hover:opacity-30 transition-opacity"></div>
+                <img src={logo} className="relative size-12 rounded-lg shadow-md group-hover:shadow-lg transition-shadow" />
+                <div className="absolute inset-0 rounded-lg bg-blue-500/0 group-hover:bg-blue-500/10 transition-colors"></div>
               </div>
               <div className="flex-1 min-w-0">
                 <h2 className="font-bold text-lg text-gray-900 truncate">
@@ -244,6 +245,7 @@ export function AppSidebar() {
                         <SidebarMenuButton 
                           isActive={isActive}
                           onClick={item.onClick}
+                          data-tour={item.title === "اعطای واحد به کاربر" ? "assign-unit" : undefined}
                           className={cn(
                             "rounded-lg transition-all duration-200 w-full",
                             "hover:bg-gray-100 hover:shadow-sm",
@@ -277,7 +279,14 @@ export function AppSidebar() {
                   <Collapsible key={item.title} defaultOpen={isActive} className="group">
                     <CollapsibleTrigger asChild>
                       <SidebarMenuButton 
-                        isActive={isActive} 
+                        isActive={isActive}
+                        data-tour={
+                          item.title === "کاربران" ? "users-menu" : 
+                          item.title === "پروژه‌ها" ? "projects-menu" : 
+                          item.title === "رسیدهای پرداخت" ? "preselling-transactions" : 
+                          item.title === "اعطای واحد به کاربر" ? "assign-unit" : 
+                          undefined
+                        }
                         className={cn(
                           "justify-between rounded-lg transition-all duration-200 w-full",
                           "hover:bg-gray-100 hover:shadow-sm",
