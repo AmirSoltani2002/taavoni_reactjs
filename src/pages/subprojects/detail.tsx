@@ -26,6 +26,9 @@ export default function SubProjectDetail() {
     const [loadingHistory, setLoadingHistory] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
     const [activeTab, setActiveTab] = useState<string>('info');
+    const [currentOwner, setCurrentOwner] = useState<User | null>(null);
+    const [loadingCurrentOwner, setLoadingCurrentOwner] = useState(false);
+    const [currentOwnerTransaction, setCurrentOwnerTransaction] = useState<TransactionHistory | null>(null);
     
     // Load user info to check admin status
     useEffect(() => {
@@ -124,6 +127,52 @@ export default function SubProjectDetail() {
             }, false);
         }
     }, [id, isAdmin]);
+
+    // Load current owner based on subProject.userId
+    useEffect(() => {
+        if (subProject?.userId && isAdmin) {
+            // Check if we already have the correct owner loaded
+            if (currentOwner?.id === subProject.userId) {
+                // Already have the correct owner, just update transaction if needed
+                const matchingTransaction = ownerHistory.find(transaction => transaction.userId === subProject.userId);
+                if (matchingTransaction && !currentOwnerTransaction) {
+                    setCurrentOwnerTransaction(matchingTransaction);
+                }
+                return;
+            }
+
+            setLoadingCurrentOwner(true);
+            // First, try to find the owner in transaction history
+            const matchingTransaction = ownerHistory.find(transaction => transaction.userId === subProject.userId);
+            
+            if (matchingTransaction && matchingTransaction.user) {
+                // Use user data from transaction history
+                setCurrentOwner(matchingTransaction.user);
+                setCurrentOwnerTransaction(matchingTransaction);
+                setLoadingCurrentOwner(false);
+            } else {
+                // Fetch user data directly
+                getTable(`users/${subProject.userId}`, (userData: User | {error?: any}) => {
+                    if (userData && !('error' in userData)) {
+                        setCurrentOwner(userData as User);
+                        // Try to find matching transaction for date
+                        const matchingTx = ownerHistory.find(transaction => transaction.userId === subProject.userId);
+                        if (matchingTx) {
+                            setCurrentOwnerTransaction(matchingTx);
+                        }
+                    } else {
+                        setCurrentOwner(null);
+                        setCurrentOwnerTransaction(null);
+                    }
+                    setLoadingCurrentOwner(false);
+                }, false);
+            }
+        } else {
+            setCurrentOwner(null);
+            setCurrentOwnerTransaction(null);
+            setLoadingCurrentOwner(false);
+        }
+    }, [subProject?.userId, ownerHistory, isAdmin]);
 
     // Load image URLs when projectImages change
     useEffect(() => {
@@ -552,60 +601,51 @@ export default function SubProjectDetail() {
                 </CardHeader>
                 <CardContent className="p-6 space-y-6">
                     {/* Current Owner Section */}
-                    {loadingHistory ? (
+                    {loadingHistory || loadingCurrentOwner ? (
                         <PageLoader />
-                    ) : (() => {
-                        // Find current owner (most recent transaction)
-                        const sortedHistory = [...ownerHistory].sort((a, b) => {
-                            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-                            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-                            return dateB - dateA;
-                        });
-                        const currentOwner = sortedHistory.length > 0 ? sortedHistory[0] : null;
-                        
-                        return (
-                            <>
-                                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border-2 border-indigo-200 p-6">
-                                    <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                        <Building className="w-5 h-5 text-indigo-600" />
-                                        مالک فعلی واحد
-                                    </h3>
-                                    {currentOwner && currentOwner.user ? (
+                    ) : (
+                        <>
+                            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border-2 border-indigo-200 p-6">
+                                <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                    <Building className="w-5 h-5 text-indigo-600" />
+                                    مالک فعلی واحد
+                                </h3>
+                                    {currentOwner ? (
                                         <div className="space-y-3">
                                             <div className="bg-white rounded-lg p-4 border border-indigo-100">
                                                 <div className="flex items-start justify-between">
                                                     <div className="flex-1">
                                                         <p className="text-lg font-semibold text-slate-900 mb-2">
-                                                            {currentOwner.user.name || ''} {currentOwner.user.lastName || ''}
+                                                            {currentOwner.name || ''} {currentOwner.lastName || ''}
                                                         </p>
                                                         <div className="space-y-1 text-sm text-slate-600">
-                                                            {currentOwner.user.email && (
+                                                            {currentOwner.email && (
                                                                 <p className="flex items-center gap-2">
                                                                     <span className="font-medium">ایمیل:</span>
-                                                                    <span>{currentOwner.user.email}</span>
+                                                                    <span>{currentOwner.email}</span>
                                                                 </p>
                                                             )}
-                                                            {currentOwner.user.mobile && (
+                                                            {currentOwner.mobile && (
                                                                 <p className="flex items-center gap-2">
                                                                     <span className="font-medium">موبایل:</span>
-                                                                    <span>{currentOwner.user.mobile}</span>
+                                                                    <span>{currentOwner.mobile}</span>
                                                                 </p>
                                                             )}
-                                                            {currentOwner.user.nationalNumber && (
+                                                            {currentOwner.nationalNumber && (
                                                                 <p className="flex items-center gap-2">
                                                                     <span className="font-medium">کد ملی:</span>
-                                                                    <span>{currentOwner.user.nationalNumber}</span>
+                                                                    <span>{currentOwner.nationalNumber}</span>
                                                                 </p>
                                                             )}
                                                         </div>
                                                     </div>
-                                                    {currentOwner.userId && (
+                                                    {subProject?.userId && (
                                                         <Button
                                                             type="button"
                                                             variant="outline"
                                                             size="sm"
                                                             onClick={() => {
-                                                                window.location.href = `/users/${currentOwner.userId}`;
+                                                                window.location.href = `/users/${subProject.userId}`;
                                                             }}
                                                             className="text-indigo-600 border-indigo-300 hover:bg-indigo-50"
                                                         >
@@ -614,11 +654,11 @@ export default function SubProjectDetail() {
                                                     )}
                                                 </div>
                                             </div>
-                                            {currentOwner.createdAt && (
+                                            {currentOwnerTransaction?.createdAt && (
                                                 <div className="text-sm text-slate-600 bg-white/70 rounded-lg p-3 border border-indigo-100">
                                                     <span className="font-medium">تاریخ واگذاری: </span>
                                                     <span>
-                                                        {new Date(currentOwner.createdAt).toLocaleDateString('fa-IR', {
+                                                        {new Date(currentOwnerTransaction.createdAt).toLocaleDateString('fa-IR', {
                                                             year: 'numeric',
                                                             month: 'long',
                                                             day: 'numeric',
@@ -640,31 +680,30 @@ export default function SubProjectDetail() {
                                             </p>
                                         </div>
                                     )}
-                                </div>
+                            </div>
 
-                                {/* History Table */}
-                                {ownerHistory.length > 0 && (
-                                    <div>
-                                        <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                            <History className="w-5 h-5 text-indigo-600" />
-                                            تاریخچه کامل واگذاری‌ها
-                                        </h3>
-                                        <DataTable 
-                                            columns={getSubProjectHistoryColumns()} 
-                                            data={ownerHistory} 
-                                            tableName="transaction-history"
-                                            _showDeleteButton={false}
-                                            onClickRow={(row) => {
-                                                if (row.userId) {
-                                                    window.location.href = `/users/${row.userId}`;
-                                                }
-                                            }}
-                                        />
-                                    </div>
-                                )}
-                            </>
-                        );
-                    })()}
+                            {/* History Table */}
+                            {ownerHistory.length > 0 && (
+                                <div>
+                                    <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                        <History className="w-5 h-5 text-indigo-600" />
+                                        تاریخچه کامل واگذاری‌ها
+                                    </h3>
+                                    <DataTable 
+                                        columns={getSubProjectHistoryColumns()} 
+                                        data={ownerHistory} 
+                                        tableName="transaction-history"
+                                        _showDeleteButton={false}
+                                        onClickRow={(row) => {
+                                            if (row.userId) {
+                                                window.location.href = `/users/${row.userId}`;
+                                            }
+                                        }}
+                                    />
+                                </div>
+                            )}
+                        </>
+                    )}
                 </CardContent>
                     </Card>
                     </TabsContent>
