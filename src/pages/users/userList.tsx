@@ -13,14 +13,24 @@ export default function UsersList() {
     const [data, setData] = useState<User[]>([])
     const [isLoading, setIsLoading] = useState(false)
     const [searchQuery, setSearchQuery] = useState("")
+    const [errorMessage, setErrorMessage] = useState<string | null>(null)
     const navigate = useNavigate();
-    
-    useEffect(() => {
+    const loadUsers = () => {
         setIsLoading(true);
         getTable('users', (d) => {
-            setData(d);
+            if (Array.isArray(d)) {
+                setData(d);
+                setErrorMessage(null);
+            } else {
+                setData([]);
+                setErrorMessage(d?.error || 'خطایی رخ داده است');
+            }
             setIsLoading(false);
         });
+    };
+    
+    useEffect(() => {
+        loadUsers();
     }, [])
 
     // Filter users based on search query (name, lastName, or nationalNumber)
@@ -79,7 +89,7 @@ export default function UsersList() {
                 data={filteredData} 
                 tableName="users" 
                 onRefresh={() => {
-                    getTable('users', setData);
+                    loadUsers();
                 }} 
                 editComponent={UserCreate}
                 options={[
@@ -89,7 +99,7 @@ export default function UsersList() {
                             setIsLoading(true);
                             if(row.id){
                                 await updateTableRow(`users`, row.id, {accepted: true}, () => {
-                                    getTable('users', setData);
+                                    loadUsers();
                                 })
                             }
                             setIsLoading(false)
@@ -97,6 +107,7 @@ export default function UsersList() {
                     }
                 ]}
                 onClickRow={(row) => row.id && navigate(`/users/${row.id}`)}
+                errorMessage={errorMessage}
             />
             {isLoading && <PageLoader />}
         </div>
