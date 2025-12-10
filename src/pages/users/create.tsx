@@ -162,12 +162,35 @@ export default function UserCreate({ initialValues, onSubmit, isEdit }: UserCrea
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Filter out empty strings before submitting
+    const cleanedForm = Object.entries(form).reduce((acc, [key, value]) => {
+      // Keep the value if it's not an empty string (but keep other falsy values like 0, null, false)
+      if (value !== '') {
+        (acc as any)[key] = value;
+      }
+      return acc;
+    }, {} as Partial<User>);
+    
     if (onSubmit) {
-      onSubmit(form);
+      onSubmit(cleanedForm as User);
     } else {
-      postTable('users', form, (_data) => {
+      postTable('users', cleanedForm, (_data) => {
         toast.success('کاربر با موفقیت ایجاد شد');
-        setForm(initialState);
+        // Reset form - create new object and ensure string fields are empty strings (not undefined) for controlled inputs
+        setForm({
+          ...initialState,
+          name: '',
+          lastName: '',
+          email: '',
+          password: '',
+          mobile: '',
+          homePhone: '',
+          workPhone: '',
+          nationalNumber: '',
+          address: '',
+          sex: '',
+          birthDay: '',
+        });
       });
     }
   };

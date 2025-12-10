@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { ChevronDownIcon } from "lucide-react"
 import { timeFormat } from "../../config"
 import { Button } from "../ui/button"
@@ -26,7 +26,9 @@ export const Calendar22 = ({title, date, setDate, className}: {title?: string, d
     }
   };
   
-  const dateObj = ensureDate(date);
+  // Memoize to avoid creating a new Date each render which was causing
+  // useEffect to fire repeatedly and trigger a render loop when used as a controlled input
+  const dateObj = useMemo(() => ensureDate(date), [date]);
   
   // Internal state to track selected date for immediate UI update
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(dateObj);
