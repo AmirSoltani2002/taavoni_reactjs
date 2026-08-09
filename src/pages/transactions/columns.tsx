@@ -1,6 +1,6 @@
 import { type ColumnDef } from "@tanstack/react-table"
 import { Download, Eye, CheckCircle2, XCircle } from "lucide-react"
-import { getToken, updateTableRow } from "@/general"
+import { updateTableRow } from "@/general"
 import { api_base_url } from "@/config"
 import { toast } from "sonner"
 import type { User } from "../users/columns"
@@ -164,11 +164,10 @@ export const getTransactionOptions = (onRefresh?: () => void, userInfo?: User): 
         }
 
         try {
-            const token = getToken();
             const resp = await fetch(`${api_base_url}/transaction/download/${transactionId}`, {
+                credentials: 'include',
                 method: 'GET',
                 headers: {
-                    'Authorization': token ? `Bearer ${token}` : ''
                 }
             });
             
@@ -211,11 +210,10 @@ export const getTransactionOptions = (onRefresh?: () => void, userInfo?: User): 
         }
 
         try {
-            const token = getToken();
             const resp = await fetch(`${api_base_url}/transaction/download/${transactionId}`, {
+                credentials: 'include',
                 method: 'GET',
                 headers: {
-                    'Authorization': token ? `Bearer ${token}` : ''
                 }
             });
             
@@ -397,11 +395,10 @@ export const getFinalTransactionOptions = (onRefresh?: () => void, userInfo?: Us
         }
 
         try {
-            const token = getToken();
             const resp = await fetch(`${api_base_url}/final-transaction/download/${transactionId}`, {
+                credentials: 'include',
                 method: 'GET',
                 headers: {
-                    'Authorization': token ? `Bearer ${token}` : ''
                 }
             });
             
@@ -443,11 +440,10 @@ export const getFinalTransactionOptions = (onRefresh?: () => void, userInfo?: Us
         }
 
         try {
-            const token = getToken();
             const resp = await fetch(`${api_base_url}/final-transaction/download/${transactionId}`, {
+                credentials: 'include',
                 method: 'GET',
                 headers: {
-                    'Authorization': token ? `Bearer ${token}` : ''
                 }
             });
             
