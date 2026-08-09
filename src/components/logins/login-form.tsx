@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { cn } from "../../lib/utils"
 import { Button } from "../ui/button"
-import { faToEn, postTable, getTable } from "../../general"
+import { faToEn, postTable, getTable, logout } from "../../general"
 import {
   Card,
   CardContent,
@@ -20,7 +20,6 @@ import {
   DialogTitle,
 } from "../ui/dialog"
 import { useNavigate } from "react-router-dom"
-import Cookies from "js-cookie"
 import { XIcon } from "lucide-react"
 import type { User } from "../../pages/users/columns"
 import { getUserType } from "../../pages/users/columns"
@@ -34,8 +33,7 @@ export function LoginForm({
   const [showRoleMismatchDialog, setShowRoleMismatchDialog] = useState(false);
   const [userRole, setUserRole] = useState<string>("");
 
-  const handleLogin = (token: string) => {
-    Cookies.set('tokenut', token);
+  const handleLogin = () => {
     // Fetch user profile to check role
     getTable('users/profile', (user: User | {error?: any}) => {
       if (user && !('error' in user)) {
@@ -67,8 +65,8 @@ export function LoginForm({
     navigate('/guide', { replace: true});
   };
 
-  const handleLogout = () => {
-    Cookies.remove('tokenut');
+  const handleLogout = async () => {
+    await logout();
     setShowRoleMismatchDialog(false);
     navigate('/', { replace: true});
   };
@@ -90,8 +88,8 @@ export function LoginForm({
                 nationalNumber: faToEn((e.target as HTMLFormElement).email.value),
                 password: (e.target as HTMLFormElement).password.value
               }, (d) => {
-                if(d.token) {
-                  handleLogin(d.token);
+                if(d.authenticated) {
+                  handleLogin();
                 }
               }, false)
             }}>
