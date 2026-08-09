@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getTable, getToken } from "@/general";
+import { getTable } from "@/general";
 import { toast } from "sonner";
 import { api_base_url } from "@/config";
 import { Upload, X } from "lucide-react";
@@ -180,7 +180,6 @@ export default function PresellingTransactionCreate({ onSubmit, onCancel, userIn
         setIsLoading(true);
 
         try {
-            const token = getToken();
             const formData = new FormData();
             
             if (form.file) {
@@ -203,9 +202,9 @@ export default function PresellingTransactionCreate({ onSubmit, onCancel, userIn
             }
 
             const response = await fetch(`${api_base_url}/transaction`, {
+                credentials: 'include',
                 method: 'POST',
                 headers: {
-                    'Authorization': token ? `Bearer ${token}` : ''
                 },
                 body: formData
             });
