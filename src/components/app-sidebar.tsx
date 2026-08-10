@@ -2,7 +2,7 @@ import { Building, ChevronDown, Home, User, Clipboard, CreditCard, KeyRound, Log
 import { NavLink, useLocation, useNavigate } from "react-router-dom"
 import { useEffect, useState } from "react";
 import { type User as UserType } from "@/pages/users/columns";
-import { getTable } from "@/general";
+import { getTable, logout } from "@/general";
 import { UserSelectDialog } from "@/components/user-select-dialog";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -20,7 +20,6 @@ import {
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "./ui/collapsible";
-import Cookies from "js-cookie";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import logo from '@/assets/logo-nobg.png';
 
@@ -346,8 +345,8 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              onClick={() => {
-                Cookies.remove('tokenut');
+              onClick={async () => {
+                await logout();
                 navigate('/')
               }}
               className={cn(

@@ -1,4 +1,3 @@
-import Cookies from "js-cookie";
 import { api_base_url } from "./config";
 import { toast } from "sonner";
 
@@ -6,10 +5,6 @@ export function faToEn(input: string | number): string {
   return String(input).replace(/[\u06F0-\u06F9]/g, d =>
     String(d.charCodeAt(0) - 0x06F0)
   );
-}
-
-export const getToken = () => {
-  return Cookies.get('tokenut') || '';
 }
 
 const getFarsiError = (err: string) => {
@@ -49,6 +44,13 @@ const getFarsiError = (err: string) => {
 }
 
 export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+export const logout = async (): Promise<void> => {
+  await fetch(`${api_base_url}/auth/logout`, {
+    credentials: 'include',
+    method: 'POST',
+  });
+};
 
 // Helper function to fix double-encoded UTF-8 file names
 // This happens when UTF-8 bytes are incorrectly interpreted as ISO-8859-1/Latin-1
@@ -97,7 +99,6 @@ export const uploadFile = async (
   userId?: number, 
   verbose: boolean = true
 ): Promise<string | undefined> => {
-  const token = getToken();
   if(!userId){return 'no user';}
   try {
     const formData = new FormData();
@@ -110,9 +111,9 @@ export const uploadFile = async (
     })
     
     const response = await fetch(`${api_base_url}/${tableName}`, {
+      credentials: 'include',
       method: 'POST',
       headers: {
-        'Authorization': token ? `Bearer ${token}` : ''
         // Note: Don't set Content-Type header for FormData, browser will set it automatically with boundary
       },
       body: formData
@@ -150,8 +151,6 @@ export const uploadFile = async (
 
 // Multiple files upload
 export const uploadMultipleFiles = async (files: File[], endpoint: string = 'upload/multiple'): Promise<string[]> => {
-  const token = getToken();
-  
   try {
     const formData = new FormData();
   files.forEach((file) => {
@@ -159,9 +158,9 @@ export const uploadMultipleFiles = async (files: File[], endpoint: string = 'upl
     });
     
     const response = await fetch(`${api_base_url}/${endpoint}`, {
+      credentials: 'include',
       method: 'POST',
       headers: {
-        'Authorization': token ? `Bearer ${token}` : ''
       },
       body: formData
     });
@@ -189,7 +188,6 @@ export const uploadProjectDoc = async (
   detail?: string,
   verbose: boolean = true
 ): Promise<any> => {
-  const token = getToken();
   console.log('uploadProjectDoc', {file, projectId, detail});
   try {
     const formData = new FormData();
@@ -200,9 +198,9 @@ export const uploadProjectDoc = async (
     }
     console.log('formData', formData);
     const response = await fetch(`${api_base_url}/project-docs`, {
+      credentials: 'include',
       method: 'POST',
       headers: {
-        'Authorization': token ? `Bearer ${token}` : ''
         // Note: Don't set Content-Type header for FormData, browser will set it automatically with boundary
       },
       body: formData
@@ -237,12 +235,11 @@ export const uploadProjectDoc = async (
   }
 };
 export const getTable = async(tableName: string, onGot?: (data: any) => void, verbose: boolean=true) => {
-  const token =  getToken()
   try{
     const resp = await fetch(`${api_base_url}/${tableName}`, {
+      credentials: 'include',
       method: 'GET',
       headers: {
-        'Authorization': token ? `Bearer ${token}`: ''
       }
     });
     if(resp.ok){
@@ -305,14 +302,13 @@ export const getTable = async(tableName: string, onGot?: (data: any) => void, ve
   } 
 }
 
-export const postTable = async(tableName: string, row: any, onPosted?: (data: any) => void, tokenRequired:boolean=true, verbose: boolean=true) => {
-  const token =  getToken()
+export const postTable = async(tableName: string, row: any, onPosted?: (data: any) => void, _tokenRequired:boolean=true, verbose: boolean=true) => {
   try{
     const resp = await fetch(`${api_base_url}/${tableName}`, {
+      credentials: 'include',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': (tokenRequired) ? `Bearer ${token}`: ''
       },
       body: JSON.stringify(row)
     });
@@ -357,12 +353,11 @@ export const postTable = async(tableName: string, row: any, onPosted?: (data: an
 }
 
 export const deleteTableRow = async(tableName: string, id: number, onDeleted?: (data: any) => void, verbose: boolean=true) => {
-  const token =  getToken()
   try{
     const resp = await fetch(`${api_base_url}/${tableName}/${id}`, {
+      credentials: 'include',
       method: 'DELETE',
       headers: {
-        'Authorization': token ? `Bearer ${token}`: ''
       }
     });
     if(resp.ok){
@@ -411,12 +406,11 @@ export const deleteTableRow = async(tableName: string, id: number, onDeleted?: (
 }
 // Get download URL for document (for displaying images)
 export const getDocumentDownloadUrl = async (fileId: number, type: 'user-doc' | 'project-docs', verbose: boolean = true): Promise<string | undefined> => {
-  const token = getToken();
   try {
     const resp = await fetch(`${api_base_url}/${type}/download/${fileId}`, {
+      credentials: 'include',
       method: 'GET',
       headers: {
-        'Authorization': token ? `Bearer ${token}` : ''
       }
     });
     if (resp.ok) {
@@ -460,12 +454,11 @@ export const getDocumentDownloadUrl = async (fileId: number, type: 'user-doc' | 
 
 // Get image blob URL for displaying images (returns blob URL that can be used as img src)
 export const getImageBlobUrl = async (fileId: number, type: 'user-doc' | 'project-docs', verbose: boolean = false): Promise<string | undefined> => {
-  const token = getToken();
   try {
     const resp = await fetch(`${api_base_url}/${type}/download/${fileId}`, {
+      credentials: 'include',
       method: 'GET',
       headers: {
-        'Authorization': token ? `Bearer ${token}` : ''
       }
     });
     if (resp.ok) {
@@ -509,12 +502,11 @@ export const getImageBlobUrl = async (fileId: number, type: 'user-doc' | 'projec
 
 // Download document file by fetching from the download endpoint
 export const downloadDocument = async (fileId: number, type: 'user-doc' | 'project-docs', filename?: string, verbose: boolean = true): Promise<void> => {
-  const token = getToken();
   try {
     const resp = await fetch(`${api_base_url}/${type}/download/${fileId}`, {
+      credentials: 'include',
       method: 'GET',
       headers: {
-        'Authorization': token ? `Bearer ${token}` : ''
       }
     });
     if (resp.ok) {
@@ -572,7 +564,6 @@ export const downloadDocument = async (fileId: number, type: 'user-doc' | 'proje
 };
 
 export const updateTableRow = async(tableName: string, id: number | string, row: any, onUpdated?: (data: any) => void, verbose: boolean=true) => {
-  const token =  getToken()
   row = {
     ...row,
     id: undefined,
@@ -583,10 +574,10 @@ export const updateTableRow = async(tableName: string, id: number | string, row:
   }
   try{
     const resp = await fetch(`${api_base_url}/${tableName}/${id}`, {
+      credentials: 'include',
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}`: ''
       },
       body: JSON.stringify(row)
     });
