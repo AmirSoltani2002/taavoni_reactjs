@@ -12,7 +12,7 @@ pipeline {
         IMAGE_REPOSITORY = 'amirsoltani/taavoni-frontend'
         DEPLOY_HOST = 'host.docker.internal'
         DEPLOY_PORT = '22'
-        DEPLOY_USER = 'deploy'
+        DEPLOY_USER = 'taavoni'
         DEPLOY_SERVICE = 'frontend'
     }
 
