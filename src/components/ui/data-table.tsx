@@ -128,7 +128,7 @@ export function DataTable<TData extends { id?: number }, TValue>({
           <>
             {EditComponent && (
               <>
-                <Button size="sm" variant="outline" onClick={(e) => {
+                <Button aria-label="ویرایش" size="sm" variant="outline" onClick={(e) => {
                   e.stopPropagation();
                   setEditRow(row.original);
                 }}><Pencil /></Button>
@@ -148,7 +148,7 @@ export function DataTable<TData extends { id?: number }, TValue>({
                 {op.title}
               </Button>
             ))}
-            {_showDeleteButton && <Button size="sm" variant="destructive" onClick={(e) => {
+            {_showDeleteButton && <Button aria-label="حذف" size="sm" variant="destructive" onClick={(e) => {
               e.stopPropagation();
               setDeleteRow(row.original);
             }}><Trash2 /></Button>}
@@ -157,7 +157,7 @@ export function DataTable<TData extends { id?: number }, TValue>({
           // Show three dots menu if multiple actions
           <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
             <PopoverTrigger asChild>
-              <Button size="sm" variant="outline" onClick={(e) => e.stopPropagation()}>
+              <Button aria-label="عملیات" size="sm" variant="outline" onClick={(e) => e.stopPropagation()}>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </PopoverTrigger>

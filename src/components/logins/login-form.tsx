@@ -84,9 +84,10 @@ export function LoginForm({
           <CardContent>
             <form onSubmit={e => {
               e.preventDefault();
+              const formData = new FormData(e.currentTarget);
               postTable('auth/national/', {
-                nationalNumber: faToEn((e.target as HTMLFormElement).email.value),
-                password: (e.target as HTMLFormElement).password.value
+                nationalNumber: faToEn(String(formData.get('email') || '')),
+                password: String(formData.get('password') || '')
               }, (d) => {
                 if(d.authenticated) {
                   handleLogin();
