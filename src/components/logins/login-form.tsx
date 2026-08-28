@@ -50,8 +50,8 @@ export function LoginForm({
           setUserRole(getUserType(userType));
           setShowRoleMismatchDialog(true);
         } else {
-          // Role matches, proceed to guide page
-          navigate('/guide', { replace: true});
+          // Role matches, proceed to dashboard page
+          navigate('/dashboard', { replace: true});
         }
       } else {
         // If we can't get user profile, proceed anyway
@@ -62,7 +62,7 @@ export function LoginForm({
 
   const handleProceed = () => {
     setShowRoleMismatchDialog(false);
-    navigate('/guide', { replace: true});
+    navigate('/dashboard', { replace: true});
   };
 
   const handleLogout = async () => {
