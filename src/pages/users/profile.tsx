@@ -1166,7 +1166,7 @@ export default function ProfilePage() {
                       <CardHeader className="pb-3">
                         <CardTitle className="text-sm font-medium text-gray-700 flex items-center gap-2">
                           <Home className="h-4 w-4 text-blue-600" />
-                          پرداخت‌های ملک
+                          پرداخت‌های ساخت
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
@@ -1234,7 +1234,7 @@ export default function ProfilePage() {
                 <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
                   <CardTitle className="text-xl flex items-center gap-2">
                     <Home className="h-5 w-5 text-blue-600" />
-                    پرداخت‌های ملک
+                    پرداخت‌های ساخت
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-6">
