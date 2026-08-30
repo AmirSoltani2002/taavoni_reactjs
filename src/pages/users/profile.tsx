@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { getDocsColumns, type User, type UserDoc, getIsargaryPercentLabel } from "./columns";
+import { getDocsColumns, type User, type UserDoc, getIsargaryPercentLabel, REGULAR_USER_TYPE_OPTIONS } from "./columns";
 import { getTable, updateTableRow, uploadFile, deleteTableRow, getImageBlobUrl, downloadDocument } from "@/general";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -1399,22 +1399,7 @@ export default function ProfilePage() {
                       hideWhenNotAdmin: false,
                       type: 'select',
                       options: [
-                        {
-                          label: 'کارمند دانشگاه تهران',
-                          value: 'tehranUni'
-                        },
-                        {
-                          label: 'کارمند سایر دانشگاه‌ها',
-                          value: 'otherUni'
-                        },
-                        {
-                          label: 'کارمند غیردانشگاهی',
-                          value: 'employee'
-                        },
-                        {
-                          label: 'عضو آزاد',
-                          value: 'free'
-                        },
+                        ...REGULAR_USER_TYPE_OPTIONS,
                         {
                           label: 'ادمین',
                           value: 'admin'
@@ -1541,5 +1526,4 @@ export default function ProfilePage() {
     </div>
   );
 }
-
 

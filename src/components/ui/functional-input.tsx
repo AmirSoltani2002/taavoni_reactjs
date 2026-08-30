@@ -41,6 +41,7 @@ const FInput = <FieldType,>({
     urlType,
     className,
 }: FInputProps<FieldType>) => {
+    const fieldId = item.name.toString();
     if(
         (item.hideWhenEdit && isEdit) ||
         (item.hideWhenNotAdmin && !(urlType == 'admin' || urlType == 'system'))
@@ -48,14 +49,14 @@ const FInput = <FieldType,>({
         return undefined;
     } else if(item.type === 'select' && item.options) {
         return <div className={className}>
-        <label>{item.title + (item.isRequired ? '*' : '')}</label>
-        <Select value={values[item.name]?.toString()} onValueChange={v => handleSelect(item.name, v)} required={item.isRequired}>
-            <SelectTrigger className={cn("w-full", className)}>
+        <label htmlFor={fieldId}>{item.title + (item.isRequired ? '*' : '')}</label>
+        <Select value={values[item.name]?.toString() ?? ''} onValueChange={v => handleSelect(item.name, v)} required={item.isRequired}>
+            <SelectTrigger id={fieldId} className={cn("w-full", className)}>
             <SelectValue placeholder="انتخاب کنید" />
             </SelectTrigger>
             <SelectContent>
             {item.options.map(sopt => (
-                <SelectItem value={sopt.value}>{sopt.label}</SelectItem>
+                <SelectItem key={sopt.value} value={sopt.value}>{sopt.label}</SelectItem>
             ))}
             </SelectContent>
         </Select>
@@ -72,7 +73,7 @@ const FInput = <FieldType,>({
         </div>
     } else if(item.type === 'slider') {
         return <div className={className}>
-            <label>{item.title + (item.isRequired ? '*' : '')}</label>
+            <label htmlFor={fieldId}>{item.title + (item.isRequired ? '*' : '')}</label>
             <Slider
                 value={[Number(values[item.name]) || 7]}
                 onValueChange={(val: number[]) => handleSelect(item.name, val[0])}
@@ -84,10 +85,11 @@ const FInput = <FieldType,>({
         </div>
     } else {
         return <div className={className}>
-        <label>{item.title + (item.isRequired ? '*' : '')}</label>
+        <label htmlFor={fieldId}>{item.title + (item.isRequired ? '*' : '')}</label>
         <Input 
+            id={fieldId}
             name={item.name.toString()} 
-            value={values[item.name]?.toString()}
+            value={values[item.name]?.toString() ?? ''}
             type={item.type || 'text'} 
             onChange={handleChange} 
             required={item.isRequired} 

@@ -2,6 +2,27 @@ import { type ColumnDef } from "@tanstack/react-table"
 import { CircleCheckBig, Crown, Download } from "lucide-react";
 import { downloadDocument } from "@/general";
 import { Button } from "@/components/ui/button";
+
+export type UserType =
+    | 'system'
+    | 'admin'
+    | 'tehranUni'
+    | 'universityFaculty'
+    | 'otherUni'
+    | 'otherUniversityFaculty'
+    | 'free'
+    | 'employee';
+
+export type RegularUserType = Exclude<UserType, 'system' | 'admin'>;
+
+export const REGULAR_USER_TYPE_OPTIONS: { label: string; value: RegularUserType }[] = [
+    { label: 'کارمند دانشگاهی', value: 'tehranUni' },
+    { label: 'هیئت علمی دانشگاهی', value: 'universityFaculty' },
+    { label: 'کارمند سایر دانشگاه‌ها', value: 'otherUni' },
+    { label: 'هیئت علمی سایر دانشگاه‌ها', value: 'otherUniversityFaculty' },
+    { label: 'کارمند غیردانشگاهی', value: 'employee' },
+    { label: 'عضو آزاد', value: 'free' },
+];
  
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
@@ -26,7 +47,7 @@ export type User = {
     shahedFamilyNumber?: null | number
     shahedRelation?: null | 'azade_wife' | 'azade_child' | 'jan_wife' | 'jan_child';
     subProjects?: any[];
-    type?: null | 'system' | 'admin' | 'tehranUni' | 'otherUni' | 'free' | 'employee';
+    type?: null | UserType;
     workPhone?: string;
     accepted?: boolean;
 }
@@ -39,21 +60,13 @@ export type UserDoc = {
     updatedAt?: string;
 }
 
-export const getUserType = (type: any) => {
+export const getUserType = (type: User['type'] | string): string => {
     if(type === 'system') {
         return 'مدیر سیستم';
     } else if(type === 'admin') {
         return 'ادمین';
-    } else if(type === 'tehranUni') {
-        return 'عضو دانشگاه تهران';
-    } else if(type === 'otherUni') {
-        return 'عضو سایر دانشگاه ها';
-    } else if(type === 'employee') {
-        return ' کارمند غیر دانشگاهی';
-    } else if(type === 'free') {
-        return 'عضو آزاد';
     } else {
-        return type;
+        return REGULAR_USER_TYPE_OPTIONS.find(option => option.value === type)?.label || type || '';
     }
 }
 
@@ -102,7 +115,7 @@ export const columns: ColumnDef<User>[] = [
         accessorKey: "type",
         header: "نوع اکانت",
         cell: ({ cell }) => {
-            const v = cell.getValue();
+            const v = cell.getValue() as User['type'];
             return getUserType(v);
         }
     },

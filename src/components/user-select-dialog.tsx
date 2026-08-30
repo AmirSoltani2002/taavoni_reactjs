@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { getTable, updateTableRow } from "@/general";
 import { PageLoader } from "@/components/ui/loader";
 import { Search, User as UserIcon } from "lucide-react";
-import type { User } from "@/pages/users/columns";
+import { getUserType, type User } from "@/pages/users/columns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -168,12 +168,7 @@ export function UserSelectDialog({ open, onOpenChange, subProjectId, onAssignCom
                               </div>
                               {user.type && (
                                 <div className="text-xs text-gray-500 mt-1">
-                                  {user.type === 'admin' ? 'ادمین' : 
-                                   user.type === 'system' ? 'مدیر سیستم' :
-                                   user.type === 'tehranUni' ? 'عضو دانشگاه تهران' :
-                                   user.type === 'otherUni' ? 'عضو سایر دانشگاه‌ها' :
-                                   user.type === 'employee' ? 'کارمند غیر دانشگاهی' :
-                                   user.type === 'free' ? 'عضو آزاد' : user.type}
+                                  {getUserType(user.type)}
                                 </div>
                               )}
                             </div>
@@ -225,4 +220,3 @@ export function UserSelectDialog({ open, onOpenChange, subProjectId, onAssignCom
     </Dialog>
   );
 }
-

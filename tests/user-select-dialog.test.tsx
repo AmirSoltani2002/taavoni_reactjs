@@ -63,4 +63,30 @@ describe('UserSelectDialog', () => {
     expect(screen.queryByText('علی رضایی')).not.toBeInTheDocument()
     expect(screen.getByText('مریم احمدی')).toBeVisible()
   })
+
+  it('renders the new faculty membership labels', async () => {
+    server.use(
+      http.get(api_base_url + '/users', () =>
+        HttpResponse.json([
+          {
+            id: 10,
+            name: 'سارا',
+            lastName: 'دانشگاهی',
+            type: 'universityFaculty',
+          },
+          {
+            id: 11,
+            name: 'رضا',
+            lastName: 'سایر',
+            type: 'otherUniversityFaculty',
+          },
+        ]),
+      ),
+    )
+
+    renderDialog()
+
+    expect(await screen.findByText('هیئت علمی دانشگاهی')).toBeVisible()
+    expect(screen.getByText('هیئت علمی سایر دانشگاه‌ها')).toBeVisible()
+  })
 })
