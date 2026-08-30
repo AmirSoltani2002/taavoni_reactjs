@@ -8,6 +8,7 @@ import { useRef, useState, useEffect } from "react";
 import { uploadProjectDoc, downloadDocument, deleteTableRow, getImageBlobUrl } from "@/general";
 import { toast } from "sonner";
 import type { Project } from "../columns";
+import { PROJECT_END_DATE_MAX } from "../dateLimits";
 import MapPicker from "@/components/app/MapPicker";
 
 interface Step1BasicInfoProps {
@@ -429,6 +430,7 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                     title="" 
                     date={project.endDate ? new Date(project.endDate) : undefined} 
                     setDate={(d) => handleProjectChange('endDate', d?.toISOString())} 
+                    maxDate={PROJECT_END_DATE_MAX}
                   />
                 </div>
               </div>

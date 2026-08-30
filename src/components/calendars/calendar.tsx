@@ -11,7 +11,21 @@ import {
 } from "../ui/popover"
 import { cn } from "@/lib/utils";
 
-export const Calendar22 = ({title, date, setDate, className}: {title?: string, date: Date | string | undefined, setDate: (date: Date | undefined) => void, className?: string}) => {
+interface Calendar22Props {
+  title?: string
+  date: Date | string | undefined
+  setDate: (date: Date | undefined) => void
+  className?: string
+  maxDate?: Date
+}
+
+export const Calendar22 = ({
+  title,
+  date,
+  setDate,
+  className,
+  maxDate,
+}: Calendar22Props) => {
   const [open, setOpen] = useState(false)
   
   // Helper function to ensure we have a Date object
@@ -86,7 +100,8 @@ export const Calendar22 = ({title, date, setDate, className}: {title?: string, d
               }}
               captionLayout="dropdown"
               className={cn("rounded-lg border shadow-sm", className)}
-              endMonth={new Date((new Date()).getFullYear() + 10, 12)}
+              endMonth={maxDate ?? new Date((new Date()).getFullYear() + 10, 12)}
+              disabled={maxDate ? { after: maxDate } : undefined}
             />
           </div>
         </PopoverContent>
