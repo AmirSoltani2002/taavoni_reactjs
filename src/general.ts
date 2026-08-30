@@ -29,11 +29,7 @@ const getFarsiError = (err: string) => {
 
   }
 
-  const Skips: string[] = [
-    'type must be one of the following values: system, admin, tehranuni, otheruni, free, employee',
-
-  ]
-  if(Skips.includes(err.toLowerCase())) {
+  if(err.toLowerCase().startsWith('type must be one of the following values:')) {
     return null;
   }
   if(Object.keys(Errors).includes(err.toLowerCase())) {
@@ -625,4 +621,3 @@ export const updateTableRow = async(tableName: string, id: number | string, row:
     return mockResponse;
   }
 }
-

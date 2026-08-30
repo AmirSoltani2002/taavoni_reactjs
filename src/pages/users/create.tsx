@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { postTable } from "@/general";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
-import type { User } from "./columns";
+import { REGULAR_USER_TYPE_OPTIONS, type User } from "./columns";
 import FInput from "@/components/ui/functional-input";
 
 // User type based on columns.tsx
@@ -38,9 +38,9 @@ type UserCreateProps = {
 export default function UserCreate({ initialValues, onSubmit, isEdit }: UserCreateProps) {
   const [form, setForm] = useState<User>(initialValues || initialState);
   const [searchParams] = useSearchParams();
-  const urlType = searchParams.get("type") as User["type"] | null;
+  const urlType = searchParams.get("type");
   const FIELDS = useMemo(() => {
-    let fields: {
+    const fields: {
       title?: string;
       name: keyof User;
       isRequired?: boolean;
@@ -122,34 +122,16 @@ export default function UserCreate({ initialValues, onSubmit, isEdit }: UserCrea
         isRequired: true,
         hideWhenNotAdmin: false,
         type: 'select',
-        options: [
-          {
-            label: 'کارمند دانشگاه تهران',
-            value: 'tehranUni'
-          },
-          {
-            label: 'کارمند سایر دانشگاه‌ها',
-            value: 'otherUni'
-          },
-          {
-            label: 'کارمند غیردانشگاهی',
-            value: 'employee'
-          },
-          {
-            label: 'عضو آزاد',
-            value: 'free'
-          },
-          
-        ]
+        options: REGULAR_USER_TYPE_OPTIONS,
       });
     }
     return fields;
   }, [urlType]);
   useEffect(() => {
-    if (urlType && !form.type) {
+    if ((urlType === 'admin' || urlType === 'system') && !form.type) {
       setForm((prev) => ({ ...prev, type: urlType }));
     }
-  }, [urlType]);
+  }, [urlType, form.type]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -162,19 +144,21 @@ export default function UserCreate({ initialValues, onSubmit, isEdit }: UserCrea
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const hasValidRegularType = REGULAR_USER_TYPE_OPTIONS.some(option => option.value === form.type);
+    const isAdministrativeType = urlType === 'admin' || urlType === 'system';
+    if (!isEdit && !isAdministrativeType && !hasValidRegularType) {
+      toast.error('لطفا نوع عضویت را مشخص کنید');
+      return;
+    }
     // Filter out empty strings before submitting
-    const cleanedForm = Object.entries(form).reduce((acc, [key, value]) => {
-      // Keep the value if it's not an empty string (but keep other falsy values like 0, null, false)
-      if (value !== '') {
-        (acc as any)[key] = value;
-      }
-      return acc;
-    }, {} as Partial<User>);
+    const cleanedForm = Object.fromEntries(
+      Object.entries(form).filter(([, value]) => value !== ''),
+    ) as Partial<User>;
     
     if (onSubmit) {
       onSubmit(cleanedForm as User);
     } else {
-      postTable('users', cleanedForm, (_data) => {
+      postTable('users', cleanedForm, () => {
         toast.success('کاربر با موفقیت ایجاد شد');
         // Reset form - create new object and ensure string fields are empty strings (not undefined) for controlled inputs
         setForm({
@@ -205,6 +189,7 @@ export default function UserCreate({ initialValues, onSubmit, isEdit }: UserCrea
         <div className="grid grid-cols-2 gap-4">
           {FIELDS.map(item => (
             <FInput<User> 
+              key={item.name.toString()}
               values={form} 
               item={item} 
               handleChange={handleChange} 

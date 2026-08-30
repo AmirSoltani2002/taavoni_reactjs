@@ -23,7 +23,7 @@ import {
 } from "../ui/select"
 
 
-import type { User } from "@/pages/users/columns";
+import { REGULAR_USER_TYPE_OPTIONS, type User } from "@/pages/users/columns";
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
 import { toast } from "sonner";
@@ -159,13 +159,15 @@ export function SignupForm({
                     <SelectContent>
                       <SelectGroup>
                         <SelectLabel>عضو دانشگاهی</SelectLabel>
-                        <SelectItem value="tehranUni">عضو دانشگاه تهران</SelectItem>
-                        <SelectItem value="otherUni">عضو سایر دانشگاه‌ها</SelectItem>
+                        {REGULAR_USER_TYPE_OPTIONS.slice(0, 4).map(option => (
+                          <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                        ))}
                       </SelectGroup>
                       <SelectGroup>
                         <SelectLabel>غیر دانشگاهی</SelectLabel>
-                        <SelectItem value="employee">عضو کارمند</SelectItem>
-                        <SelectItem value="free">عضو آزاد</SelectItem>
+                        {REGULAR_USER_TYPE_OPTIONS.slice(4).map(option => (
+                          <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                        ))}
                       </SelectGroup>
                     </SelectContent>
                   </Select>
