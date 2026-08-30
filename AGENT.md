@@ -98,6 +98,8 @@ For each applicable new feature, test in this order:
 4. Loading states and backend error messages.
 5. Important edge cases and previously reported bugs.
 
+After adding, removing or changing a new feature, never change or remove the existing tests imidiatly afterwards. First, run all the exiting and new tests. If newer test fail, modify code accordingly and search the exact reason. If you found out there is a conflict between newer feature and an existing one, modify both features until the conflict is solved. Then, only if you found out the problem is certainly with the older tests and there are some conflicts between older tests and new features, change tests or remove. After changing and removing them, explain what you did.
+
 Feature tests must cover applicable interactions: login, validation, buttons
 calling the correct API, permission-based hide/show behavior, tables rendering
 returned data, create/edit/delete refreshing visible data, loading states, and
@@ -117,6 +119,7 @@ Follow these rules:
   full suite and project lint before completion when feasible.
 - Ask before installing system-wide software or changing shared infrastructure.
 - Report passing tests, failures, and important behavior that remains untested.
+
 
 ## Commit & Pull Request Guidelines
 
@@ -149,3 +152,5 @@ In the final report, summarize changes in simple words, provide exact test and
 lint commands and results, and mention anything not tested and why. If changes
 are ready but unpublished, ask whether the user wants them committed and opened
 as a pull request.
+
+After completion, cleanup all stale containers, images, volumes and packages, made during the testing process.
