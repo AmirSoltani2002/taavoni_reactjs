@@ -9,8 +9,8 @@ import { Toaster } from '@/components/ui/sonner'
 import { server } from './mocks/server'
 
 const MEMBERSHIP_LABELS = [
-  'کارمند دانشگاهی',
-  'هیئت علمی دانشگاهی',
+  'کارمند دانشگاه تهران',
+  'هیئت علمی دانشگاه تهران',
   'کارمند سایر دانشگاه‌ها',
   'هیئت علمی سایر دانشگاه‌ها',
   'کارمند غیردانشگاهی',
@@ -88,7 +88,7 @@ describe('UserCreate', () => {
     renderRegularUserForm()
     await fillRequiredTextFields(user)
     await selectOption(user, 'جنسیت*', 'مرد')
-    await selectOption(user, 'نوع عضویت*', 'هیئت علمی دانشگاهی')
+    await selectOption(user, 'نوع عضویت*', 'هیئت علمی دانشگاه تهران')
 
     await user.click(screen.getByRole('button', { name: 'افزودن کاربر' }))
 
