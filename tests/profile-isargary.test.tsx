@@ -56,6 +56,9 @@ async function choose(
 ) {
   await user.click(screen.getByLabelText(field))
   await user.click(await screen.findByRole('option', { name: option }))
+  await waitFor(() => {
+    expect(screen.getByLabelText(field)).toHaveTextContent(option)
+  })
 }
 
 describe('ProfilePage isargary information', () => {
@@ -73,6 +76,9 @@ describe('ProfilePage isargary information', () => {
       'ایثارگر',
     ])
     await user.click(screen.getByRole('option', { name: 'خانواده شهید' }))
+    await waitFor(() => {
+      expect(screen.getByLabelText('نوع ایثارگری')).toHaveTextContent('خانواده شهید')
+    })
     expect(screen.getByLabelText('نسبت با شهید')).toBeVisible()
     expect(screen.queryByLabelText('نسبت با ایثارگر')).not.toBeInTheDocument()
     await user.click(screen.getByLabelText('نسبت با شهید'))
