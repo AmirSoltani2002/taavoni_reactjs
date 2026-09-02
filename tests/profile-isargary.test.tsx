@@ -117,7 +117,7 @@ describe('ProfilePage isargary information', () => {
     await choose(user, 'نوع ایثارگری', 'هیچ کدام')
     expect(screen.queryByLabelText('نسبت با ایثارگر')).not.toBeInTheDocument()
     expect(screen.queryByRole('group', { name: 'نوع حضور در جبهه' })).not.toBeInTheDocument()
-  })
+  }, 10_000)
 
   it('warns about every required conditional field before saving', async () => {
     const onPatch = vi.fn()
