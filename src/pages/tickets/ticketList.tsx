@@ -101,11 +101,13 @@ const FIELD_LABELS: Record<string, string> = {
     'address': 'آدرس',
     'sex': 'جنسیت',
     'birthDay': 'تاریخ تولد',
-    'isargaryPercent': 'درصد ایثارگری',
-    'azadeEsaratMonths': 'ماه های اسارت',
-    'azadeMonths': 'ماه های آزادگی',
-    'shahedFamilyNumber': 'تعداد اعضای خانواده شاهد',
-    'shahedRelation': 'ارتباط با ایثارگر'
+    'isargaryType': 'نوع ایثارگری',
+    'martyrRelation': 'نسبت با شهید',
+    'isargarRelation': 'نسبت با ایثارگر',
+    'janbaziPercent': 'درصد جانبازی',
+    'captivityMonths': 'مدت اسارت (به ماه)',
+    'frontPresenceType': 'نوع حضور در جبهه',
+    'frontPresenceMonths': 'مدت حضور در جبهه (به ماه)'
 };
 
 const getProfileInfoChangeContent = (user: User | undefined, selectedFields: string[]): string => {

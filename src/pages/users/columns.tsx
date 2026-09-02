@@ -23,6 +23,49 @@ export const REGULAR_USER_TYPE_OPTIONS: { label: string; value: RegularUserType 
     { label: 'کارمند غیردانشگاهی', value: 'employee' },
     { label: 'عضو آزاد', value: 'free' },
 ];
+
+export type IsargaryType = 'none' | 'martyrFamily' | 'janbaz' | 'azade' | 'isargar';
+export type MartyrRelation = 'child' | 'brother' | 'parent' | 'spouse';
+export type IsargarRelation = 'self' | 'spouse' | 'child';
+export type FrontPresenceType = 'voluntary' | 'mandatory';
+
+export const ISARGARY_TYPE_OPTIONS: { label: string; value: IsargaryType }[] = [
+    { label: 'هیچ کدام', value: 'none' },
+    { label: 'خانواده شهید', value: 'martyrFamily' },
+    { label: 'جانباز', value: 'janbaz' },
+    { label: 'آزاده', value: 'azade' },
+    { label: 'ایثارگر', value: 'isargar' },
+];
+
+export const MARTYR_RELATION_OPTIONS: { label: string; value: MartyrRelation }[] = [
+    { label: 'فرزند شهید', value: 'child' },
+    { label: 'برادر شهید', value: 'brother' },
+    { label: 'پدر یا مادر شهید', value: 'parent' },
+    { label: 'همسر شهید', value: 'spouse' },
+];
+
+export const ISARGAR_RELATION_OPTIONS: { label: string; value: IsargarRelation }[] = [
+    { label: 'خود ایثارگر', value: 'self' },
+    { label: 'همسر ایثارگر', value: 'spouse' },
+    { label: 'فرزند ایثارگر', value: 'child' },
+];
+
+export const FRONT_PRESENCE_TYPE_OPTIONS: { label: string; value: FrontPresenceType }[] = [
+    { label: 'اختیاری', value: 'voluntary' },
+    { label: 'اجباری', value: 'mandatory' },
+];
+
+export const getIsargaryTypeLabel = (value: User['isargaryType']) =>
+    ISARGARY_TYPE_OPTIONS.find(option => option.value === value)?.label ?? 'هیچ کدام';
+
+export const getMartyrRelationLabel = (value: User['martyrRelation']) =>
+    MARTYR_RELATION_OPTIONS.find(option => option.value === value)?.label ?? '-';
+
+export const getIsargarRelationLabel = (value: User['isargarRelation']) =>
+    ISARGAR_RELATION_OPTIONS.find(option => option.value === value)?.label ?? '-';
+
+export const getFrontPresenceTypeLabel = (value: User['frontPresenceType']) =>
+    FRONT_PRESENCE_TYPE_OPTIONS.find(option => option.value === value)?.label ?? '-';
  
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
@@ -31,12 +74,16 @@ export type User = {
     updatedAt?: string;
     createdAt?: string;
     address?: string;
-    azadeEsaratMonths?: null | number
-    azadeMonths?: null | number
     birthDay?: string;
     email?: string;
     homePhone?: string;
-    isargaryPercent?: 'val10_15' | 'val15_20' | 'val20_plus';
+    isargaryType?: IsargaryType;
+    martyrRelation?: MartyrRelation | null;
+    isargarRelation?: IsargarRelation | null;
+    janbaziPercent?: number | null;
+    captivityMonths?: number | null;
+    frontPresenceType?: FrontPresenceType | null;
+    frontPresenceMonths?: number | null;
     lastName?: string
     mobile?: string;
     name?: string;
@@ -44,8 +91,6 @@ export type User = {
     nationalNumber?: string;
     password?: string;
     sex?: 'male' | 'female' | string;
-    shahedFamilyNumber?: null | number
-    shahedRelation?: null | 'azade_wife' | 'azade_child' | 'jan_wife' | 'jan_child';
     subProjects?: any[];
     type?: null | UserType;
     workPhone?: string;
@@ -70,17 +115,6 @@ export const getUserType = (type: User['type'] | string): string => {
     }
 }
 
-export const getIsargaryPercentLabel = (value: User['isargaryPercent']) => {
-    if(value === 'val10_15') {
-        return '۱۰−۱۵%';
-    } else if(value === 'val15_20') {
-        return '۱۵−۲۰%';
-    } else if(value === 'val20_plus') {
-        return '۲۰%+';
-    } else {
-        return null;
-    }
-}
 export const columns: ColumnDef<User>[] = [
     {
         accessorKey: "id",
@@ -138,12 +172,11 @@ export const columns: ColumnDef<User>[] = [
         }
     },
     {
-        accessorKey: "isargary_percent",
-        header: "درصد ایثارگری",
+        accessorKey: "isargaryType",
+        header: "نوع ایثارگری",
         cell: ({ cell }) => {
-            const v = cell.getValue() as User['isargaryPercent'];
-            const label = getIsargaryPercentLabel(v);
-            return label || 'ندارد';
+            const value = cell.getValue() as User['isargaryType'];
+            return getIsargaryTypeLabel(value);
         }
     },
 ]
