@@ -2,7 +2,6 @@ import {useState} from "react"
 import { cn } from "../../lib/utils"
 import { Button } from "../ui/button"
 import { Calendar22 } from "../calendars/calendar"
-import {Switch} from "../ui/switch"
 import { postTable } from "../../general"
 import {
   Card,
@@ -32,7 +31,6 @@ export function SignupForm({
   ...props
 }: React.ComponentProps<"div">) {
   const [date, setDate] = useState<Date | undefined>(undefined)
-  const [isIsargar, setIsIsargar] = useState<boolean>(false)
   const [idcardFile, setIdcardFile] = useState<File>()
   const [showPasswordHint, setShowPasswordHint] = useState(false);
   const placeholders: {
@@ -77,11 +75,6 @@ export function SignupForm({
               sex: formData.get('sex') as User['sex'],
               type: formData.get('type') as User['type'],
               address: formData.get('address') as string,
-              isargaryPercent: formData.get('isargaryPercent') as User['isargaryPercent'] | undefined,
-              azadeMonths: formData.get('azadeMonths') ? Number(formData.get('azadeMonths')) : null,
-              azadeEsaratMonths: formData.get('azadeEsaratMonths') ? Number(formData.get('azadeEsaratMonths')) : null,
-              shahedFamilyNumber: formData.get('shahedFamilyNumber') ? Number(formData.get('shahedFamilyNumber')) : null,
-              shahedRelation: formData.get('shahedRelation') as User['shahedRelation'],
               password: formData.get('password') as string,
             };
             postTable('users', data).then(response => {
@@ -182,62 +175,6 @@ export function SignupForm({
                   required
                 />
               </div>
-              <div className="grid grid-cols-2 ml-auto mr-auto">
-                <Switch
-                  checked={isIsargar}
-                  onCheckedChange={setIsIsargar}
-                />
-                <Label htmlFor="isargari-type" className="ml-auto">ورود اطلاعات ایثارگری</Label>
-              </div>
-              {isIsargar && <div className="grid grid-cols-2">
-                <div>
-                <Label htmlFor="isargari-type" className="ml-auto">درصد جانبازی</Label>
-                <Select name="isargaryPercent">
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="درصد جانبازی" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>جانبازان</SelectLabel>
-                      <SelectItem value="val10_15">۱۰−۱۵%</SelectItem>
-                      <SelectItem value="val15_20">۱۵−۲۰%</SelectItem>
-                      <SelectItem value="val20_plus">۲۰%+</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-                </div>
-                <div>
-                <Label htmlFor="azade-type" className="ml-auto">تعدادماه‌های حصور در جبهه</Label>
-                <Input name="azadeMonths" type="number"  placeholder="تعداد ماه‌های حضور در جبهه" />
-                </div>
-                <div>
-                <Label htmlFor="azade-type" className="ml-auto">تعدادماه‌های اسارت</Label>
-                <Input name="azadeEsaratMonths"  type="number" placeholder="تعداد ماه‌های حضور در اسارت" />
-                </div>
-                <div>
-                <Label htmlFor="family_shahid-type" className="ml-auto">تعداد شهید خانواده</Label>
-                <Input name="shahedFamilyNumber"  type="number" placeholder="تعداد شهید خانواده" />
-                </div>
-              </div>}
-              {isIsargar && 
-                <div>
-                <Label htmlFor="family_shahid-type" className="ml-auto">نزدیک‌ترین ارتباط با ایثارگران</Label>
-                <Select name="shahedRelation">
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="نزدیک‌ترین ارتباط با ایثارگران را انتخاب کنید." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>رابطه</SelectLabel>
-                      <SelectItem value="azade_wife">همسر آزاده</SelectItem>
-                      <SelectItem value="azade_child">فرزند آزاده</SelectItem>
-                      <SelectItem value="jan_wife">همسر جانباز</SelectItem>
-                      <SelectItem value="jan_child">فرزند جانباز</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-                </div>
-              }
               <div>
                 <Label htmlFor="password" className="ml-auto">رمز عبور</Label>
                 <Label htmlFor="password" className="text-xs p-4 text-red-400 transition-all">

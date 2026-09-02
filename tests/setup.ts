@@ -10,7 +10,7 @@ beforeAll(() => {
 afterEach(() => {
   server.resetHandlers()
   cleanup()
-  localStorage.clear()
+  globalThis.localStorage?.clear()
   vi.clearAllMocks()
 })
 

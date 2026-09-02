@@ -1,5 +1,19 @@
 import { useEffect, useState, useRef } from "react";
-import { getDocsColumns, type User, type UserDoc, getIsargaryPercentLabel, REGULAR_USER_TYPE_OPTIONS } from "./columns";
+import {
+  FRONT_PRESENCE_TYPE_OPTIONS,
+  getDocsColumns,
+  getFrontPresenceTypeLabel,
+  getIsargarRelationLabel,
+  getIsargaryTypeLabel,
+  getMartyrRelationLabel,
+  ISARGAR_RELATION_OPTIONS,
+  ISARGARY_TYPE_OPTIONS,
+  MARTYR_RELATION_OPTIONS,
+  REGULAR_USER_TYPE_OPTIONS,
+  type IsargaryType,
+  type User,
+  type UserDoc,
+} from "./columns";
 import { getTable, updateTableRow, uploadFile, deleteTableRow, getImageBlobUrl, downloadDocument } from "@/general";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,7 +32,7 @@ import UserProjects from "./userProjects";
 import { 
   User as UserIcon, Mail, Phone, MapPin, Calendar, FileText, 
   Edit2, Save, X, ArrowRight, CheckCircle2, Upload, Lock, 
-  Award, Users, Home, Briefcase, Hash, CreditCard, Camera, 
+  Award, Home, Briefcase, Hash, CreditCard, Camera,
   Download, Trash2, History
 } from "lucide-react";
 import { getTransactionHistoryColumns, type TransactionHistory } from "./transactionHistory";
@@ -40,6 +54,7 @@ import {
 
 // Document type for user-doc/profile
 const LABEL_CLASS = "font-semibold text-gray-700 mb-1.5 block"
+const JANBAZI_PERCENTAGES = Array.from({ length: 16 }, (_, index) => (index + 1) * 5)
 
 export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -395,8 +410,51 @@ export default function ProfilePage() {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value ? Number(value) : null }));
   };
+  const handleIsargaryTypeChange = (value: IsargaryType) => {
+    setForm((prev) => ({
+      ...prev,
+      isargaryType: value,
+      martyrRelation: null,
+      isargarRelation: null,
+      janbaziPercent: null,
+      captivityMonths: null,
+      frontPresenceType: null,
+      frontPresenceMonths: null,
+    }));
+  };
+  const getIsargaryValidationError = () => {
+    const isargaryType = form.isargaryType ?? 'none';
+    if (isargaryType === 'none') return null;
+    if (isargaryType === 'martyrFamily') {
+      return form.martyrRelation ? null : 'لطفا نسبت با شهید را انتخاب کنید';
+    }
+    if (!form.isargarRelation) {
+      return 'لطفا نسبت با ایثارگر را انتخاب کنید';
+    }
+    if (isargaryType === 'janbaz') {
+      return JANBAZI_PERCENTAGES.includes(form.janbaziPercent ?? 0)
+        ? null
+        : 'لطفا درصد جانبازی را انتخاب کنید';
+    }
+    if (isargaryType === 'azade') {
+      return Number.isInteger(form.captivityMonths) && (form.captivityMonths ?? 0) > 0
+        ? null
+        : 'مدت اسارت باید یک عدد صحیح مثبت باشد';
+    }
+    if (!form.frontPresenceType) {
+      return 'لطفا نوع حضور در جبهه را انتخاب کنید';
+    }
+    return Number.isInteger(form.frontPresenceMonths) && (form.frontPresenceMonths ?? 0) > 0
+      ? null
+      : 'مدت حضور در جبهه باید یک عدد صحیح مثبت باشد';
+  };
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const validationError = getIsargaryValidationError();
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
     updateTableRow("users", userId ? userId : 'profile', { ...form, accepted: undefined, birthDay: birthDate ? birthDate.toISOString().split("T")[0] : undefined }, () => {
       toast.success("اطلاعات با موفقیت ویرایش شد");
       setEdit(false);
@@ -769,7 +827,7 @@ export default function ProfilePage() {
 
             {/* Martyrdom Information Tab */}
             <TabsContent value="martyrdom" className="mt-0">
-              {(user.isargaryPercent || user.azadeEsaratMonths || user.azadeMonths || user.shahedFamilyNumber || user.shahedRelation) ? (
+              {user.isargaryType && user.isargaryType !== 'none' ? (
                 <Card className="shadow-lg border-0 bg-white">
                   <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b">
                     <div className="flex items-center justify-between">
@@ -788,30 +846,44 @@ export default function ProfilePage() {
                   <CardContent className="pt-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-1">
-                        <Label className={LABEL_CLASS}>درصد ایثارگری</Label>
-                        <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{getIsargaryPercentLabel(user.isargaryPercent) ?? "-"}</div>
+                        <Label className={LABEL_CLASS}>نوع ایثارگری</Label>
+                        <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{getIsargaryTypeLabel(user.isargaryType)}</div>
                       </div>
-                      <div className="space-y-1">
-                        <Label className={LABEL_CLASS}>ماه های اسارت</Label>
-                        <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.azadeEsaratMonths ?? "-"}</div>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className={LABEL_CLASS}>ماه های آزادگی</Label>
-                        <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.azadeMonths ?? "-"}</div>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className={LABEL_CLASS}><Users className="h-4 w-4 inline ml-2" />تعداد اعضای خانواده شاهد</Label>
-                        <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.shahedFamilyNumber ?? "-"}</div>
-                      </div>
-                      <div className="space-y-1 md:col-span-2">
-                        <Label className={LABEL_CLASS}>ارتباط با ایثارگر</Label>
-                        <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">
-                          {user.shahedRelation === 'azade_wife' ? 'همسر آزاده' :
-                           user.shahedRelation === 'azade_child' ? 'فرزند آزاده' :
-                           user.shahedRelation === 'jan_wife' ? 'همسر جانباز' :
-                           user.shahedRelation === 'jan_child' ? 'فرزند جانباز' : "-"}
+                      {user.isargaryType === 'martyrFamily' ? (
+                        <div className="space-y-1">
+                          <Label className={LABEL_CLASS}>نسبت با شهید</Label>
+                          <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{getMartyrRelationLabel(user.martyrRelation)}</div>
                         </div>
-                      </div>
+                      ) : (
+                        <div className="space-y-1">
+                          <Label className={LABEL_CLASS}>نسبت با ایثارگر</Label>
+                          <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{getIsargarRelationLabel(user.isargarRelation)}</div>
+                        </div>
+                      )}
+                      {user.isargaryType === 'janbaz' && (
+                        <div className="space-y-1">
+                          <Label className={LABEL_CLASS}>درصد جانبازی</Label>
+                          <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.janbaziPercent}%</div>
+                        </div>
+                      )}
+                      {user.isargaryType === 'azade' && (
+                        <div className="space-y-1">
+                          <Label className={LABEL_CLASS}>مدت اسارت (به ماه)</Label>
+                          <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.captivityMonths}</div>
+                        </div>
+                      )}
+                      {user.isargaryType === 'isargar' && (
+                        <>
+                          <div className="space-y-1">
+                            <Label className={LABEL_CLASS}>نوع حضور در جبهه</Label>
+                            <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{getFrontPresenceTypeLabel(user.frontPresenceType)}</div>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className={LABEL_CLASS}>مدت حضور در جبهه (به ماه)</Label>
+                            <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.frontPresenceMonths}</div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -820,6 +892,12 @@ export default function ProfilePage() {
                   <CardContent className="pt-6 text-center py-12 text-gray-500">
                     <Award className="h-12 w-12 mx-auto mb-4 text-gray-400" />
                     <p>اطلاعات ایثارگری ثبت نشده است.</p>
+                    {(!userId || viewer?.type === 'system') && (
+                      <Button onClick={() => setEdit(true)} variant="outline" size="sm" className="mt-4 gap-2">
+                        <Edit2 className="h-4 w-4" />
+                        ویرایش
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               )}
@@ -1354,40 +1432,86 @@ export default function ProfilePage() {
                     }} />
                   </div>
                   <div className="space-y-2">
-                    <Label className={LABEL_CLASS}>درصد ایثارگری</Label>
-                    <Select value={form.isargaryPercent ?? ""} onValueChange={v => handleSelect("isargaryPercent", v)}>
-                      <SelectTrigger className="h-11"><SelectValue placeholder="انتخاب کنید" /></SelectTrigger>
+                    <Label htmlFor="isargaryType" className={LABEL_CLASS}>نوع ایثارگری</Label>
+                    <Select value={form.isargaryType ?? "none"} onValueChange={value => handleIsargaryTypeChange(value as IsargaryType)}>
+                      <SelectTrigger id="isargaryType" className="h-11"><SelectValue placeholder="هیچ کدام" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="val10_15">۱۰−۱۵%</SelectItem>
-                        <SelectItem value="val15_20">۱۵−۲۰%</SelectItem>
-                        <SelectItem value="val20_plus">۲۰%+</SelectItem>
+                        {ISARGARY_TYPE_OPTIONS.map(option => (
+                          <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label className={LABEL_CLASS}>ماه های اسارت</Label>
-                    <Input name="azadeEsaratMonths" value={form.azadeEsaratMonths ?? ""} onChange={handleNumberChange} type="number" min="0" className="h-11" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className={LABEL_CLASS}>ماه های آزادگی</Label>
-                    <Input name="azadeMonths" value={form.azadeMonths ?? ""} onChange={handleNumberChange} type="number" min="0" className="h-11" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className={LABEL_CLASS}><Users className="h-4 w-4 inline ml-2" />تعداد اعضای خانواده شاهد</Label>
-                    <Input name="shahedFamilyNumber" value={form.shahedFamilyNumber ?? ""} onChange={handleNumberChange} type="number" min="0" className="h-11" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className={LABEL_CLASS}>ارتباط با ایثارگر</Label>
-                    <Select value={form.shahedRelation ?? ""} onValueChange={v => handleSelect("shahedRelation", v)}>
-                      <SelectTrigger className="h-11"><SelectValue placeholder="انتخاب کنید" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="azade_wife">همسر آزاده</SelectItem>
-                        <SelectItem value="azade_child">فرزند آزاده</SelectItem>
-                        <SelectItem value="jan_wife">همسر جانباز</SelectItem>
-                        <SelectItem value="jan_child">فرزند جانباز</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {form.isargaryType === 'martyrFamily' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="martyrRelation" className={LABEL_CLASS}>نسبت با شهید</Label>
+                      <Select value={form.martyrRelation ?? ""} onValueChange={value => handleSelect("martyrRelation", value)}>
+                        <SelectTrigger id="martyrRelation" className="h-11"><SelectValue placeholder="انتخاب کنید" /></SelectTrigger>
+                        <SelectContent>
+                          {MARTYR_RELATION_OPTIONS.map(option => (
+                            <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  {form.isargaryType && !['none', 'martyrFamily'].includes(form.isargaryType) && (
+                    <div className="space-y-2">
+                      <Label htmlFor="isargarRelation" className={LABEL_CLASS}>نسبت با ایثارگر</Label>
+                      <Select value={form.isargarRelation ?? ""} onValueChange={value => handleSelect("isargarRelation", value)}>
+                        <SelectTrigger id="isargarRelation" className="h-11"><SelectValue placeholder="انتخاب کنید" /></SelectTrigger>
+                        <SelectContent>
+                          {ISARGAR_RELATION_OPTIONS.map(option => (
+                            <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  {form.isargaryType === 'janbaz' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="janbaziPercent" className={LABEL_CLASS}>درصد جانبازی</Label>
+                      <Select value={form.janbaziPercent?.toString() ?? ""} onValueChange={value => handleSelect("janbaziPercent", Number(value))}>
+                        <SelectTrigger id="janbaziPercent" className="h-11"><SelectValue placeholder="انتخاب کنید" /></SelectTrigger>
+                        <SelectContent>
+                          {JANBAZI_PERCENTAGES.map(percent => (
+                            <SelectItem key={percent} value={percent.toString()}>{percent}%</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  {form.isargaryType === 'azade' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="captivityMonths" className={LABEL_CLASS}>مدت اسارت (به ماه)</Label>
+                      <Input id="captivityMonths" name="captivityMonths" value={form.captivityMonths ?? ""} onChange={handleNumberChange} type="number" min="1" step="1" className="h-11" />
+                    </div>
+                  )}
+                  {form.isargaryType === 'isargar' && (
+                    <>
+                      <fieldset className="space-y-2">
+                        <legend className={LABEL_CLASS}>نوع حضور در جبهه</legend>
+                        <div className="flex h-11 items-center gap-6 rounded-md border px-3">
+                          {FRONT_PRESENCE_TYPE_OPTIONS.map(option => (
+                            <label key={option.value} className="flex cursor-pointer items-center gap-2">
+                              <input
+                                type="radio"
+                                name="frontPresenceType"
+                                value={option.value}
+                                checked={form.frontPresenceType === option.value}
+                                onChange={() => handleSelect("frontPresenceType", option.value)}
+                              />
+                              {option.label}
+                            </label>
+                          ))}
+                        </div>
+                      </fieldset>
+                      <div className="space-y-2">
+                        <Label htmlFor="frontPresenceMonths" className={LABEL_CLASS}>مدت حضور در جبهه (به ماه)</Label>
+                        <Input id="frontPresenceMonths" name="frontPresenceMonths" value={form.frontPresenceMonths ?? ""} onChange={handleNumberChange} type="number" min="1" step="1" className="h-11" />
+                      </div>
+                    </>
+                  )}
                 {viewer?.type === 'system' && (
                   <FInput<User>
                     className={cn("w-full", LABEL_CLASS)}
@@ -1526,4 +1650,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-

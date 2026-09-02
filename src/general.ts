@@ -21,7 +21,11 @@ const getFarsiError = (err: string) => {
     'email must be an email': 'ایمیل وارد شده صحیح نمی‌باشد',
     'type should not be empty': 'نوع حساب کاربری را تعیین کنید',
     'password is not strong enough': 'لطفا رمز عبور قوی‌تری انتخاب کنید',
-    'shahedrelation must be one of the following values: azade_wife, azade_child, jan_wife, jan_child': 'لطفا ارتباط خود با ایثارگر را مشخص کنید',
+    'martyrrelation is required for martyrfamily': 'لطفا نسبت با شهید را مشخص کنید',
+    'janbazipercent must be between 5 and 80 in steps of 5': 'لطفا درصد جانبازی را مشخص کنید',
+    'captivitymonths must be a positive integer': 'مدت اسارت باید عدد صحیح مثبت باشد',
+    'frontpresencetype is required for isargar': 'لطفا نوع حضور در جبهه را مشخص کنید',
+    'frontpresencemonths must be a positive integer': 'مدت حضور در جبهه باید عدد صحیح مثبت باشد',
 
     'floorcount must be a number conforming to the specified constraints': 'لطفا تعداد طبقات را مشخص کنید',
     'startdate must be a date instance': 'تاریخ شروع پروژه را مشخص کنید',
@@ -31,6 +35,9 @@ const getFarsiError = (err: string) => {
 
   if(err.toLowerCase().startsWith('type must be one of the following values:')) {
     return null;
+  }
+  if(err.toLowerCase().startsWith('isargarrelation is required for')) {
+    return 'لطفا نسبت با ایثارگر را مشخص کنید';
   }
   if(Object.keys(Errors).includes(err.toLowerCase())) {
     return Errors[err.toLowerCase()];
