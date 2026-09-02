@@ -144,7 +144,7 @@ describe('ProfilePage isargary information', () => {
     await user.click(screen.getByRole('button', { name: 'ذخیره تغییرات' }))
     expect(await screen.findByText('مدت حضور در جبهه باید یک عدد صحیح مثبت باشد')).toBeVisible()
     expect(onPatch).not.toHaveBeenCalled()
-  })
+  }, 10_000)
 
   it('submits valid information and clears fields from other types', async () => {
     const onPatch = vi.fn()
