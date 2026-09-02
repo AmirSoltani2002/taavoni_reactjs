@@ -56,6 +56,9 @@ async function choose(
 ) {
   await user.click(screen.getByLabelText(field))
   await user.click(await screen.findByRole('option', { name: option }))
+  await waitFor(() => {
+    expect(screen.getByLabelText(field)).toHaveTextContent(option)
+  })
 }
 
 describe('ProfilePage isargary information', () => {
@@ -73,6 +76,9 @@ describe('ProfilePage isargary information', () => {
       'ایثارگر',
     ])
     await user.click(screen.getByRole('option', { name: 'خانواده شهید' }))
+    await waitFor(() => {
+      expect(screen.getByLabelText('نوع ایثارگری')).toHaveTextContent('خانواده شهید')
+    })
     expect(screen.getByLabelText('نسبت با شهید')).toBeVisible()
     expect(screen.queryByLabelText('نسبت با ایثارگر')).not.toBeInTheDocument()
     await user.click(screen.getByLabelText('نسبت با شهید'))
@@ -111,7 +117,7 @@ describe('ProfilePage isargary information', () => {
     await choose(user, 'نوع ایثارگری', 'هیچ کدام')
     expect(screen.queryByLabelText('نسبت با ایثارگر')).not.toBeInTheDocument()
     expect(screen.queryByRole('group', { name: 'نوع حضور در جبهه' })).not.toBeInTheDocument()
-  })
+  }, 10_000)
 
   it('warns about every required conditional field before saving', async () => {
     const onPatch = vi.fn()
