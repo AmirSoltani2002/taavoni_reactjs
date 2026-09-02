@@ -86,7 +86,7 @@ describe('UserSelectDialog', () => {
 
     renderDialog()
 
-    expect(await screen.findByText('هیئت علمی دانشگاهی')).toBeVisible()
+    expect(await screen.findByText('هیئت علمی دانشگاه تهران')).toBeVisible()
     expect(screen.getByText('هیئت علمی سایر دانشگاه‌ها')).toBeVisible()
   })
 })

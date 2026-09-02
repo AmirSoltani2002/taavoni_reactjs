@@ -16,8 +16,8 @@ export type UserType =
 export type RegularUserType = Exclude<UserType, 'system' | 'admin'>;
 
 export const REGULAR_USER_TYPE_OPTIONS: { label: string; value: RegularUserType }[] = [
-    { label: 'کارمند دانشگاهی', value: 'tehranUni' },
-    { label: 'هیئت علمی دانشگاهی', value: 'universityFaculty' },
+    { label: 'کارمند دانشگاه تهران', value: 'tehranUni' },
+    { label: 'هیئت علمی دانشگاه تهران', value: 'universityFaculty' },
     { label: 'کارمند سایر دانشگاه‌ها', value: 'otherUni' },
     { label: 'هیئت علمی سایر دانشگاه‌ها', value: 'otherUniversityFaculty' },
     { label: 'کارمند غیردانشگاهی', value: 'employee' },
