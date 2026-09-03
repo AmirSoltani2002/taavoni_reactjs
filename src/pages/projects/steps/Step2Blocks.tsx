@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Blocks, Plus, Trash, Building, Square, FileText } from "lucide-react";
 import type { Block } from "../columns";
-import { useState } from "react";
 
 interface Step2BlocksProps {
   blocks: Block[];
@@ -16,9 +15,8 @@ export const Step2Blocks: React.FC<Step2BlocksProps> = ({
   blocks, 
   setBlocks 
 }) => {
-  const [nextId, setNextId] = useState(1);
-
   const addBlock = () => {
+    const nextId = Math.min(0, ...blocks.map(block => block.id ?? 0)) - 1;
     const newBlock: Block = {
       id: nextId,
       name: `بلوک ${blocks.length + 1}`,
@@ -28,7 +26,6 @@ export const Step2Blocks: React.FC<Step2BlocksProps> = ({
       description: "",
     };
     setBlocks([...blocks, newBlock]);
-    setNextId(nextId + 1);
   };
 
   const updateBlock = (id: number, field: keyof Block, value: string | number) => {
@@ -63,7 +60,7 @@ export const Step2Blocks: React.FC<Step2BlocksProps> = ({
       </CardHeader>
       <CardContent className="p-6">
         <div className="space-y-6">
-          {blocks.map((block, _index) => (
+          {blocks.map((block) => (
             <Card key={block.id} className="border-2 border-green-200/40 bg-green-50/30 shadow-md">
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
@@ -76,6 +73,7 @@ export const Step2Blocks: React.FC<Step2BlocksProps> = ({
                     variant="outline" 
                     size="sm"
                     onClick={() => removeBlock(block.id!)}
+                    aria-label={`حذف ${block.name}`}
                     className="h-8 w-8 p-0 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 transition-colors"
                   >
                     <Trash className="h-4 w-4" />

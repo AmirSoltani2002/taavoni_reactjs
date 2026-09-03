@@ -13,16 +13,44 @@ interface Step3UnitsProps {
   units: SubProject[];
   setUnits: (units: SubProject[]) => void;
   onDuplicateChange?: (hasDuplicates: boolean) => void;
+  selectedBlockId: number | null;
+  setSelectedBlockId: (blockId: number | null) => void;
+  selectedFloor: number | null;
+  setSelectedFloor: (floor: number | null) => void;
 }
 
 export const Step3Units: React.FC<Step3UnitsProps> = ({ 
   blocks, 
   units, 
   setUnits,
-  onDuplicateChange
+  onDuplicateChange,
+  selectedBlockId,
+  setSelectedBlockId,
+  selectedFloor,
+  setSelectedFloor,
 }) => {
-  const [nextId, setNextId] = useState(1);
+  const [pendingInvalidUnitId, setPendingInvalidUnitId] = useState<number | null>(null);
   const firstInvalidUnitRef = useRef<HTMLDivElement | null>(null);
+
+  const selectedBlock = blocks.find(block => block.id === selectedBlockId);
+
+  useEffect(() => {
+    if (blocks.length === 0) {
+      setSelectedBlockId(null);
+      setSelectedFloor(null);
+      return;
+    }
+
+    if (!selectedBlock) {
+      setSelectedBlockId(blocks[0].id ?? null);
+      setSelectedFloor(1);
+      return;
+    }
+
+    if (!selectedFloor || selectedFloor > selectedBlock.floorCount) {
+      setSelectedFloor(1);
+    }
+  }, [blocks, selectedBlock, selectedBlockId, selectedFloor, setSelectedBlockId, setSelectedFloor]);
 
   // Find duplicate unitNumbers within the same blockId
   const duplicateUnits = useMemo(() => {
@@ -79,32 +107,48 @@ export const Step3Units: React.FC<Step3UnitsProps> = ({
     return null;
   }, [units, duplicateUnits, hasDuplicates]);
 
-  const scrollToFirstInvalidUnit = () => {
-    if (firstInvalidUnitRef.current) {
-      firstInvalidUnitRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      // Highlight briefly
-      firstInvalidUnitRef.current.classList.add('animate-pulse');
-      setTimeout(() => {
-        firstInvalidUnitRef.current?.classList.remove('animate-pulse');
-      }, 2000);
+  useEffect(() => {
+    if (pendingInvalidUnitId !== firstInvalidUnitId || !firstInvalidUnitRef.current) {
+      return;
     }
+
+    firstInvalidUnitRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    firstInvalidUnitRef.current.classList.add('animate-pulse');
+    const timeoutId = window.setTimeout(() => {
+      firstInvalidUnitRef.current?.classList.remove('animate-pulse');
+      setPendingInvalidUnitId(null);
+    }, 2000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [firstInvalidUnitId, pendingInvalidUnitId, selectedBlockId, selectedFloor]);
+
+  const scrollToFirstInvalidUnit = () => {
+    const invalidUnit = units.find(unit => unit.id === firstInvalidUnitId);
+    if (!invalidUnit) {
+      return;
+    }
+
+    setSelectedBlockId(invalidUnit.blockId ?? null);
+    setSelectedFloor(invalidUnit.floor);
+    setPendingInvalidUnitId(invalidUnit.id ?? null);
   };
 
   const addUnit = (blockId: number, floor: number) => {
+    const nextId = Math.min(0, ...units.map(unit => unit.id ?? 0)) - 1;
+    const nextUnitNumber = Math.max(0, ...units.map(unit => unit.unitNumber || 0)) + 1;
     const newUnit: SubProject = {
       // Use negative ID for new units to distinguish from database IDs
-      id: -nextId,
+      id: nextId,
       area: 50,
       floor: floor,
       point: 7,
       roomCount: 1,
       options: "",
       direction: "north",
-      unitNumber: nextId,
+      unitNumber: nextUnitNumber,
       blockId: blockId,
     };
     setUnits([...units, newUnit]);
-    setNextId(nextId + 1);
   };
 
   const updateUnit = (id: number, field: keyof SubProject, value: string | number | undefined) => {
@@ -127,6 +171,10 @@ export const Step3Units: React.FC<Step3UnitsProps> = ({
     { label: 'غرب', value: 'west' },
     { label: 'شمال‑غرب', value: 'north-west' }
   ];
+
+  const floorUnits = selectedBlockId && selectedFloor
+    ? units.filter(unit => unit.blockId === selectedBlockId && unit.floor === selectedFloor)
+    : [];
 
   return (
     <Card className="bg-white/70 backdrop-blur-sm shadow-xl border-0 ring-1 ring-white/20 hover:shadow-2xl transition-all duration-300">
@@ -163,29 +211,77 @@ export const Step3Units: React.FC<Step3UnitsProps> = ({
             </button>
           </div>
         )}
-        <div className="space-y-8">
-          {blocks.map((block, _blockIndex) => (
-            <div key={block.id}>
-              <div className="mb-4">
-                <h3 className="text-lg font-bold text-purple-700 flex items-center gap-2">
-                  <Square className="w-5 h-5" />
-                  {block.name}
-                </h3>
-                <p className="text-sm text-slate-600">
-                  {block.floorCount} طبقه - {block.buildingArea} متر مربع زیربنا
-                </p>
+        <div className="space-y-6">
+          {blocks.length === 0 ? (
+            <div className="rounded-lg border-2 border-dashed border-purple-200 p-8 text-center text-slate-500">
+              ابتدا در مرحله قبل یک بلوک تعریف کنید.
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="unit-block-select" className="font-medium text-slate-700">
+                    بلوک
+                  </Label>
+                  <Select
+                    value={selectedBlockId?.toString() ?? ""}
+                    onValueChange={(value) => {
+                      setSelectedBlockId(Number(value));
+                      setSelectedFloor(1);
+                    }}
+                  >
+                    <SelectTrigger id="unit-block-select" className="w-full">
+                      <SelectValue placeholder="انتخاب بلوک" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {blocks.map(block => (
+                        <SelectItem key={block.id} value={block.id!.toString()}>
+                          {block.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="unit-floor-select" className="font-medium text-slate-700">
+                    طبقه
+                  </Label>
+                  <Select
+                    value={selectedFloor?.toString() ?? ""}
+                    onValueChange={(value) => setSelectedFloor(Number(value))}
+                    disabled={!selectedBlock}
+                  >
+                    <SelectTrigger id="unit-floor-select" className="w-full">
+                      <SelectValue placeholder="ابتدا بلوک را انتخاب کنید" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {selectedBlock && Array.from({ length: selectedBlock.floorCount }).map((_, floorIndex) => (
+                        <SelectItem key={floorIndex + 1} value={(floorIndex + 1).toString()}>
+                          طبقه {floorIndex + 1}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
-              {Array.from({ length: block.floorCount }).map((_, floorIndex) => {
-                const floorUnits = units.filter(unit => 
-                  unit.blockId === block.id && unit.floor === floorIndex + 1
-                );
+              {selectedBlock && selectedFloor && (
+                <div>
+                  <div className="mb-4">
+                    <h3 className="flex items-center gap-2 text-lg font-bold text-purple-700">
+                      <Square className="w-5 h-5" />
+                      {selectedBlock.name} / طبقه {selectedFloor}
+                    </h3>
+                    <p className="text-sm text-slate-600">
+                      {selectedBlock.floorCount} طبقه - {selectedBlock.buildingArea} متر مربع زیربنا
+                    </p>
+                  </div>
 
-                return (
-                  <Card key={`${block.id}-${floorIndex}`} className="mb-6 border-2 border-purple-200/40 bg-purple-50/30">
+                  <Card className="border-2 border-purple-200/40 bg-purple-50/30">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-purple-700 text-base">
-                        طبقه {floorIndex + 1}
+                        طبقه {selectedFloor}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -215,6 +311,7 @@ export const Step3Units: React.FC<Step3UnitsProps> = ({
                                 variant="outline" 
                                 size="sm"
                                 onClick={() => removeUnit(unit.id!)}
+                                aria-label={`حذف واحد ${unit.unitNumber}`}
                                 className="h-8 w-8 p-0 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 transition-colors"
                               >
                                 <Trash className="h-4 w-4" />
@@ -325,18 +422,18 @@ export const Step3Units: React.FC<Step3UnitsProps> = ({
                       <Button 
                         type="button" 
                         variant="secondary" 
-                        onClick={() => addUnit(block.id!, floorIndex + 1)}
+                        onClick={() => addUnit(selectedBlock.id!, selectedFloor)}
                         className="w-full"
                       >
                         <Plus className="w-4 h-4 mr-2" />
-                        افزودن واحد به طبقه {floorIndex + 1}
+                        افزودن واحد به طبقه {selectedFloor}
                       </Button>
                     </CardContent>
                   </Card>
-                );
-              })}
-            </div>
-          ))}
+                </div>
+              )}
+            </>
+          )}
         </div>
       </CardContent>
     </Card>
