@@ -62,6 +62,8 @@ export default function ProjectCreate({
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [units, setUnits] = useState<SubProject[]>([]);
   const [hasDuplicateUnits, setHasDuplicateUnits] = useState(false);
+  const [selectedBlockId, setSelectedBlockId] = useState<number | null>(null);
+  const [selectedFloor, setSelectedFloor] = useState<number | null>(null);
   
   // Project images and docs state
   // Project images can be: string (base64 or old path) or {id: number, url?: string} (loaded from API)
@@ -175,6 +177,19 @@ export default function ProjectCreate({
       ...prevProject,
       latitude: lat,
       longitude: lng
+    }));
+  };
+
+  const handleBlocksChange = (nextBlocks: Block[]) => {
+    setBlocks(nextBlocks);
+    setUnits(currentUnits => currentUnits.filter(unit => {
+      const block = nextBlocks.find(item => item.id === unit.blockId);
+      if (!block) {
+        return false;
+      }
+
+      const floorCount = Number(block.floorCount);
+      return !Number.isFinite(floorCount) || floorCount < 1 || unit.floor <= floorCount;
     }));
   };
 
@@ -391,7 +406,7 @@ export default function ProjectCreate({
         return (
           <Step2Blocks 
             blocks={blocks} 
-            setBlocks={setBlocks} 
+            setBlocks={handleBlocksChange}
           />
         );
       case 2:
@@ -401,6 +416,10 @@ export default function ProjectCreate({
             units={units} 
             setUnits={setUnits}
             onDuplicateChange={setHasDuplicateUnits}
+            selectedBlockId={selectedBlockId}
+            setSelectedBlockId={setSelectedBlockId}
+            selectedFloor={selectedFloor}
+            setSelectedFloor={setSelectedFloor}
           />
         );
       case 3:
