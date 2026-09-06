@@ -51,8 +51,8 @@ export const ISARGAR_RELATION_OPTIONS: { label: string; value: IsargarRelation }
 ];
 
 export const FRONT_PRESENCE_TYPE_OPTIONS: { label: string; value: FrontPresenceType }[] = [
-    { label: 'اختیاری', value: 'voluntary' },
-    { label: 'اجباری', value: 'mandatory' },
+    { label: 'حضور داوطلبانه', value: 'voluntary' },
+    { label: 'دوره ضرورت خدمت', value: 'mandatory' },
 ];
 
 export const getIsargaryTypeLabel = (value: User['isargaryType']) =>

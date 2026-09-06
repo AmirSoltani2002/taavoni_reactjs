@@ -835,7 +835,7 @@ export default function ProfilePage() {
                         <Award className="h-5 w-5 text-purple-600" />
                         اطلاعات ایثارگری
                       </CardTitle>
-                      {(!userId || viewer?.type === 'system') && (
+                      {(!userId || viewer?.type === 'system' || viewer?.type === 'admin') && (
                         <Button onClick={() => setEdit(true)} variant="outline" size="sm" className="gap-2">
                           <Edit2 className="h-4 w-4" />
                           ویرایش
@@ -892,7 +892,7 @@ export default function ProfilePage() {
                   <CardContent className="pt-6 text-center py-12 text-gray-500">
                     <Award className="h-12 w-12 mx-auto mb-4 text-gray-400" />
                     <p>اطلاعات ایثارگری ثبت نشده است.</p>
-                    {(!userId || viewer?.type === 'system') && (
+                    {(!userId || viewer?.type === 'system' || viewer?.type === 'admin') && (
                       <Button onClick={() => setEdit(true)} variant="outline" size="sm" className="mt-4 gap-2">
                         <Edit2 className="h-4 w-4" />
                         ویرایش
