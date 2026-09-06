@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { HttpResponse, http } from 'msw'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import { api_base_url } from '@/config'
 import { Toaster } from '@/components/ui/sonner'
@@ -39,6 +39,43 @@ function renderProfile(onPatch = vi.fn()) {
     <MemoryRouter initialEntries={['/dashboard']}>
       <ProfilePage />
       <Toaster />
+    </MemoryRouter>,
+  )
+}
+
+function renderSelectedProfile(isargaryType: 'none' | 'isargar') {
+  const selectedProfile = {
+    ...profile,
+    id: 7,
+    accepted: true,
+    isargaryType,
+    ...(isargaryType === 'isargar'
+      ? {
+          isargarRelation: 'self',
+          frontPresenceType: 'voluntary',
+          frontPresenceMonths: 12,
+        }
+      : {}),
+  }
+
+  server.use(
+    http.get(api_base_url + '/users/7', () => HttpResponse.json(selectedProfile)),
+    http.get(api_base_url + '/users/profile', () =>
+      HttpResponse.json({ ...profile, type: 'admin', accepted: true }),
+    ),
+    http.get(api_base_url + '/user-doc/user/7', () => HttpResponse.json([])),
+    http.get(api_base_url + '/transaction/score', () => HttpResponse.json({})),
+    http.get(api_base_url + '/transaction/users/7', () => HttpResponse.json([])),
+    http.get(api_base_url + '/pre-selling/user/7', () => HttpResponse.json([])),
+    http.get(api_base_url + '/subprojects/user/7', () => HttpResponse.json([])),
+    http.get(api_base_url + '/final-transaction/users/7', () => HttpResponse.json([])),
+  )
+
+  return render(
+    <MemoryRouter initialEntries={['/users/7#martyrdom']}>
+      <Routes>
+        <Route path="/users/:userId" element={<ProfilePage />} />
+      </Routes>
     </MemoryRouter>,
   )
 }
@@ -111,6 +148,8 @@ describe('ProfilePage isargary information', () => {
 
     await choose(user, 'نوع ایثارگری', 'ایثارگر')
     expect(screen.getByRole('group', { name: 'نوع حضور در جبهه' })).toBeVisible()
+    expect(screen.getByRole('radio', { name: 'حضور داوطلبانه' })).toBeVisible()
+    expect(screen.getByRole('radio', { name: 'دوره ضرورت خدمت' })).toBeVisible()
     expect(screen.getByLabelText('مدت حضور در جبهه (به ماه)')).toHaveAttribute('step', '1')
     expect(screen.queryByLabelText('مدت اسارت (به ماه)')).not.toBeInTheDocument()
 
@@ -146,7 +185,7 @@ describe('ProfilePage isargary information', () => {
     await choose(user, 'نسبت با ایثارگر', 'همسر ایثارگر')
     await user.click(screen.getByRole('button', { name: 'ذخیره تغییرات' }))
     expect(await screen.findByText('لطفا نوع حضور در جبهه را انتخاب کنید')).toBeVisible()
-    await user.click(screen.getByRole('radio', { name: 'اجباری' }))
+    await user.click(screen.getByRole('radio', { name: 'دوره ضرورت خدمت' }))
     await user.click(screen.getByRole('button', { name: 'ذخیره تغییرات' }))
     expect(await screen.findByText('مدت حضور در جبهه باید یک عدد صحیح مثبت باشد')).toBeVisible()
     expect(onPatch).not.toHaveBeenCalled()
@@ -163,7 +202,7 @@ describe('ProfilePage isargary information', () => {
     await choose(user, 'درصد جانبازی', '25%')
     await choose(user, 'نوع ایثارگری', 'ایثارگر')
     await choose(user, 'نسبت با ایثارگر', 'همسر ایثارگر')
-    await user.click(screen.getByRole('radio', { name: 'اختیاری' }))
+    await user.click(screen.getByRole('radio', { name: 'حضور داوطلبانه' }))
     await user.type(screen.getByLabelText('مدت حضور در جبهه (به ماه)'), '12')
     await user.click(screen.getByRole('button', { name: 'ذخیره تغییرات' }))
 
@@ -181,4 +220,17 @@ describe('ProfilePage isargary information', () => {
       )
     })
   })
+
+  it.each(['none', 'isargar'] as const)(
+    'lets an admin edit selected-user isargary information when the type is %s',
+    async (isargaryType) => {
+      const user = userEvent.setup()
+      renderSelectedProfile(isargaryType)
+
+      await user.click(await screen.findByRole('button', { name: 'ویرایش' }))
+
+      expect(await screen.findByText('ویرایش اطلاعات')).toBeVisible()
+      expect(screen.getByLabelText('نوع ایثارگری')).toBeVisible()
+    },
+  )
 })
