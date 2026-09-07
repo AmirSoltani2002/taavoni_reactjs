@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Building, Blocks, Home, CheckCircle } from "lucide-react";
+import { Building, Blocks, Home, CheckCircle, Layers3 } from "lucide-react";
 
 interface StepperProps {
   step: number;
@@ -22,23 +22,29 @@ const Stepper: React.FC<StepperProps> = ({ step, setStep }) => {
     },
     {
       title: "مرحله ۳",
+      desc: "اطلاعات طبقات منفی",
+      icon: Layers3,
+      bgColor: 'amber',
+    },
+    {
+      title: "مرحله ۴",
       desc: "اطلاعات واحدهای مسکونی", 
       icon: Home,
       bgColor: 'red',
     },
     {
-      title: "مرحله ۴",
+      title: "مرحله ۵",
       desc: "بررسی و تایید نهایی",
       icon: CheckCircle,
       bgColor: 'green',
     },
   ];
 
-  const [stepActive, setStepActive] = useState([false, false, false, false]);
+  const [stepActive, setStepActive] = useState([false, false, false, false, false]);
   
   useEffect(() => {
     setStepActive(prev => {
-      prev = [false, false, false, false];
+      prev = [false, false, false, false, false];
       prev[step] = true;
       return prev;
     });
@@ -71,7 +77,7 @@ const Stepper: React.FC<StepperProps> = ({ step, setStep }) => {
                     <p className="text-xs text-slate-600">{stepItem.desc}</p>
                   </div>
                 </div>
-                {index < 3 && (
+                {index < 4 && (
                   <div 
                     className={`w-16 h-px bg-${stepItem.bgColor}-500 mt-6`}
                   ></div>

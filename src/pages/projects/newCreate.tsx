@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, CheckCircle } from "lucide-react";
 import { getTable, postTable, updateTableRow, uploadProjectDoc } from "@/general";
 import { PageLoader } from "@/components/ui/loader";
-import type { Project, Block, SubProject } from "./columns";
+import type { Project, Block, NegativeFloor, SubProject } from "./columns";
 import type { User } from "../users/columns";
 import Stepper from "./newStepper";
 import { Step1BasicInfo } from "./steps/Step1BasicInfo";
 import { Step2Blocks } from "./steps/Step2Blocks";
+import { Step3NegativeFloors } from "./steps/Step3NegativeFloors";
 import { Step3Units } from "./steps/Step3Units";
 import { Step4Review } from "./steps/Step4Review";
 
@@ -58,10 +59,13 @@ export default function ProjectCreate({
     } as Project;
   });
 
-  // Blocks and units state
+  // Blocks, negative floors, and units state
   const [blocks, setBlocks] = useState<Block[]>([]);
+  const [negativeFloors, setNegativeFloors] = useState<NegativeFloor[]>([]);
   const [units, setUnits] = useState<SubProject[]>([]);
   const [hasDuplicateUnits, setHasDuplicateUnits] = useState(false);
+  const [selectedNegativeFloorBlockId, setSelectedNegativeFloorBlockId] = useState<number | null>(null);
+  const [selectedNegativeFloor, setSelectedNegativeFloor] = useState<number | null>(null);
   const [selectedBlockId, setSelectedBlockId] = useState<number | null>(null);
   const [selectedFloor, setSelectedFloor] = useState<number | null>(null);
   
@@ -94,12 +98,17 @@ export default function ProjectCreate({
           
           // Extract all units from nested blocks
           const allUnits: SubProject[] = [];
+          const allNegativeFloors: NegativeFloor[] = [];
           projectData.blocks.forEach((block: Block) => {
             if (block.subProjects && Array.isArray(block.subProjects)) {
               allUnits.push(...block.subProjects);
             }
+            if (block.negativeFloors && Array.isArray(block.negativeFloors)) {
+              allNegativeFloors.push(...block.negativeFloors);
+            }
           });
           setUnits(allUnits);
+          setNegativeFloors(allNegativeFloors);
         }
         
         // Load project docs
@@ -157,12 +166,17 @@ export default function ProjectCreate({
         
         // Extract all units from nested blocks
         const allUnits: SubProject[] = [];
+        const allNegativeFloors: NegativeFloor[] = [];
         initialValues.blocks.forEach((block: Block) => {
           if (block.subProjects && Array.isArray(block.subProjects)) {
             allUnits.push(...block.subProjects);
           }
+          if (block.negativeFloors && Array.isArray(block.negativeFloors)) {
+            allNegativeFloors.push(...block.negativeFloors);
+          }
         });
         setUnits(allUnits);
+        setNegativeFloors(allNegativeFloors);
       }
     }
   }, [initialValues, isEdit]);
@@ -182,6 +196,38 @@ export default function ProjectCreate({
 
   const handleBlocksChange = (nextBlocks: Block[]) => {
     setBlocks(nextBlocks);
+    setNegativeFloors(currentFloors => {
+      let nextId = Math.min(0, ...currentFloors.map(floor => floor.id ?? 0)) - 1;
+      const nextFloors: NegativeFloor[] = [];
+
+      nextBlocks.forEach(block => {
+        if (block.negativeFloorCount === undefined) {
+          nextFloors.push(...currentFloors.filter(floor => floor.blockId === block.id));
+          return;
+        }
+
+        const count = Number(block.negativeFloorCount);
+        if (!block.id || !Number.isInteger(count) || count < 1) {
+          return;
+        }
+
+        for (let floorNumber = 1; floorNumber <= count; floorNumber += 1) {
+          const existingFloor = currentFloors.find(floor =>
+            floor.blockId === block.id && floor.floorNumber === floorNumber
+          );
+          nextFloors.push(existingFloor ?? {
+            id: nextId--,
+            floorNumber,
+            parkingCount: undefined,
+            storageCount: undefined,
+            description: "",
+            blockId: block.id,
+          });
+        }
+      });
+
+      return nextFloors;
+    });
     setUnits(currentUnits => currentUnits.filter(unit => {
       const block = nextBlocks.find(item => item.id === unit.blockId);
       if (!block) {
@@ -192,6 +238,31 @@ export default function ProjectCreate({
       return !Number.isFinite(floorCount) || floorCount < 1 || unit.floor <= floorCount;
     }));
   };
+
+  const isNonNegativeInteger = (value: number | undefined) =>
+    typeof value === 'number' && Number.isInteger(value) && value >= 0;
+
+  const areNegativeFloorsValid = () => blocks.every(block => {
+    if (!isNonNegativeInteger(block.negativeFloorCount)) {
+      return false;
+    }
+
+    const count = block.negativeFloorCount!;
+    for (let floorNumber = 1; floorNumber <= count; floorNumber += 1) {
+      const floor = negativeFloors.find(item =>
+        item.blockId === block.id && item.floorNumber === floorNumber
+      );
+      if (
+        !floor ||
+        !isNonNegativeInteger(floor.parkingCount) ||
+        !isNonNegativeInteger(floor.storageCount)
+      ) {
+        return false;
+      }
+    }
+
+    return true;
+  });
 
   // Convert base64 string to File object
   const base64ToFile = (base64: string, filename: string): File => {
@@ -215,7 +286,7 @@ export default function ProjectCreate({
     }
     
     // Prevent submission if required fields are not defined
-    if (!project.startDate) {
+    if (!project.startDate || !areNegativeFloorsValid()) {
       return;
     }
     
@@ -233,29 +304,70 @@ export default function ProjectCreate({
           projectDocs: undefined,
         });
         
-        // Update blocks
+        // Update blocks and retain the persisted ID for every draft block.
+        const persistedBlockIds = new Map<number, number>();
         for (const block of blocks) {
-          if (block.id) {
-            // Update existing block (remove ID from block data)
-            const { id: blockId, ...blockData } = block;
-            await updateTableRow('blocks', block.id, { ...blockData, subProjects: undefined });
+          const blockData = {
+            name: block.name,
+            floorCount: block.floorCount,
+            negativeFloorCount: block.negativeFloorCount,
+            shareArea: block.shareArea,
+            buildingArea: block.buildingArea,
+            description: block.description,
+            projectId: Number(projectId),
+          };
+
+          if (block.id && block.id > 0) {
+            await updateTableRow('blocks', block.id, blockData);
+            persistedBlockIds.set(block.id, block.id);
           } else {
-            // Create new block (remove ID from block data)
-            const { id: blockId, ...blockData } = block;
-            await postTable('blocks', { ...blockData, subProjects: undefined });
+            const createdBlock = await postTable('blocks', blockData);
+            if (block.id && createdBlock?.id) {
+              persistedBlockIds.set(block.id, createdBlock.id);
+            }
+          }
+        }
+
+        // Update or create the in-range negative floors. Reducing a block's
+        // count removes out-of-range rows in the backend block transaction.
+        for (const negativeFloor of negativeFloors) {
+          const persistedBlockId = persistedBlockIds.get(negativeFloor.blockId);
+          if (!persistedBlockId) {
+            continue;
+          }
+          const negativeFloorData = {
+            floorNumber: negativeFloor.floorNumber,
+            parkingCount: negativeFloor.parkingCount,
+            storageCount: negativeFloor.storageCount,
+            description: negativeFloor.description,
+            blockId: persistedBlockId,
+          };
+
+          if (negativeFloor.id && negativeFloor.id > 0) {
+            await updateTableRow('negative-floors', negativeFloor.id, negativeFloorData);
+          } else {
+            await postTable('negative-floors', negativeFloorData);
           }
         }
         
         // Update units
         for (const unit of units) {
+          const unitData = {
+            area: unit.area,
+            pricePerMeter: unit.pricePerMeter,
+            floor: unit.floor,
+            point: unit.point,
+            roomCount: unit.roomCount,
+            options: unit.options,
+            direction: unit.direction,
+            unitNumber: unit.unitNumber,
+            userId: unit.userId,
+            blockId: unit.blockId ? persistedBlockIds.get(unit.blockId) ?? unit.blockId : undefined,
+          };
           if (unit.id && unit.id > 0) {
-            // Update existing unit (positive ID means it exists in database)
-            const { id: unitId, ...unitData } = unit;
-            await updateTableRow('subprojects', unit.id, { ...unitData });
+            await updateTableRow('subprojects', unit.id, unitData);
           } else {
-            // Create new unit (negative ID or no ID means it's new)
-            const { id: unitId, ...unitData } = unit;
-            await postTable('subprojects', { ...unitData });
+            await postTable('subprojects', unitData);
           }
         }
         
@@ -265,7 +377,7 @@ export default function ProjectCreate({
         // Navigate back to projects list
         navigate('/projects/list');
       } else if (isEdit && onSubmit) {
-        onSubmit?.({ project, blocks, units });
+        onSubmit?.({ project, blocks, negativeFloors, units });
       } else {
         // Create project first (remove ID from project data)
         const { id: _, ...projectData } = project;
@@ -276,29 +388,47 @@ export default function ProjectCreate({
         });
         if (projectResult && projectResult.id) {
           // Create blocks one by one (remove ID from block data)
-          const createdBlocks: Block[] = [];
+          const persistedBlockIds = new Map<number, number>();
           for (const block of blocks) {
-            const { id: blockId, ...blockData } = block;
             const blockPayload = {
-              ...blockData,
-              projectId: projectResult.id
+              name: block.name,
+              floorCount: block.floorCount,
+              negativeFloorCount: block.negativeFloorCount,
+              shareArea: block.shareArea,
+              buildingArea: block.buildingArea,
+              description: block.description,
+              projectId: projectResult.id,
             };
             const createdBlock = await postTable('blocks', blockPayload);
-            if (createdBlock && createdBlock.id) {
-              createdBlocks.push(createdBlock);
+            if (block.id && createdBlock?.id) {
+              persistedBlockIds.set(block.id, createdBlock.id);
             }
           }
+
+          if (negativeFloors.length > 0) {
+            const negativeFloorsWithBlockIds = negativeFloors.map(negativeFloor => ({
+              floorNumber: negativeFloor.floorNumber,
+              parkingCount: negativeFloor.parkingCount,
+              storageCount: negativeFloor.storageCount,
+              description: negativeFloor.description,
+              blockId: persistedBlockIds.get(negativeFloor.blockId),
+            }));
+            await postTable('negative-floors/multiple', negativeFloorsWithBlockIds);
+          }
           
-          if (createdBlocks.length > 0) {
+          if (persistedBlockIds.size > 0) {
             // Create units with block IDs (remove ID from unit data)
             const unitsWithBlockIds = units.map(unit => {
-              const { id: unitId, ...unitData } = unit;
-              const correspondingBlock = createdBlocks.find((block: any) => 
-                block.name === blocks.find(b => b.id === unit.blockId)?.name
-              );
               return {
-                ...unitData,
-                blockId: correspondingBlock?.id,
+                area: unit.area,
+                pricePerMeter: unit.pricePerMeter,
+                floor: unit.floor,
+                point: unit.point,
+                roomCount: unit.roomCount,
+                options: unit.options,
+                direction: unit.direction,
+                unitNumber: unit.unitNumber,
+                blockId: unit.blockId ? persistedBlockIds.get(unit.blockId) : undefined,
                 userId: user?.id
               };
             });
@@ -349,7 +479,7 @@ export default function ProjectCreate({
           navigate('/projects/list');
           // Call onSubmit callback for new projects too
           if (onSubmit) {
-            onSubmit?.({ project, blocks, units });
+            onSubmit?.({ project, blocks, negativeFloors, units });
           }
         }
       }
@@ -366,13 +496,19 @@ export default function ProjectCreate({
         return project.name && project.startDate;
       case 1:
         return blocks.length > 0 && blocks.every(block => 
-          block.name && block.floorCount > 0 && block.shareArea >= 0 && block.buildingArea > 0
+          block.name &&
+          block.floorCount > 0 &&
+          isNonNegativeInteger(block.negativeFloorCount) &&
+          block.shareArea >= 0 &&
+          block.buildingArea > 0
         );
       case 2:
+        return areNegativeFloorsValid();
+      case 3:
         return units.length > 0 && units.every(unit => 
           unit.area > 0 && unit.roomCount > 0 && unit.direction
         ) && !hasDuplicateUnits;
-      case 3:
+      case 4:
         return !hasDuplicateUnits; // Review step requires no duplicates
       default:
         return false;
@@ -383,6 +519,7 @@ export default function ProjectCreate({
   const canSubmit = () => {
     return !!(
       project.startDate &&
+      areNegativeFloorsValid() &&
       !hasDuplicateUnits
     );
   };
@@ -411,6 +548,18 @@ export default function ProjectCreate({
         );
       case 2:
         return (
+          <Step3NegativeFloors
+            blocks={blocks}
+            negativeFloors={negativeFloors}
+            setNegativeFloors={setNegativeFloors}
+            selectedBlockId={selectedNegativeFloorBlockId}
+            setSelectedBlockId={setSelectedNegativeFloorBlockId}
+            selectedFloor={selectedNegativeFloor}
+            setSelectedFloor={setSelectedNegativeFloor}
+          />
+        );
+      case 3:
+        return (
           <Step3Units 
             blocks={blocks} 
             units={units} 
@@ -422,11 +571,12 @@ export default function ProjectCreate({
             setSelectedFloor={setSelectedFloor}
           />
         );
-      case 3:
+      case 4:
         return (
           <Step4Review 
             project={project} 
             blocks={blocks} 
+            negativeFloors={negativeFloors}
             units={units} 
           />
         );
@@ -483,13 +633,13 @@ export default function ProjectCreate({
           
           {/* Navigation Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 pt-6">
-            {step === 3 ? (
+            {step === 4 ? (
               <Button 
                 type={hasDuplicateUnits || !canSubmit() ? "button" : "submit"}
                 onClick={hasDuplicateUnits || !canSubmit() ? (e) => {
                   e.preventDefault();
                   if (hasDuplicateUnits) {
-                    setStep(2);
+                    setStep(3);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }
                 } : undefined}
@@ -516,7 +666,7 @@ export default function ProjectCreate({
                   <>
                     <div className="w-5 h-5 border-2 border-white rounded-full"></div>
                     <span className="hover:underline">
-                      لطفاً تاریخ شروع را مشخص کنید
+                      لطفاً اطلاعات الزامی پروژه را تکمیل کنید
                     </span>
                   </>
                 ) : (
@@ -542,8 +692,8 @@ export default function ProjectCreate({
                 <Button 
                   type="button" 
                   className="flex-1 h-14 text-lg gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg"
-                  onClick={() => setStep(Math.min(3, step + 1))}
-                  disabled={step >= 3 || !canProceedToNext()}
+                  onClick={() => setStep(Math.min(4, step + 1))}
+                  disabled={step >= 4 || !canProceedToNext()}
                 >
                   مرحله بعد
                   <ArrowLeft className="w-5 h-5" />

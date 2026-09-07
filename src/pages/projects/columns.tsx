@@ -22,6 +22,7 @@ export type Block = {
     id?: number;
     name: string;
     floorCount: number;
+    negativeFloorCount?: number;
     shareArea: number;
     buildingArea: number;
     description?: string;
@@ -29,7 +30,19 @@ export type Block = {
     createdAt?: string;
     updatedAt?: string;
     subProjects?: SubProject[];
+    negativeFloors?: NegativeFloor[];
     project?: Project;
+}
+
+export type NegativeFloor = {
+    id?: number;
+    floorNumber: number;
+    parkingCount?: number;
+    storageCount?: number;
+    description?: string;
+    blockId: number;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 export type SubProject = {
