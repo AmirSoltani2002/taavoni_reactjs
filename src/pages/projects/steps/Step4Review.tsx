@@ -9,22 +9,31 @@ import {
   Home, 
   Users, 
   Navigation,
+  Layers3,
+  SquareParking,
+  Warehouse,
 } from "lucide-react";
-import type { Project, Block, SubProject } from "../columns";
+import type { Project, Block, NegativeFloor, SubProject } from "../columns";
 
 interface Step4ReviewProps {
   project: Project;
   blocks: Block[];
+  negativeFloors: NegativeFloor[];
   units: SubProject[];
 }
 
 export const Step4Review: React.FC<Step4ReviewProps> = ({ 
   project, 
   blocks, 
+  negativeFloors,
   units 
 }) => {
   const totalUnits = units.length;
   const totalFloors = blocks.reduce((sum, block) => sum + block.floorCount, 0);
+  const totalNegativeFloors = blocks.reduce(
+    (sum, block) => sum + (block.negativeFloorCount ?? 0),
+    0,
+  );
   const totalBuildingArea = blocks.reduce((sum, block) => sum + block.buildingArea, 0);
   const totalShareArea = blocks.reduce((sum, block) => sum + block.shareArea, 0);
 
@@ -108,7 +117,7 @@ export const Step4Review: React.FC<Step4ReviewProps> = ({
                 خلاصه بلوک‌ها
               </span>
               <p className="text-sm text-slate-500 font-normal mt-1">
-                {blocks.length} بلوک - {totalFloors} طبقه - {totalBuildingArea} متر مربع زیربنا
+                {blocks.length} بلوک - {totalFloors} طبقه - {totalNegativeFloors} طبقه منفی - {totalBuildingArea} متر مربع زیربنا
                 - {totalShareArea} متر مربع مشاعات
               </p>
             </div>
@@ -116,7 +125,7 @@ export const Step4Review: React.FC<Step4ReviewProps> = ({
         </CardHeader>
         <CardContent className="p-6">
           <div className="space-y-4">
-            {blocks.map((block, _index) => (
+            {blocks.map((block) => (
               <Card key={block.id} className="border border-green-200 bg-green-50/30">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-3">
@@ -125,7 +134,7 @@ export const Step4Review: React.FC<Step4ReviewProps> = ({
                       {block.name}
                     </h4>
                     <Badge variant="secondary" className="bg-green-100 text-green-700">
-                      {block.floorCount} طبقه
+                      {block.floorCount} طبقه / {block.negativeFloorCount ?? 0} طبقه منفی
                     </Badge>
                   </div>
                   
@@ -156,6 +165,72 @@ export const Step4Review: React.FC<Step4ReviewProps> = ({
         </CardContent>
       </Card>
 
+      {/* Negative Floors Summary */}
+      <Card className="bg-white/70 backdrop-blur-sm shadow-xl border-0 ring-1 ring-white/20">
+        <CardHeader className="bg-gradient-to-r from-amber-50/50 to-orange-50/50 border-b border-amber-200/30 pb-6">
+          <CardTitle className="flex items-center gap-4 text-xl">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl blur-sm opacity-30" />
+              <div className="relative p-3 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl">
+                <Layers3 className="w-6 h-6 text-white" />
+              </div>
+            </div>
+            <div>
+              <span className="bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent font-bold">
+                خلاصه طبقات منفی
+              </span>
+              <p className="text-sm text-slate-500 font-normal mt-1">
+                {negativeFloors.length} طبقه منفی تعریف شده
+              </p>
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          {negativeFloors.length === 0 ? (
+            <p className="text-center text-slate-500">طبقه منفی تعریف نشده است.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {negativeFloors.map((negativeFloor) => {
+                const block = blocks.find((item) => item.id === negativeFloor.blockId);
+                return (
+                  <Card key={negativeFloor.id} className="border border-amber-200 bg-amber-50/30">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-bold text-amber-700 flex items-center gap-2">
+                          <Layers3 className="w-4 h-4" />
+                          {block?.name}
+                        </h4>
+                        <Badge variant="secondary" className="bg-amber-100 text-amber-700">
+                          طبقه منفی {negativeFloor.floorNumber}
+                        </Badge>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center gap-2">
+                          <SquareParking className="w-4 h-4 text-amber-600" />
+                          <span className="text-slate-600">پارکینگ:</span>
+                          <span className="font-semibold">{negativeFloor.parkingCount}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Warehouse className="w-4 h-4 text-orange-600" />
+                          <span className="text-slate-600">انباری:</span>
+                          <span className="font-semibold">{negativeFloor.storageCount}</span>
+                        </div>
+                        {negativeFloor.description && (
+                          <div className="mt-2">
+                            <span className="text-slate-600">توضیحات:</span>
+                            <p className="text-slate-800 text-xs mt-1">{negativeFloor.description}</p>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Units Summary */}
       <Card className="bg-white/70 backdrop-blur-sm shadow-xl border-0 ring-1 ring-white/20">
         <CardHeader className="bg-gradient-to-r from-purple-50/50 to-pink-50/50 border-b border-purple-200/30 pb-6">
@@ -178,7 +253,7 @@ export const Step4Review: React.FC<Step4ReviewProps> = ({
         </CardHeader>
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {units.map((unit, _index) => (
+            {units.map((unit) => (
               <Card key={unit.id} className="border border-purple-200 bg-purple-50/30">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-3">

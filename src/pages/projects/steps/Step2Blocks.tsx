@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Blocks, Plus, Trash, Building, Square, FileText } from "lucide-react";
+import { Blocks, Plus, Trash, Building, Square, FileText, Layers3 } from "lucide-react";
 import type { Block } from "../columns";
 
 interface Step2BlocksProps {
@@ -21,6 +21,7 @@ export const Step2Blocks: React.FC<Step2BlocksProps> = ({
       id: nextId,
       name: `بلوک ${blocks.length + 1}`,
       floorCount: 1,
+      negativeFloorCount: undefined,
       shareArea: 0,
       buildingArea: 0,
       description: "",
@@ -28,7 +29,7 @@ export const Step2Blocks: React.FC<Step2BlocksProps> = ({
     setBlocks([...blocks, newBlock]);
   };
 
-  const updateBlock = (id: number, field: keyof Block, value: string | number) => {
+  const updateBlock = (id: number, field: keyof Block, value: string | number | undefined) => {
     setBlocks(blocks.map(block => 
       block.id === id ? { ...block, [field]: value } : block
     ));
@@ -111,6 +112,31 @@ export const Step2Blocks: React.FC<Step2BlocksProps> = ({
                        min="1"
                        placeholder="تعداد طبقات..."
                      />
+                  </div>
+
+                  <div>
+                    <Label
+                      htmlFor={`negative-floor-count-${block.id}`}
+                      className="flex items-center gap-2 text-slate-700 font-medium mb-2"
+                    >
+                      <Layers3 className="w-4 h-4 text-amber-600" />
+                      تعداد طبقات منفی *
+                    </Label>
+                    <Input
+                      id={`negative-floor-count-${block.id}`}
+                      required
+                      type="number"
+                      value={block.negativeFloorCount ?? ""}
+                      onChange={(e) => updateBlock(
+                        block.id!,
+                        'negativeFloorCount',
+                        e.target.value === "" ? undefined : Number(e.target.value),
+                      )}
+                      className="h-10"
+                      min="0"
+                      step="1"
+                      placeholder="تعداد طبقات منفی..."
+                    />
                   </div>
 
                   <div>
