@@ -18,6 +18,7 @@ import { getTable, updateTableRow, uploadFile, deleteTableRow, getImageBlobUrl, 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Calendar22 } from "@/components/calendars/calendar";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
@@ -1572,27 +1573,29 @@ export default function ProfilePage() {
                       <CardContent className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <Label className={LABEL_CLASS}>رمز عبور جدید</Label>
-                            <Input 
+                            <Label htmlFor="new-password" className={LABEL_CLASS}>رمز عبور جدید</Label>
+                            <PasswordInput
+                              id="new-password"
                               name="newPassword" 
-                              type="password" 
                               value={passwordForm.newPassword} 
                               onChange={handlePasswordChange}
                               minLength={6}
                               required
                               className="h-11"
+                              visibilityLabel="رمز عبور جدید"
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label className={LABEL_CLASS}>تأیید رمز عبور جدید</Label>
-                            <Input 
+                            <Label htmlFor="confirm-new-password" className={LABEL_CLASS}>تأیید رمز عبور جدید</Label>
+                            <PasswordInput
+                              id="confirm-new-password"
                               name="confirmPassword" 
-                              type="password" 
                               value={passwordForm.confirmPassword} 
                               onChange={handlePasswordChange}
                               minLength={6}
                               required
                               className="h-11"
+                              visibilityLabel="تأیید رمز عبور جدید"
                             />
                           </div>
                         </div>

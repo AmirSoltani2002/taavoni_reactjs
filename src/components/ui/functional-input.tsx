@@ -1,6 +1,7 @@
 import type { HTMLInputTypeAttribute } from "react";
 import type React from "react";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Calendar22 } from "@/components/calendars/calendar";
 import {
   Select,
@@ -86,14 +87,25 @@ const FInput = <FieldType,>({
     } else {
         return <div className={className}>
         <label htmlFor={fieldId}>{item.title + (item.isRequired ? '*' : '')}</label>
-        <Input 
-            id={fieldId}
-            name={item.name.toString()} 
-            value={values[item.name]?.toString() ?? ''}
-            type={item.type || 'text'} 
-            onChange={handleChange} 
-            required={item.isRequired} 
-        />
+        {item.type === 'password' ? (
+            <PasswordInput
+                id={fieldId}
+                name={item.name.toString()}
+                value={values[item.name]?.toString() ?? ''}
+                onChange={handleChange}
+                required={item.isRequired}
+                visibilityLabel={item.title}
+            />
+        ) : (
+            <Input
+                id={fieldId}
+                name={item.name.toString()}
+                value={values[item.name]?.toString() ?? ''}
+                type={item.type || 'text'}
+                onChange={handleChange}
+                required={item.isRequired}
+            />
+        )}
         </div>
     }
 }

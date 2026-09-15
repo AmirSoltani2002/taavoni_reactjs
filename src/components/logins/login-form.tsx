@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "../ui/card"
 import { Input } from "../ui/input"
+import { PasswordInput } from "../ui/password-input"
 import { Label } from "../ui/label"
 import {
   Dialog,
@@ -109,7 +110,7 @@ export function LoginForm({
                   <div className="flex items-center">
                     <Label htmlFor="password">رمزعبور</Label>
                   </div>
-                  <Input name="password" id="password" type="password" required />
+                  <PasswordInput name="password" id="password" required />
                 </div>
                 <div className="flex flex-col gap-3">
                   <Button type="submit" className="w-full">
