@@ -96,6 +96,11 @@ export default function ProfilePage() {
   const [loadingPresellings, setLoadingPresellings] = useState(false);
   const [subProjects, setSubProjects] = useState<SubProject[]>([]);
   const [finalTransactions, setFinalTransactions] = useState<FinalTransaction[]>([]);
+  const canManageDocuments = !userId || Boolean(
+    user &&
+    ['admin', 'system'].includes(viewer?.type || '') &&
+    !['admin', 'system'].includes(user.type || '')
+  );
   
   // Get initial tab from URL hash, default to 'personal'
   const getInitialTab = () => {
@@ -378,7 +383,7 @@ export default function ProfilePage() {
         },
         
       ], user?.id);
-      await getTable("user-doc/profile", (data: UserDoc[]) => {
+      await getTable(userId ? `user-doc/user/${userId}` : "user-doc/profile", (data: UserDoc[]) => {
         setDocs(data);
         // Update profile image doc if it exists
         const profileDoc = data.find(doc => doc.detail && doc.detail === 'profile-image');
@@ -391,7 +396,7 @@ export default function ProfilePage() {
       });
       setFileInputTitle('');
       if(fileInputRef.current) {
-        fileInputRef.current.files = null;
+        fileInputRef.current.value = '';
       }
     } catch (error) {
       console.error('Error uploading document:', error);
@@ -914,7 +919,7 @@ export default function ProfilePage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  {!userId && (
+                  {canManageDocuments && (
                     <Card className="mb-6 bg-blue-50 border-blue-200">
                       <CardContent className="pt-6">
                         <h3 className="font-semibold mb-4 flex items-center gap-2">
@@ -923,6 +928,7 @@ export default function ProfilePage() {
                         </h3>
                         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                           <Input 
+                            aria-label="موضوع مدرک"
                             type='text' 
                             value={fileInputTitle} 
                             placeholder="موضوع فایل (اختیاری)" 
@@ -931,6 +937,7 @@ export default function ProfilePage() {
                             disabled={uploading}
                           />
                           <Input 
+                            aria-label="فایل مدرک"
                             ref={fileInputRef} 
                             type="file" 
                             accept="image/*,application/pdf"
@@ -964,7 +971,17 @@ export default function ProfilePage() {
                       <p>مدرکی ثبت نشده است.</p>
                     </div>
                   ) : (
-                    <DataTable columns={getDocsColumns(downloadingDocs, setDownloadingDocs)} data={docs.filter(doc => doc.detail !== 'profile-image')} tableName="user-doc" />
+                    <DataTable
+                      columns={getDocsColumns(downloadingDocs, setDownloadingDocs, canManageDocuments)}
+                      data={docs.filter(doc => doc.detail !== 'profile-image')}
+                      tableName={canManageDocuments ? "user-doc" : undefined}
+                      _showDeleteButton={canManageDocuments}
+                      onRefresh={() => {
+                        getTable(userId ? `user-doc/user/${userId}` : "user-doc/profile", (data: UserDoc[]) => {
+                          setDocs(data);
+                        });
+                      }}
+                    />
                   )}
                 </CardContent>
               </Card>
