@@ -181,7 +181,11 @@ export const columns: ColumnDef<User>[] = [
     },
 ]
 
-export const getDocsColumns = (downloadingDocs: Set<number>, setDownloadingDocs: (updater: (prev: Set<number>) => Set<number>) => void): ColumnDef<UserDoc>[] => [
+export const getDocsColumns = (
+    downloadingDocs: Set<number>,
+    setDownloadingDocs: (updater: (prev: Set<number>) => Set<number>) => void,
+    canDownload: boolean = true,
+): ColumnDef<UserDoc>[] => [
     {
         header: 'موضوع عکس',
         accessorFn: (row) => row.detail || 'بدون موضوع',
@@ -200,6 +204,7 @@ export const getDocsColumns = (downloadingDocs: Set<number>, setDownloadingDocs:
         header: 'دانلود',
         accessorFn: row => row.id,
         cell: ({row}) => {
+            if (!canDownload) return null;
             const docId = row.original.id;
             if (!docId) return null;
             const isDownloading = downloadingDocs.has(docId);
