@@ -28,6 +28,25 @@ function renderLogin(type = 'admin') {
 }
 
 describe('LoginForm', () => {
+  it.each(['admin', 'investor'])(
+    'shows and hides the password on the %s login path',
+    async (type) => {
+      const user = userEvent.setup()
+      renderLogin(type)
+      const passwordInput = screen.getByLabelText('رمزعبور')
+
+      await user.type(passwordInput, 'safe-password')
+      expect(passwordInput).toHaveAttribute('type', 'password')
+
+      await user.click(screen.getByRole('button', { name: 'نمایش رمز عبور' }))
+      expect(passwordInput).toHaveAttribute('type', 'text')
+      expect(passwordInput).toHaveValue('safe-password')
+
+      await user.click(screen.getByRole('button', { name: 'پنهان کردن رمز عبور' }))
+      expect(passwordInput).toHaveAttribute('type', 'password')
+    },
+  )
+
   it('logs in through the API and navigates when the role matches', async () => {
     let loginBody: unknown;
     server.use(

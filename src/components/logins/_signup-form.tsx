@@ -24,6 +24,7 @@ import {
 
 import { REGULAR_USER_TYPE_OPTIONS, type User } from "@/pages/users/columns";
 import { Input } from "../ui/input"
+import { PasswordInput } from "../ui/password-input"
 import { Label } from "../ui/label"
 import { toast } from "sonner";
 export function SignupForm({
@@ -182,10 +183,9 @@ export function SignupForm({
                     رمز عبور باید حداقل ۸ کارکتر و شامل حروف انگلیسی، عدد و حداقل یک کارکتر خاص (!@#$%^&*) باشد
                   </span>}
                 </Label>
-                <Input
+                <PasswordInput
                   name="password"
                   id="password"
-                  type="password"
                   onFocus={() => setShowPasswordHint(true)}
                   onBlur={() => setShowPasswordHint(false)}
                   required
@@ -193,10 +193,10 @@ export function SignupForm({
               </div>
               <div>
                 <Label htmlFor="password-repeat" className="ml-auto">تکرار رمز عبور</Label>
-                <Input
+                <PasswordInput
                   name="passwordRepeat"
                   id="password-repeat"
-                  type="password"
+                  visibilityLabel="تکرار رمز عبور"
                   required
                 />
               </div>

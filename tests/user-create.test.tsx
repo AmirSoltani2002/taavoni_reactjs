@@ -17,13 +17,17 @@ const MEMBERSHIP_LABELS = [
   'عضو آزاد',
 ]
 
-function renderRegularUserForm() {
+function renderUserForm(type: 'admin' | 'other') {
   return render(
-    <MemoryRouter initialEntries={['/users/create?type=other']}>
+    <MemoryRouter initialEntries={[`/users/create?type=${type}`]}>
       <UserCreate />
       <Toaster />
     </MemoryRouter>,
   )
+}
+
+function renderRegularUserForm() {
+  return renderUserForm('other')
 }
 
 async function fillRequiredTextFields(user: ReturnType<typeof userEvent.setup>) {
@@ -43,6 +47,22 @@ async function selectOption(
 }
 
 describe('UserCreate', () => {
+  it.each(['admin', 'other'] as const)(
+    'shows and hides the password on the %s creation path',
+    async (type) => {
+      const user = userEvent.setup()
+      renderUserForm(type)
+      const passwordInput = screen.getByLabelText('رمز عبور*')
+
+      await user.type(passwordInput, 'safe-password')
+      expect(passwordInput).toHaveAttribute('type', 'password')
+
+      await user.click(screen.getByRole('button', { name: 'نمایش رمز عبور' }))
+      expect(passwordInput).toHaveAttribute('type', 'text')
+      expect(passwordInput).toHaveValue('safe-password')
+    },
+  )
+
   it('shows the six regular membership types in the requested order', async () => {
     const user = userEvent.setup()
     renderRegularUserForm()
