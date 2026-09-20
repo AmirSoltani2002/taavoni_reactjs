@@ -9,7 +9,6 @@ import { Upload, X } from "lucide-react";
 import type { User } from "../users/columns";
 import { UserSelect } from "@/components/user-select";
 import type { SubProject } from "../projects/columns";
-import { BankSelect } from "@/components/BankSelect";
 import { Calendar22 } from "@/components/calendars/calendar";
 
 type FinalTransactionFormData = {
@@ -304,7 +303,7 @@ export default function FinalTransactionCreate({ onSubmit, onCancel, userInfo }:
                 {/* Amount */}
                 <div className="space-y-2">
                     <Label htmlFor="amount">
-                        مبلغ (تومان) <span className="text-red-500">*</span>
+                        مبلغ (ریال) <span className="text-red-500">*</span>
                     </Label>
                     <Input
                         id="amount"
@@ -319,22 +318,36 @@ export default function FinalTransactionCreate({ onSubmit, onCancel, userInfo }:
                 </div>
 
                 {/* Bank */}
-                <BankSelect
-                    id="bank"
-                    label="بانک مبدا"
-                    required
-                    value={form.bank}
-                    onChange={(bank) => setForm((prev) => ({ ...prev, bank }))}
-                />
+                <div className="space-y-2">
+                    <Label htmlFor="bank">
+                        بانک مبدا <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                        id="bank"
+                        name="bank"
+                        type="text"
+                        value={form.bank}
+                        onChange={handleChange}
+                        placeholder="نام بانک مبدا"
+                        required
+                    />
+                </div>
 
                 {/* Target Bank */}
-                <BankSelect
-                    id="targetBank"
-                    label="بانک مقصد"
-                    required
-                    value={form.targetBank}
-                    onChange={(bank) => setForm((prev) => ({ ...prev, targetBank: bank }))}
-                />
+                <div className="space-y-2">
+                    <Label htmlFor="targetBank">
+                        بانک مقصد <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                        id="targetBank"
+                        name="targetBank"
+                        type="text"
+                        value={form.targetBank}
+                        onChange={handleChange}
+                        placeholder="نام بانک مقصد"
+                        required
+                    />
+                </div>
 
                 {/* Transaction Number */}
                 <div className="space-y-2">
@@ -414,4 +427,3 @@ export default function FinalTransactionCreate({ onSubmit, onCancel, userInfo }:
         </form>
     );
 }
-
