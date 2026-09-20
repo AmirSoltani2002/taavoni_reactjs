@@ -287,7 +287,7 @@ export default function TransactionsList() {
                                             تعداد تراکنش: {sum.count.toLocaleString('fa-IR')}
                                         </div>
                                         <div className="text-lg font-bold text-blue-700">
-                                            مجموع: {sum.total.toLocaleString('fa-IR')} تومان
+                                            مجموع: {sum.total.toLocaleString('fa-IR')} ریال
                                         </div>
                                     </div>
                                 ))}
@@ -295,7 +295,7 @@ export default function TransactionsList() {
                             {selectedProjectId && (
                                 <div className="mt-4 pt-4 border-t">
                                     <div className="font-semibold text-slate-900">
-                                        مجموع تراکنش‌های فیلتر شده: {filteredData.reduce((sum, t) => sum + (t.amount || 0), 0).toLocaleString('fa-IR')} تومان
+                                        مجموع تراکنش‌های فیلتر شده: {filteredData.reduce((sum, t) => sum + (t.amount || 0), 0).toLocaleString('fa-IR')} ریال
                                     </div>
                                 </div>
                             )}
@@ -317,4 +317,3 @@ export default function TransactionsList() {
         </div>
     )
 }
-

@@ -1249,7 +1249,7 @@ export default function ProfilePage() {
                           {loadingTransactions ? (
                             <div className="animate-pulse">...</div>
                           ) : (
-                            `${transactionsTotal.toLocaleString('fa-IR')} تومان`
+                            `${transactionsTotal.toLocaleString('fa-IR')} ریال`
                           )}
                         </div>
                         <div className="text-xs text-gray-600 mt-1">
@@ -1270,7 +1270,7 @@ export default function ProfilePage() {
                           {loadingFinalTransactions ? (
                             <div className="animate-pulse">...</div>
                           ) : (
-                            `${finalTransactionsTotal.toLocaleString('fa-IR')} تومان`
+                            `${finalTransactionsTotal.toLocaleString('fa-IR')} ریال`
                           )}
                         </div>
                         <div className="text-xs text-gray-600 mt-1">
@@ -1291,7 +1291,7 @@ export default function ProfilePage() {
                           {loadingTransactions || loadingFinalTransactions ? (
                             <div className="animate-pulse">...</div>
                           ) : (
-                            `${totalSum.toLocaleString('fa-IR')} تومان`
+                            `${totalSum.toLocaleString('fa-IR')} ریال`
                           )}
                         </div>
                         <div className="text-xs text-gray-600 mt-1">
