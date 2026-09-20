@@ -291,13 +291,13 @@ export default function PresellingTransactionsList() {
                                 <div className="border rounded-lg p-4 bg-gradient-to-br from-green-50 to-green-100">
                                     <div className="text-sm text-slate-600 mb-1">مجموع مبلغ پرداختی</div>
                                     <div className="text-2xl font-bold text-green-700">
-                                        {stats.totalAmount.toLocaleString('fa-IR')} تومان
+                                        {stats.totalAmount.toLocaleString('fa-IR')} ریال
                                     </div>
                                 </div>
                                 <div className="border rounded-lg p-4 bg-gradient-to-br from-purple-50 to-purple-100">
                                     <div className="text-sm text-slate-600 mb-1">میانگین مبلغ هر تراکنش</div>
                                     <div className="text-2xl font-bold text-purple-700">
-                                        {Math.round(stats.averageAmount).toLocaleString('fa-IR')} تومان
+                                        {Math.round(stats.averageAmount).toLocaleString('fa-IR')} ریال
                                     </div>
                                 </div>
                             </div>
@@ -319,4 +319,3 @@ export default function PresellingTransactionsList() {
         </div>
     )
 }
-

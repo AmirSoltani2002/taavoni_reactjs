@@ -113,7 +113,7 @@ export const getColumns = (): ColumnDef<Transaction>[] => {
         header: "مبلغ",
         cell: ({ cell }) => {
             const value = cell.getValue() as number;
-            return value ? `${value.toLocaleString('fa-IR')} تومان` : "-";
+            return value ? `${value.toLocaleString('fa-IR')} ریال` : "-";
         }
     },
     {
@@ -346,7 +346,7 @@ export const getFinalTransactionColumns = (): ColumnDef<FinalTransaction>[] => {
             header: "مبلغ",
             cell: ({ cell }) => {
                 const value = cell.getValue() as number;
-                return value ? `${value.toLocaleString('fa-IR')} تومان` : "-";
+                return value ? `${value.toLocaleString('fa-IR')} ریال` : "-";
             }
         },
         {
@@ -530,4 +530,3 @@ export const getFinalTransactionOptions = (onRefresh?: () => void, userInfo?: Us
         return options;
     };
 };
-

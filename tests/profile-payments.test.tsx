@@ -61,5 +61,7 @@ describe('ProfilePage payments', () => {
       expect(screen.getAllByText('پرداخت‌های ساخت')).toHaveLength(2)
     })
     expect(screen.queryByText('پرداخت‌های ملک')).not.toBeInTheDocument()
+    expect(await screen.findAllByText(/ریال/)).toHaveLength(4)
+    expect(screen.queryByText(/تومان/)).not.toBeInTheDocument()
   })
 })
