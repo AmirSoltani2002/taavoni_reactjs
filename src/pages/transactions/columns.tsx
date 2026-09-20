@@ -1,5 +1,5 @@
 import { type ColumnDef } from "@tanstack/react-table"
-import { Download, Eye, CheckCircle2, XCircle } from "lucide-react"
+import { Download, Eye, CheckCircle2, Pencil, XCircle } from "lucide-react"
 import { updateTableRow } from "@/general"
 import { api_base_url } from "@/config"
 import { toast } from "sonner"
@@ -141,7 +141,7 @@ export const getColumns = (): ColumnDef<Transaction>[] => {
     return baseColumns;
 };
 
-export const getTransactionOptions = (onRefresh?: () => void, userInfo?: User): ((transaction: Transaction) => { title: string | ReactNode; onClick: () => void }[]) => {
+export const getTransactionOptions = (onRefresh?: () => void, userInfo?: User, onEdit?: (transaction: Transaction) => void): ((transaction: Transaction) => { title: string | ReactNode; onClick: () => void }[]) => {
     const handleToggleConfirmation = async (transaction: Transaction, confirm: boolean) => {
         if (!transaction.id) return;
         
@@ -263,6 +263,17 @@ export const getTransactionOptions = (onRefresh?: () => void, userInfo?: User): 
         // Add confirmation options for admins
         const isAdmin = ['admin', 'system'].includes(userInfo?.type || '');
         if (isAdmin) {
+            if (onEdit) {
+                options.push({
+                    title: (
+                        <>
+                            <Pencil className="w-4 h-4 ml-1 inline" />
+                            ویرایش تراکنش
+                        </>
+                    ),
+                    onClick: () => onEdit(transaction)
+                });
+            }
             if (!isConfirmed) {
                 options.push({
                     title: (
@@ -385,7 +396,7 @@ export const getFinalTransactionColumns = (): ColumnDef<FinalTransaction>[] => {
     ];
 };
 
-export const getFinalTransactionOptions = (onRefresh?: () => void, userInfo?: User): ((transaction: FinalTransaction) => { title: string | ReactNode; onClick: () => void }[]) => {
+export const getFinalTransactionOptions = (onRefresh?: () => void, userInfo?: User, onEdit?: (transaction: FinalTransaction) => void): ((transaction: FinalTransaction) => { title: string | ReactNode; onClick: () => void }[]) => {
     const handleDownload = async (transaction: FinalTransaction) => {
         const documentFilename = transaction.document;
         const transactionId = transaction.id;
@@ -504,6 +515,17 @@ export const getFinalTransactionOptions = (onRefresh?: () => void, userInfo?: Us
         // Add confirmation options for admins
         const isAdmin = ['admin', 'system'].includes(userInfo?.type || '');
         if (isAdmin) {
+            if (onEdit) {
+                options.push({
+                    title: (
+                        <>
+                            <Pencil className="w-4 h-4 ml-1 inline" />
+                            ویرایش تراکنش
+                        </>
+                    ),
+                    onClick: () => onEdit(transaction)
+                });
+            }
             if (!isConfirmed) {
                 options.push({
                     title: (

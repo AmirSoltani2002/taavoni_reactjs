@@ -18,6 +18,7 @@ import FinalTransactionCreate from "./final-create"
 import { Label } from "@/components/ui/label"
 import type { SubProject } from "../projects/columns"
 import { UserSelect } from "@/components/user-select"
+import TransactionEditDialog from "./transaction-edit-dialog"
 
 export default function FinalTransactionsList() {
     const [data, setData] = useState<FinalTransaction[]>([])
@@ -28,6 +29,7 @@ export default function FinalTransactionsList() {
     const [selectedUserId, setSelectedUserId] = useState<number | ''>('')
     const [selectedTargetBank, setSelectedTargetBank] = useState<string>('')
     const [allUsers, setAllUsers] = useState<User[]>([])
+    const [editingTransaction, setEditingTransaction] = useState<FinalTransaction | null>(null)
 
     useEffect(() => {
         getTable('users/profile', (user) => {
@@ -354,12 +356,19 @@ export default function FinalTransactionsList() {
                             data={filteredData} 
                             tableName="final-transaction"
                             onRefresh={refreshData}
-                            options={getFinalTransactionOptions(refreshData, userInfo)}
+                            options={getFinalTransactionOptions(refreshData, userInfo, setEditingTransaction)}
                         />
                     </div>
                 </div>
                 {isLoading && <PageLoader />}
             </div>
+            <TransactionEditDialog
+                transaction={editingTransaction}
+                type="final"
+                userInfo={userInfo}
+                onClose={() => setEditingTransaction(null)}
+                onSaved={refreshData}
+            />
         </div>
     )
 }

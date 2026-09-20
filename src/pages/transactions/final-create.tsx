@@ -10,6 +10,8 @@ import type { User } from "../users/columns";
 import { UserSelect } from "@/components/user-select";
 import type { SubProject } from "../projects/columns";
 import { Calendar22 } from "@/components/calendars/calendar";
+import { Checkbox } from "@/components/ui/checkbox";
+import type { FinalTransaction } from "./columns";
 
 type FinalTransactionFormData = {
     amount: number | '';
@@ -20,7 +22,9 @@ type FinalTransactionFormData = {
     date: string;
     subProjectId: number | '';
     userId?: number | '';
+    isConfirmed?: boolean;
     file: File | null;
+    removeDocument: boolean;
 };
 
 const initialState: FinalTransactionFormData = {
@@ -32,17 +36,37 @@ const initialState: FinalTransactionFormData = {
     date: '',
     subProjectId: '',
     file: null,
+    removeDocument: false,
 };
 
 interface FinalTransactionCreateProps {
     onSubmit?: (data: FinalTransactionFormData) => void;
     onCancel?: () => void;
     userInfo?: User;
+    initialValues?: FinalTransaction;
+    isEdit?: boolean;
 }
 
-export default function FinalTransactionCreate({ onSubmit, onCancel, userInfo }: FinalTransactionCreateProps) {
+export default function FinalTransactionCreate({
+    onSubmit,
+    onCancel,
+    userInfo,
+    initialValues,
+    isEdit = false,
+}: FinalTransactionCreateProps) {
     const isAdmin = ['admin', 'system'].includes(userInfo?.type || '');
-    const [form, setForm] = useState<FinalTransactionFormData>(initialState);
+    const [form, setForm] = useState<FinalTransactionFormData>(() => ({
+        ...initialState,
+        amount: initialValues?.amount ?? '',
+        bank: initialValues?.bank ?? '',
+        targetBank: initialValues?.targetBank ?? '',
+        number: initialValues?.number ?? '',
+        detail: initialValues?.detail ?? '',
+        date: initialValues?.date?.split('T')[0] ?? '',
+        subProjectId: initialValues?.subProjectId ?? '',
+        userId: initialValues?.userId ?? '',
+        isConfirmed: initialValues?.isConfirmed,
+    }));
     const [subProjects, setSubProjects] = useState<SubProject[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [users, setUsers] = useState<User[]>([]);
@@ -60,7 +84,7 @@ export default function FinalTransactionCreate({ onSubmit, onCancel, userInfo }:
             }, false);
         } else {
             // For normal users, fetch their subprojects immediately
-            loadSubProjects();
+            loadSubProjects(userInfo?.id);
         }
     }, [isAdmin]);
 
@@ -68,17 +92,17 @@ export default function FinalTransactionCreate({ onSubmit, onCancel, userInfo }:
         // When user changes (admin only), load their subprojects
         // Note: The backend /subprojects/profile endpoint should handle user context
         if (isAdmin && form.userId) {
-            loadSubProjects();
+            loadSubProjects(form.userId);
         } else if (isAdmin && !form.userId) {
             setSubProjects([]);
             setForm((prev) => ({ ...prev, subProjectId: '' }));
         }
     }, [form.userId, isAdmin]);
 
-    const loadSubProjects = () => {
+    const loadSubProjects = (userId?: number | '') => {
         setLoadingSubProjects(true);
-        // Use /subprojects/profile endpoint for getting user's subprojects
-        getTable('subprojects/profile', (data: SubProject[] | { error: { error: string, status: number } }) => {
+        const endpoint = isAdmin && userId ? `subprojects/user/${userId}` : 'subprojects/profile';
+        getTable(endpoint, (data: SubProject[] | { error: { error: string, status: number } }) => {
             if ('error' in data) {
                 console.error('Error loading subprojects:', data.error);
                 setSubProjects([]);
@@ -175,15 +199,20 @@ export default function FinalTransactionCreate({ onSubmit, onCancel, userInfo }:
             formData.append('bank', form.bank);
             formData.append('targetBank', form.targetBank);
             formData.append('number', form.number);
-            if (form.detail) {
+            if (form.detail || isEdit) {
                 formData.append('detail', form.detail);
             }
             formData.append('date', form.date);
             formData.append('subProjectId', form.subProjectId.toString());
 
-            const response = await fetch(`${api_base_url}/final-transaction`, {
+            if (isEdit && isAdmin) {
+                formData.append('isConfirmed', Boolean(form.isConfirmed).toString());
+                formData.append('removeDocument', form.removeDocument.toString());
+            }
+
+            const response = await fetch(`${api_base_url}/final-transaction${isEdit ? `/${initialValues?.id}` : ''}`, {
                 credentials: 'include',
-                method: 'POST',
+                method: isEdit ? 'PATCH' : 'POST',
                 headers: {
                 },
                 body: formData
@@ -192,11 +221,13 @@ export default function FinalTransactionCreate({ onSubmit, onCancel, userInfo }:
             if (response.ok) {
                 const data = await response.json();
                 if(data && data.id){
-                    toast.success('رسید پرداخت با موفقیت ثبت شد');
+                    toast.success(isEdit ? 'تراکنش با موفقیت ویرایش شد' : 'رسید پرداخت با موفقیت ثبت شد');
                     if (onSubmit) {
                         onSubmit(form);
                     }
-                    setForm(initialState);
+                    if (!isEdit) {
+                        setForm(initialState);
+                    }
                 } else {
                     toast.error('خطایی رخ داده است');
                 }
@@ -379,23 +410,69 @@ export default function FinalTransactionCreate({ onSubmit, onCancel, userInfo }:
                     />
                 </div>
 
+                {isEdit && isAdmin && (
+                    <div className="flex items-center space-x-2 space-x-reverse">
+                        <Checkbox
+                            id="finalIsConfirmed"
+                            checked={Boolean(form.isConfirmed)}
+                            onCheckedChange={(checked) => {
+                                setForm((prev) => ({ ...prev, isConfirmed: checked as boolean }));
+                            }}
+                        />
+                        <Label htmlFor="finalIsConfirmed" className="text-sm font-medium leading-none">
+                            تایید شده
+                        </Label>
+                    </div>
+                )}
+
                 {/* File Upload */}
                 <div className="space-y-2">
                     <Label htmlFor="file">
                         فایل رسید پرداخت
                     </Label>
-                    {!form.file ? (
+                    {isEdit && initialValues?.document && !form.file && !form.removeDocument && (
+                        <div className="flex items-center gap-2 p-3 border rounded-md bg-gray-50">
+                            <Upload className="w-4 h-4 text-gray-600" />
+                            <span className="flex-1 text-sm text-gray-700 truncate">{initialValues.document}</span>
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => setForm((prev) => ({ ...prev, removeDocument: true }))}
+                            >
+                                حذف سند
+                            </Button>
+                        </div>
+                    )}
+                    {isEdit && initialValues?.document && form.removeDocument && !form.file && (
+                        <div className="flex items-center gap-2 p-3 border rounded-md bg-red-50 text-sm text-red-700">
+                            <span className="flex-1">سند فعلی حذف خواهد شد.</span>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setForm((prev) => ({ ...prev, removeDocument: false }))}
+                            >
+                                بازگردانی
+                            </Button>
+                        </div>
+                    )}
+                    {!form.file && (
                         <div className="flex items-center gap-2">
                             <Input
                                 id="file"
                                 name="file"
                                 type="file"
-                                onChange={handleFileChange}
+                                onChange={(event) => {
+                                    handleFileChange(event);
+                                    setForm((prev) => ({ ...prev, removeDocument: false }));
+                                }}
                                 accept="image/*,.pdf"
                                 className="cursor-pointer"
                             />
                         </div>
-                    ) : (
+                    )}
+                    {form.file && (
                         <div className="flex items-center gap-2 p-3 border rounded-md bg-gray-50">
                             <Upload className="w-4 h-4 text-gray-600" />
                             <span className="flex-1 text-sm text-gray-700">{form.file.name}</span>
@@ -416,7 +493,7 @@ export default function FinalTransactionCreate({ onSubmit, onCancel, userInfo }:
 
             <div className="flex gap-3 pt-4">
                 <Button type="submit" disabled={isLoading} className="flex-1">
-                    {isLoading ? 'در حال ثبت...' : 'ثبت رسید پرداخت'}
+                    {isLoading ? (isEdit ? 'در حال ذخیره...' : 'در حال ثبت...') : (isEdit ? 'ذخیره تغییرات' : 'ثبت رسید پرداخت')}
                 </Button>
                 {onCancel && (
                     <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
