@@ -40,7 +40,13 @@ import { getTransactionHistoryColumns, type TransactionHistory } from "./transac
 import { FaFaceSmile } from "react-icons/fa6";
 import { Badge } from "@/components/ui/badge";
 import type { Transaction, FinalTransaction } from "../transactions/columns";
-import { columns as transactionColumns, getFinalTransactionColumns } from "../transactions/columns";
+import {
+  columns as transactionColumns,
+  getFinalTransactionColumns,
+  getFinalTransactionOptions,
+  getTransactionOptions,
+} from "../transactions/columns";
+import TransactionEditDialog from "../transactions/transaction-edit-dialog";
 import type { PreSelling } from "../preselling/columns";
 import { columns as presellingColumns } from "../preselling/columns";
 import type { SubProject } from "../projects/columns";
@@ -96,11 +102,30 @@ export default function ProfilePage() {
   const [loadingPresellings, setLoadingPresellings] = useState(false);
   const [subProjects, setSubProjects] = useState<SubProject[]>([]);
   const [finalTransactions, setFinalTransactions] = useState<FinalTransaction[]>([]);
+  const [editingTransaction, setEditingTransaction] = useState<{
+    type: 'preselling' | 'final';
+    transaction: Transaction | FinalTransaction;
+  } | null>(null);
   const canManageDocuments = !userId || Boolean(
     user &&
     ['admin', 'system'].includes(viewer?.type || '') &&
     !['admin', 'system'].includes(user.type || '')
   );
+  const canManageTransactions = ['admin', 'system'].includes(viewer?.type || '');
+
+  const refreshTransactions = () => {
+    const endpoint = userId ? `transaction/users/${userId}` : 'transaction/profile';
+    getTable(endpoint, (data: Transaction[] | {error?: unknown}) => {
+      setTransactions(Array.isArray(data) ? data : []);
+    }, false);
+  };
+
+  const refreshFinalTransactions = () => {
+    const endpoint = userId ? `final-transaction/users/${userId}` : 'final-transaction/profile';
+    getTable(endpoint, (data: FinalTransaction[] | {error?: unknown}) => {
+      setFinalTransactions(Array.isArray(data) ? data : []);
+    }, false);
+  };
   
   // Get initial tab from URL hash, default to 'personal'
   const getInitialTab = () => {
@@ -1320,7 +1345,19 @@ export default function ProfilePage() {
                       <p>پرداخت زمینی ثبت نشده است.</p>
                     </div>
                   ) : (
-                    <DataTable columns={transactionColumns} data={transactions} tableName="transaction" />
+                    <DataTable
+                      columns={transactionColumns}
+                      data={transactions}
+                      tableName="transaction"
+                      onRefresh={refreshTransactions}
+                      options={canManageTransactions
+                        ? getTransactionOptions(
+                            refreshTransactions,
+                            viewer || undefined,
+                            (transaction) => setEditingTransaction({ type: 'preselling', transaction }),
+                          )
+                        : undefined}
+                    />
                   )}
                 </CardContent>
               </Card>
@@ -1342,7 +1379,19 @@ export default function ProfilePage() {
                       <p>پرداخت ملکی ثبت نشده است.</p>
                     </div>
                   ) : (
-                    <DataTable columns={getFinalTransactionColumns()} data={finalTransactions} tableName="final-transaction" />
+                    <DataTable
+                      columns={getFinalTransactionColumns()}
+                      data={finalTransactions}
+                      tableName="final-transaction"
+                      onRefresh={refreshFinalTransactions}
+                      options={canManageTransactions
+                        ? getFinalTransactionOptions(
+                            refreshFinalTransactions,
+                            viewer || undefined,
+                            (transaction) => setEditingTransaction({ type: 'final', transaction }),
+                          )
+                        : undefined}
+                    />
                   )}
                 </CardContent>
               </Card>
@@ -1666,6 +1715,19 @@ export default function ProfilePage() {
           </Card>
         )}
       </div>
+      <TransactionEditDialog
+        transaction={editingTransaction?.transaction || null}
+        type={editingTransaction?.type || 'preselling'}
+        userInfo={viewer || undefined}
+        onClose={() => setEditingTransaction(null)}
+        onSaved={() => {
+          if (editingTransaction?.type === 'final') {
+            refreshFinalTransactions();
+          } else {
+            refreshTransactions();
+          }
+        }}
+      />
       {isLoading && <PageLoader />}
     </div>
   );

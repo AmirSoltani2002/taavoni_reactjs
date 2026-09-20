@@ -8,6 +8,7 @@ import { PageLoader } from "@/components/ui/loader"
 import { Label } from "@/components/ui/label"
 import type { Project } from "../projects/columns"
 import { UserSelect } from "@/components/user-select"
+import TransactionEditDialog from "./transaction-edit-dialog"
 
 export default function TransactionsList() {
     const [data, setData] = useState<Transaction[]>([])
@@ -19,6 +20,7 @@ export default function TransactionsList() {
     const [selectedTargetBank, setSelectedTargetBank] = useState<string>('')
     const [projects, setProjects] = useState<Project[]>([])
     const [allUsers, setAllUsers] = useState<User[]>([])
+    const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
 
     useEffect(() => {
         getTable('users/profile', (user) => {
@@ -308,12 +310,19 @@ export default function TransactionsList() {
                             data={filteredData} 
                             tableName="transaction"
                             onRefresh={refreshData}
-                            options={getTransactionOptions(refreshData, userInfo)}
+                            options={getTransactionOptions(refreshData, userInfo, setEditingTransaction)}
                         />
                     </div>
                 </div>
                 {isLoading && <PageLoader />}
             </div>
+            <TransactionEditDialog
+                transaction={editingTransaction}
+                type="preselling"
+                userInfo={userInfo}
+                onClose={() => setEditingTransaction(null)}
+                onSaved={refreshData}
+            />
         </div>
     )
 }
