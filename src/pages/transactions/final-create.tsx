@@ -55,6 +55,7 @@ export default function FinalTransactionCreate({
     isEdit = false,
 }: FinalTransactionCreateProps) {
     const isAdmin = ['admin', 'system'].includes(userInfo?.type || '');
+    const paymentDetailsRequired = !isAdmin;
     const [form, setForm] = useState<FinalTransactionFormData>(() => ({
         ...initialState,
         amount: initialValues?.amount ?? '',
@@ -154,17 +155,17 @@ export default function FinalTransactionCreate({
             return;
         }
 
-        if (!form.bank) {
+        if (paymentDetailsRequired && !form.bank) {
             toast.error('لطفا نام بانک را وارد کنید');
             return;
         }
 
-        if (!form.targetBank) {
+        if (paymentDetailsRequired && !form.targetBank) {
             toast.error('لطفا بانک مقصد را وارد کنید');
             return;
         }
 
-        if (!form.number) {
+        if (paymentDetailsRequired && !form.number) {
             toast.error('لطفا شماره تراکنش را وارد کنید');
             return;
         }
@@ -174,7 +175,7 @@ export default function FinalTransactionCreate({
             return;
         }
 
-        if (!form.date) {
+        if (paymentDetailsRequired && !form.date) {
             toast.error('لطفا تاریخ را وارد کنید');
             return;
         }
@@ -310,11 +311,11 @@ export default function FinalTransactionCreate({
                 {/* Date */}
                 <div className="space-y-2">
                     <Label>
-                        تاریخ پرداخت <span className="text-red-500">*</span>
+                        تاریخ پرداخت {paymentDetailsRequired && <span className="text-red-500">*</span>}
                     </Label>
                     <Calendar22
                         title=""
-                        date={form.date ? new Date(form.date) : new Date()}
+                        date={form.date ? new Date(form.date) : undefined}
                         setDate={(date) => {
                             // Format date in local timezone to avoid timezone conversion issues
                             const formatDateLocal = (d: Date): string => {
@@ -351,7 +352,7 @@ export default function FinalTransactionCreate({
                 {/* Bank */}
                 <div className="space-y-2">
                     <Label htmlFor="bank">
-                        بانک مبدا <span className="text-red-500">*</span>
+                        بانک مبدا {paymentDetailsRequired && <span className="text-red-500">*</span>}
                     </Label>
                     <Input
                         id="bank"
@@ -360,14 +361,14 @@ export default function FinalTransactionCreate({
                         value={form.bank}
                         onChange={handleChange}
                         placeholder="نام بانک مبدا"
-                        required
+                        required={paymentDetailsRequired}
                     />
                 </div>
 
                 {/* Target Bank */}
                 <div className="space-y-2">
                     <Label htmlFor="targetBank">
-                        بانک مقصد <span className="text-red-500">*</span>
+                        بانک مقصد {paymentDetailsRequired && <span className="text-red-500">*</span>}
                     </Label>
                     <Input
                         id="targetBank"
@@ -376,14 +377,14 @@ export default function FinalTransactionCreate({
                         value={form.targetBank}
                         onChange={handleChange}
                         placeholder="نام بانک مقصد"
-                        required
+                        required={paymentDetailsRequired}
                     />
                 </div>
 
                 {/* Transaction Number */}
                 <div className="space-y-2">
                     <Label htmlFor="number">
-                        شماره تراکنش <span className="text-red-500">*</span>
+                        شماره تراکنش {paymentDetailsRequired && <span className="text-red-500">*</span>}
                     </Label>
                     <Input
                         id="number"
@@ -392,7 +393,7 @@ export default function FinalTransactionCreate({
                         value={form.number}
                         onChange={handleChange}
                         placeholder="شماره تراکنش بانکی"
-                        required
+                        required={paymentDetailsRequired}
                     />
                 </div>
 

@@ -33,7 +33,7 @@ const initialState: PresellingTransactionFormData = {
     targetBank: '',
     number: '',
     detail: '',
-    date: new Date().toISOString().split('T')[0], // Default to today
+    date: '',
     presellingId: '',
     file: null,
     removeDocument: false,
@@ -55,6 +55,7 @@ export default function PresellingTransactionCreate({
     isEdit = false,
 }: PresellingTransactionCreateProps) {
     const isAdmin = ['admin', 'system'].includes(userInfo?.type || '');
+    const paymentDetailsRequired = !isAdmin;
     const [form, setForm] = useState<PresellingTransactionFormData>(() => ({
         ...initialState,
         amount: initialValues?.amount ?? '',
@@ -62,7 +63,7 @@ export default function PresellingTransactionCreate({
         targetBank: initialValues?.targetBank ?? '',
         number: initialValues?.number ?? '',
         detail: initialValues?.detail ?? '',
-        date: initialValues?.date?.split('T')[0] ?? new Date().toISOString().split('T')[0],
+        date: initialValues?.date?.split('T')[0] ?? '',
         presellingId: initialValues?.presellingId ?? '',
         userId: initialValues?.userId ?? '',
         isConfirmed: initialValues?.isConfirmed ?? (isAdmin ? true : undefined),
@@ -163,17 +164,17 @@ export default function PresellingTransactionCreate({
             return;
         }
 
-        if (!form.bank) {
+        if (paymentDetailsRequired && !form.bank) {
             toast.error('لطفا نام بانک را وارد کنید');
             return;
         }
 
-        if (!form.targetBank) {
+        if (paymentDetailsRequired && !form.targetBank) {
             toast.error('لطفا بانک مقصد را وارد کنید');
             return;
         }
 
-        if (!form.number) {
+        if (paymentDetailsRequired && !form.number) {
             toast.error('لطفا شماره تراکنش را وارد کنید');
             return;
         }
@@ -183,7 +184,7 @@ export default function PresellingTransactionCreate({
             return;
         }
 
-        if (!form.date) {
+        if (paymentDetailsRequired && !form.date) {
             toast.error('لطفا تاریخ پرداخت را وارد کنید');
             return;
         }
@@ -241,7 +242,6 @@ export default function PresellingTransactionCreate({
                         setForm({
                             ...initialState,
                             isConfirmed: isAdmin ? true : undefined,
-                            date: new Date().toISOString().split('T')[0]
                         });
                     }
                 } else {
@@ -338,7 +338,7 @@ export default function PresellingTransactionCreate({
                 {/* Bank */}
                 <div className="space-y-2">
                     <Label htmlFor="bank">
-                        بانک مبدا <span className="text-red-500">*</span>
+                        بانک مبدا {paymentDetailsRequired && <span className="text-red-500">*</span>}
                     </Label>
                     <Input
                         id="bank"
@@ -347,14 +347,14 @@ export default function PresellingTransactionCreate({
                         value={form.bank}
                         onChange={handleChange}
                         placeholder="نام بانک مبدا"
-                        required
+                        required={paymentDetailsRequired}
                     />
                 </div>
 
                 {/* Target Bank */}
                 <div className="space-y-2">
                     <Label htmlFor="targetBank">
-                        بانک مقصد <span className="text-red-500">*</span>
+                        بانک مقصد {paymentDetailsRequired && <span className="text-red-500">*</span>}
                     </Label>
                     <Input
                         id="targetBank"
@@ -363,14 +363,14 @@ export default function PresellingTransactionCreate({
                         value={form.targetBank}
                         onChange={handleChange}
                         placeholder="نام بانک مقصد"
-                        required
+                        required={paymentDetailsRequired}
                     />
                 </div>
 
                 {/* Transaction Number */}
                 <div className="space-y-2">
                     <Label htmlFor="number">
-                        شماره تراکنش <span className="text-red-500">*</span>
+                        شماره تراکنش {paymentDetailsRequired && <span className="text-red-500">*</span>}
                     </Label>
                     <Input
                         id="number"
@@ -379,18 +379,18 @@ export default function PresellingTransactionCreate({
                         value={form.number}
                         onChange={handleChange}
                         placeholder="شماره تراکنش بانکی"
-                        required
+                        required={paymentDetailsRequired}
                     />
                 </div>
 
                 {/* Date */}
                 <div className="space-y-2">
                     <Label>
-                        تاریخ پرداخت <span className="text-red-500">*</span>
+                        تاریخ پرداخت {paymentDetailsRequired && <span className="text-red-500">*</span>}
                     </Label>
                     <Calendar22
                         title=""
-                        date={form.date ? new Date(form.date) : new Date()}
+                        date={form.date ? new Date(form.date) : undefined}
                         setDate={(date) => {
                             // Format date in local timezone to avoid timezone conversion issues
                             const formatDateLocal = (d: Date): string => {
