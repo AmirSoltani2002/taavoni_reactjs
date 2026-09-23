@@ -13,6 +13,99 @@ const admin = {
 }
 
 describe('Transaction edit forms', () => {
+  it.each([
+    {
+      name: 'preselling',
+      Component: PresellingTransactionCreate,
+      endpoint: '/transaction/12',
+      relationEndpoint: '/pre-selling/user/7',
+      relationResponse: [
+        {
+          id: 15,
+          userId: 7,
+          area: 100,
+          project: { id: 2, name: 'پروژه نمونه' },
+        },
+      ],
+      initialValues: {
+        id: 12,
+        userId: 7,
+        presellingId: 15,
+        amount: 2_500_000,
+        bank: null,
+        targetBank: null,
+        number: null,
+        date: null,
+      },
+    },
+    {
+      name: 'final',
+      Component: FinalTransactionCreate,
+      endpoint: '/final-transaction/18',
+      relationEndpoint: '/subprojects/user/7',
+      relationResponse: [
+        {
+          id: 22,
+          userId: 7,
+          unitNumber: 4,
+          block: { name: 'بلوک الف', project: { name: 'پروژه نمونه' } },
+        },
+      ],
+      initialValues: {
+        id: 18,
+        userId: 7,
+        subProjectId: 22,
+        amount: 4_000_000,
+        bank: null,
+        targetBank: null,
+        number: null,
+        date: null,
+      },
+    },
+  ])(
+    'submits empty optional fields when an admin edits a $name transaction',
+    async ({
+      Component,
+      endpoint,
+      relationEndpoint,
+      relationResponse,
+      initialValues,
+    }) => {
+      let submittedForm: FormData | undefined
+      server.use(
+        http.get(api_base_url + '/users', () =>
+          HttpResponse.json([
+            { id: 7, name: 'کاربر', lastName: 'نمونه', type: 'free' },
+          ]),
+        ),
+        http.get(api_base_url + relationEndpoint, () =>
+          HttpResponse.json(relationResponse),
+        ),
+        http.patch(api_base_url + endpoint, async ({ request }) => {
+          submittedForm = await request.formData()
+          return HttpResponse.json({ id: initialValues.id })
+        }),
+      )
+      const user = userEvent.setup()
+
+      render(
+        <Component
+          isEdit
+          userInfo={admin}
+          initialValues={initialValues}
+        />,
+      )
+
+      await user.click(screen.getByRole('button', { name: 'ذخیره تغییرات' }))
+
+      await waitFor(() => expect(submittedForm).toBeDefined())
+      expect(submittedForm?.get('bank')).toBe('')
+      expect(submittedForm?.get('targetBank')).toBe('')
+      expect(submittedForm?.get('number')).toBe('')
+      expect(submittedForm?.get('date')).toBe('')
+    },
+  )
+
   it('prefills and edits every preselling transaction field while removing its document', async () => {
     let submittedForm: FormData | undefined
     server.use(
