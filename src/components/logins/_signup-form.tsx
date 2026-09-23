@@ -27,6 +27,7 @@ import { Input } from "../ui/input"
 import { PasswordInput } from "../ui/password-input"
 import { Label } from "../ui/label"
 import { toast } from "sonner";
+import { formatDateOnly } from "@/lib/date";
 export function SignupForm({
   className,
   ...props
@@ -68,7 +69,7 @@ export function SignupForm({
               name: formData.get('name') as string,
               lastName: formData.get('lastName') as string,
               nationalNumber: formData.get('nationalNumber') as string,
-              birthDay: date ? date.toISOString() : '',
+              birthDay: date ? formatDateOnly(date) : '',
               email: formData.get('email') as string,
               mobile: formData.get('mobile') as string,
               homePhone: formData.get('homePhone') as string,

@@ -29,6 +29,7 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { PageLoader } from "@/components/ui/loader";
 import FInput from "@/components/ui/functional-input";
 import { cn } from "@/lib/utils";
+import { formatDateOnly } from "@/lib/date";
 import UserProjects from "./userProjects";
 import { 
   User as UserIcon, Mail, Phone, MapPin, Calendar, FileText, 
@@ -486,7 +487,7 @@ export default function ProfilePage() {
       toast.error(validationError);
       return;
     }
-    updateTableRow("users", userId ? userId : 'profile', { ...form, accepted: undefined, birthDay: birthDate ? birthDate.toISOString().split("T")[0] : undefined }, () => {
+    updateTableRow("users", userId ? userId : 'profile', { ...form, accepted: undefined, birthDay: birthDate ? formatDateOnly(birthDate) : undefined }, () => {
       toast.success("اطلاعات با موفقیت ویرایش شد");
       setEdit(false);
       setUser({ ...user, ...form } as User);
@@ -1488,14 +1489,7 @@ export default function ProfilePage() {
                     <Label className={LABEL_CLASS}><Calendar className="h-4 w-4 inline ml-2" />تاریخ تولد</Label>
                     <Calendar22 date={birthDate} setDate={d => { 
                         setBirthDate(d); 
-                        // Format date in local timezone to avoid timezone conversion issues
-                        const formatDateLocal = (date: Date): string => {
-                            const year = date.getFullYear();
-                            const month = String(date.getMonth() + 1).padStart(2, '0');
-                            const day = String(date.getDate()).padStart(2, '0');
-                            return `${year}-${month}-${day}`;
-                        };
-                        setForm(f => ({ ...f, birthDay: d ? formatDateLocal(d) : undefined })); 
+                        setForm(f => ({ ...f, birthDay: d ? formatDateOnly(d) : undefined }));
                     }} />
                   </div>
                   <div className="space-y-2">
