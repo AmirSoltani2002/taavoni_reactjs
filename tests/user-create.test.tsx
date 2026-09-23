@@ -8,6 +8,20 @@ import { api_base_url } from '@/config'
 import { Toaster } from '@/components/ui/sonner'
 import { server } from './mocks/server'
 
+vi.mock('@/components/calendars/calendar', () => ({
+  Calendar22: ({
+    title,
+    setDate,
+  }: {
+    title?: string
+    setDate: (date: Date | undefined) => void
+  }) => (
+    <button type="button" onClick={() => setDate(new Date(2026, 8, 23))}>
+      {title}
+    </button>
+  ),
+}))
+
 const MEMBERSHIP_LABELS = [
   'کارمند دانشگاه تهران',
   'هیئت علمی دانشگاه تهران',
@@ -119,6 +133,31 @@ describe('UserCreate', () => {
         nationalNumber: '0012345678',
         sex: 'male',
         type: 'universityFaculty',
+      })
+    })
+  })
+
+  it('posts an administrator birthday as the selected local calendar day', async () => {
+    let requestBody: Record<string, unknown> | undefined
+    server.use(
+      http.post(api_base_url + '/users', async ({ request }) => {
+        requestBody = await request.json() as Record<string, unknown>
+        return HttpResponse.json({ id: 1, ...requestBody })
+      }),
+    )
+    const user = userEvent.setup()
+    renderUserForm('admin')
+    await fillRequiredTextFields(user)
+    await user.type(screen.getByLabelText('موبایل*'), '09120000000')
+    await selectOption(user, 'جنسیت*', 'مرد')
+    await user.click(screen.getByRole('button', { name: 'تاریخ تولد' }))
+
+    await user.click(screen.getByRole('button', { name: 'افزودن ادمین' }))
+
+    await waitFor(() => {
+      expect(requestBody).toMatchObject({
+        birthDay: '2026-09-23',
+        type: 'admin',
       })
     })
   })

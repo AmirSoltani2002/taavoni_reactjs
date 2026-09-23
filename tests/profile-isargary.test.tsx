@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { HttpResponse, http } from 'msw'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { api_base_url } from '@/config'
 import { Toaster } from '@/components/ui/sonner'
 import ProfilePage from '@/pages/users/profile'
@@ -17,7 +17,22 @@ const profile = {
   type: 'free',
   accepted: false,
   isargaryType: 'none',
+  birthDay: '2026-09-22T20:30:00.000Z',
 }
+
+const originalTimeZone = process.env.TZ
+
+beforeAll(() => {
+  process.env.TZ = 'Asia/Tehran'
+})
+
+afterAll(() => {
+  if (originalTimeZone === undefined) {
+    delete process.env.TZ
+  } else {
+    process.env.TZ = originalTimeZone
+  }
+})
 
 function renderProfile(onPatch = vi.fn()) {
   server.use(
@@ -43,7 +58,7 @@ function renderProfile(onPatch = vi.fn()) {
   )
 }
 
-function renderSelectedProfile(isargaryType: 'none' | 'isargar') {
+function renderSelectedProfile(isargaryType: 'none' | 'isargar', onPatch = vi.fn()) {
   const selectedProfile = {
     ...profile,
     id: 7,
@@ -69,6 +84,11 @@ function renderSelectedProfile(isargaryType: 'none' | 'isargar') {
     http.get(api_base_url + '/pre-selling/user/7', () => HttpResponse.json([])),
     http.get(api_base_url + '/subprojects/user/7', () => HttpResponse.json([])),
     http.get(api_base_url + '/final-transaction/users/7', () => HttpResponse.json([])),
+    http.patch(api_base_url + '/users/7', async ({ request }) => {
+      const body = await request.json()
+      onPatch(body)
+      return HttpResponse.json({ ...selectedProfile, ...body })
+    }),
   )
 
   return render(
@@ -217,6 +237,36 @@ describe('ProfilePage isargary information', () => {
           frontPresenceType: 'voluntary',
           frontPresenceMonths: 12,
         }),
+      )
+    })
+  })
+
+  it('submits the self-profile birthday as the local calendar day', async () => {
+    const onPatch = vi.fn()
+    const user = userEvent.setup()
+    renderProfile(onPatch)
+    await openEditor(user)
+
+    await user.click(screen.getByRole('button', { name: 'ذخیره تغییرات' }))
+
+    await waitFor(() => {
+      expect(onPatch).toHaveBeenCalledWith(
+        expect.objectContaining({ birthDay: '2026-09-23' }),
+      )
+    })
+  })
+
+  it('submits an administrator-edited birthday as the local calendar day', async () => {
+    const onPatch = vi.fn()
+    const user = userEvent.setup()
+    renderSelectedProfile('none', onPatch)
+
+    await user.click(await screen.findByRole('button', { name: 'ویرایش' }))
+    await user.click(screen.getByRole('button', { name: 'ذخیره تغییرات' }))
+
+    await waitFor(() => {
+      expect(onPatch).toHaveBeenCalledWith(
+        expect.objectContaining({ birthDay: '2026-09-23' }),
       )
     })
   })

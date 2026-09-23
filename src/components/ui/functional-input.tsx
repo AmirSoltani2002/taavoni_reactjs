@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "./slider";
 import { cn } from "@/lib/utils";
+import { formatDateOnly } from "@/lib/date";
 
 interface FInputProps<FieldType> {
     values: FieldType;
@@ -68,7 +69,7 @@ const FInput = <FieldType,>({
             title={item.title + (item.isRequired ? '*' : '')}
             date={values[item.name]?.toString()}
             setDate={(d) => {
-            handleSelect(item.name, d ? d.toISOString() : '')
+            handleSelect(item.name, d ? formatDateOnly(d) : '')
             }}
         />
         </div>
