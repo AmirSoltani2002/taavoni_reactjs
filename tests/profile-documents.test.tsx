@@ -14,6 +14,7 @@ const documentRecord = {
   userId: 7,
   detail: 'کارت ملی',
   document: 'national-card.pdf',
+  validation: false,
   createdAt: '2026-09-01T00:00:00.000Z',
   updatedAt: '2026-09-01T00:00:00.000Z',
 }
@@ -26,6 +27,7 @@ function setupProfileRequests(
   let documents = [{ ...documentRecord }]
   let uploadedUserId: string | null = null
   const deletedIds: string[] = []
+  const verifiedIds: string[] = []
   const target = {
     id: 7,
     name: 'کاربر',
@@ -71,6 +73,7 @@ function setupProfileRequests(
           id: 11,
           detail: body.match(/name="detail"\r\n\r\n([^\r]+)/)?.[1] ?? '',
           document: 'new-document.pdf',
+          validation: viewerType === 'admin' || viewerType === 'system',
         },
       ]
       return HttpResponse.json(documents[1], { status: 201 })
@@ -80,10 +83,22 @@ function setupProfileRequests(
       documents = documents.filter((document) => document.id !== Number(params.id))
       return HttpResponse.json({ id: Number(params.id) })
     }),
+    http.patch(api_base_url + '/user-doc/:id/verify', ({ params }) => {
+      verifiedIds.push(String(params.id))
+      documents = documents.map((document) =>
+        document.id === Number(params.id)
+          ? { ...document, validation: true }
+          : document,
+      )
+      return HttpResponse.json(
+        documents.find((document) => document.id === Number(params.id)),
+      )
+    }),
   )
 
   return {
     deletedIds,
+    verifiedIds,
     getUploadedUserId: () => uploadedUserId,
   }
 }
@@ -127,9 +142,10 @@ describe('ProfilePage documents access', () => {
     expect(originalDocumentRow).not.toBeNull()
     await user.click(
       within(originalDocumentRow as HTMLTableRowElement).getByRole('button', {
-        name: 'حذف',
+        name: 'عملیات',
       }),
     )
+    await user.click(await screen.findByRole('button', { name: 'حذف' }))
     const dialog = await screen.findByRole('dialog')
     await user.click(within(dialog).getByRole('button', { name: 'حذف' }))
 
@@ -144,7 +160,7 @@ describe('ProfilePage documents access', () => {
     renderProfile()
 
     expect(await screen.findByRole('button', { name: 'افزودن مدرک' })).toBeVisible()
-    expect(screen.getByRole('button', { name: 'حذف' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'عملیات' })).toBeVisible()
     expect(screen.getByTitle('دانلود فایل')).toBeVisible()
   })
 
@@ -173,5 +189,44 @@ describe('ProfilePage documents access', () => {
     expect(await screen.findByRole('button', { name: 'افزودن مدرک' })).toBeVisible()
     expect(screen.getByRole('button', { name: 'حذف' })).toBeVisible()
     expect(screen.getByTitle('دانلود فایل')).toBeVisible()
+    expect(screen.getByText('تاییدنشده')).toBeVisible()
+  })
+
+  it('lets an administrator verify a document and keeps verification idempotent', async () => {
+    const requests = setupProfileRequests('admin', 'free')
+    const user = userEvent.setup()
+    renderProfile()
+
+    expect(await screen.findByText('تاییدنشده')).toBeVisible()
+    await user.type(screen.getByLabelText('موضوع مدرک'), 'مدرک مدیر')
+    await user.upload(
+      screen.getByLabelText('فایل مدرک'),
+      new File(['document'], 'admin.pdf', { type: 'application/pdf' }),
+    )
+    await user.click(screen.getByRole('button', { name: 'افزودن مدرک' }))
+    expect(await screen.findByText('مدرک مدیر')).toBeVisible()
+    const documentRow = screen.getByText('کارت ملی').closest('tr')
+    expect(documentRow).not.toBeNull()
+    await user.click(
+      within(documentRow as HTMLTableRowElement).getByRole('button', {
+        name: 'عملیات',
+      }),
+    )
+    await user.click(await screen.findByRole('button', { name: /تایید مدرک/ }))
+
+    const refreshedDocumentRow = (await screen.findByText('کارت ملی')).closest('tr')
+    expect(
+      within(refreshedDocumentRow as HTMLTableRowElement).getByText('تاییدشده'),
+    ).toBeVisible()
+    expect(requests.verifiedIds).toEqual(['10'])
+
+    const verifiedRow = screen.getByText('کارت ملی').closest('tr')
+    await user.click(
+      within(verifiedRow as HTMLTableRowElement).getByRole('button', {
+        name: 'عملیات',
+      }),
+    )
+    await user.click(await screen.findByRole('button', { name: /تایید مدرک/ }))
+    expect(requests.verifiedIds).toEqual(['10'])
   })
 })

@@ -1,7 +1,8 @@
 import { type ColumnDef } from "@tanstack/react-table"
-import { CircleCheckBig, Crown, Download } from "lucide-react";
+import { CheckCircle2, CircleCheckBig, Crown, Download, XCircle } from "lucide-react";
 import { downloadDocument } from "@/general";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 export type UserType =
     | 'system'
@@ -101,6 +102,7 @@ export type UserDoc = {
     userId?: number;
     document?: string;
     detail?: string,
+    validation: boolean;
     createdAt?: string;
     updatedAt?: string;
 }
@@ -236,6 +238,31 @@ export const getDocsColumns = (
                         <Download className="h-4 w-4" />
                     )}
                 </Button>
+            );
+        }
+    },
+    {
+        accessorKey: 'validation',
+        header: 'وضعیت',
+        cell: ({row}) => {
+            const isVerified = row.original.validation === true;
+            return (
+                <Badge
+                    variant={isVerified ? 'default' : 'destructive'}
+                    className={isVerified ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}
+                >
+                    {isVerified ? (
+                        <>
+                            <CheckCircle2 className="w-3 h-3 ml-1" />
+                            تاییدشده
+                        </>
+                    ) : (
+                        <>
+                            <XCircle className="w-3 h-3 ml-1" />
+                            تاییدنشده
+                        </>
+                    )}
+                </Badge>
             );
         }
     }

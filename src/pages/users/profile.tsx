@@ -114,6 +114,32 @@ export default function ProfilePage() {
   );
   const canManageTransactions = ['admin', 'system'].includes(viewer?.type || '');
 
+  const refreshDocuments = () => {
+    getTable(userId ? `user-doc/user/${userId}` : "user-doc/profile", (data: UserDoc[]) => {
+      setDocs(data);
+    });
+  };
+
+  const documentOptions = userId && canManageDocuments
+    ? (document: UserDoc) => [{
+        title: (
+          <>
+            <CheckCircle2 className="w-4 h-4 ml-1 inline" />
+            تایید مدرک
+          </>
+        ),
+        onClick: async () => {
+          if (!document.id || document.validation) return;
+          await updateTableRow('user-doc', `${document.id}/verify`, {}, (data) => {
+            if (data?.id) {
+              toast.success('مدرک تایید شد');
+              refreshDocuments();
+            }
+          });
+        },
+      }]
+    : undefined;
+
   const refreshTransactions = () => {
     const endpoint = userId ? `transaction/users/${userId}` : 'transaction/profile';
     getTable(endpoint, (data: Transaction[] | {error?: unknown}) => {
@@ -1002,11 +1028,8 @@ export default function ProfilePage() {
                       data={docs.filter(doc => doc.detail !== 'profile-image')}
                       tableName={canManageDocuments ? "user-doc" : undefined}
                       _showDeleteButton={canManageDocuments}
-                      onRefresh={() => {
-                        getTable(userId ? `user-doc/user/${userId}` : "user-doc/profile", (data: UserDoc[]) => {
-                          setDocs(data);
-                        });
-                      }}
+                      options={documentOptions}
+                      onRefresh={refreshDocuments}
                     />
                   )}
                 </CardContent>
