@@ -322,9 +322,11 @@ describe('ProfilePage documents access', () => {
     const open = vi.spyOn(window, 'open').mockImplementation(() => null)
     await user.click(viewButton)
 
-    await waitFor(() => expect(requests.viewedIds).toEqual(['10']))
-    expect(createObjectURL).toHaveBeenCalledOnce()
-    expect(open).toHaveBeenCalledWith('blob:document', '_blank')
+    await waitFor(() => {
+      expect(requests.viewedIds).toEqual(['10'])
+      expect(createObjectURL).toHaveBeenCalledOnce()
+      expect(open).toHaveBeenCalledWith('blob:document', '_blank')
+    })
 
     await user.click(
       within(documentRow as HTMLTableRowElement).getByRole('button', {
