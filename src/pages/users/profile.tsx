@@ -35,7 +35,7 @@ import {
   User as UserIcon, Mail, Phone, MapPin, Calendar, FileText, 
   Edit2, Save, X, ArrowRight, CheckCircle2, Upload, Lock, 
   Award, Home, Briefcase, Hash, CreditCard, Camera,
-  Download, Trash2, History
+  Download, Eye, Pencil, Trash2, History
 } from "lucide-react";
 import { getTransactionHistoryColumns, type TransactionHistory } from "./transactionHistory";
 import { FaFaceSmile } from "react-icons/fa6";
@@ -48,6 +48,7 @@ import {
   getTransactionOptions,
 } from "../transactions/columns";
 import TransactionEditDialog from "../transactions/transaction-edit-dialog";
+import DocumentEditDialog from "./document-edit-dialog";
 import type { PreSelling } from "../preselling/columns";
 import { columns as presellingColumns } from "../preselling/columns";
 import type { SubProject } from "../projects/columns";
@@ -107,10 +108,17 @@ export default function ProfilePage() {
     type: 'preselling' | 'final';
     transaction: Transaction | FinalTransaction;
   } | null>(null);
-  const canManageDocuments = !userId || Boolean(
+  const [editingDocument, setEditingDocument] = useState<UserDoc | null>(null);
+  const canManageDocuments = Boolean(
     user &&
-    ['admin', 'system'].includes(viewer?.type || '') &&
-    !['admin', 'system'].includes(user.type || '')
+    viewer &&
+    (
+      !userId ||
+      (
+        ['admin', 'system'].includes(viewer.type || '') &&
+        !['admin', 'system'].includes(user.type || '')
+      )
+    )
   );
   const canManageTransactions = ['admin', 'system'].includes(viewer?.type || '');
 
@@ -120,8 +128,41 @@ export default function ProfilePage() {
     });
   };
 
-  const documentOptions = userId && canManageDocuments
-    ? (document: UserDoc) => [{
+  const handleViewDocument = async (document: UserDoc) => {
+    if (!document.id) {
+      toast.error('فایل موجود نیست');
+      return;
+    }
+    const url = await getImageBlobUrl(document.id, 'user-doc', true);
+    if (!url) return;
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 100);
+  };
+
+  const documentOptions = canManageDocuments
+    ? (document: UserDoc) => {
+      const options = [
+        {
+          title: (
+            <>
+              <Eye className="w-4 h-4 ml-1 inline" />
+              مشاهده مدرک
+            </>
+          ),
+          onClick: () => handleViewDocument(document),
+        },
+        {
+          title: (
+            <>
+              <Pencil className="w-4 h-4 ml-1 inline" />
+              ویرایش مدرک
+            </>
+          ),
+          onClick: () => setEditingDocument(document),
+        },
+      ];
+      if (userId) {
+        options.push({
         title: (
           <>
             <CheckCircle2 className="w-4 h-4 ml-1 inline" />
@@ -137,7 +178,10 @@ export default function ProfilePage() {
             }
           });
         },
-      }]
+        });
+      }
+      return options;
+    }
     : undefined;
 
   const refreshTransactions = () => {
@@ -1732,6 +1776,16 @@ export default function ProfilePage() {
           </Card>
         )}
       </div>
+      {editingDocument && (
+        <DocumentEditDialog
+          document={editingDocument}
+          onClose={() => setEditingDocument(null)}
+          onSaved={() => {
+            setEditingDocument(null);
+            refreshDocuments();
+          }}
+        />
+      )}
       <TransactionEditDialog
         transaction={editingTransaction?.transaction || null}
         type={editingTransaction?.type || 'preselling'}
