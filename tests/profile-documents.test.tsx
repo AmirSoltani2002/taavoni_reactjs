@@ -152,7 +152,9 @@ function setupProfileRequests(
     }),
     http.get(api_base_url + '/user-doc/download/:id', ({ params }) => {
       viewedIds.push(String(params.id))
-      return new HttpResponse(new Blob(['document'], { type: 'application/pdf' }))
+      return HttpResponse.text('document', {
+        headers: { 'Content-Type': 'application/pdf' },
+      })
     }),
   )
 
@@ -322,14 +324,11 @@ describe('ProfilePage documents access', () => {
     const open = vi.spyOn(window, 'open').mockImplementation(() => null)
     await user.click(viewButton)
 
-    await waitFor(
-      () => {
-        expect(requests.viewedIds).toEqual(['10'])
-        expect(createObjectURL).toHaveBeenCalledOnce()
-        expect(open).toHaveBeenCalledWith('blob:document', '_blank')
-      },
-      { timeout: 3000 },
-    )
+    await waitFor(() => {
+      expect(requests.viewedIds).toEqual(['10'])
+      expect(createObjectURL).toHaveBeenCalledOnce()
+      expect(open).toHaveBeenCalledWith('blob:document', '_blank')
+    })
 
     await user.click(
       within(documentRow as HTMLTableRowElement).getByRole('button', {
