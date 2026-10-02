@@ -51,12 +51,12 @@ const Welcome: React.FC = () => {
         {/* Investor */}
         <div className="flex flex-col items-center gap-4 border rounded-xl p-6 shadow-sm">
           <img src={invest} alt="سرمایه‌گذار" className="w-2xl h-2/4" />
-          <p className="font-semibold">ورود به عنوان سرمایه‌گذار</p>
+          <p className="font-semibold">ورود به عنوان عضو</p>
           <p className="text-sm text-muted-foreground text-center">
             مشاهده پروژه‌ها، مقایسه پروژه‌ها و پیگیری درخواست‌ها
           </p>
           <Button onClick={() => navigate("/signin?type=investor")} variant="outline" className="w-full">
-            ورود به عنوان سرمایه‌گذار
+            ورود به عنوان عضو
           </Button>
         </div>
       </div>
