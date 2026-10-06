@@ -103,6 +103,7 @@ export type UserDoc = {
     document?: string;
     detail?: string,
     validation: boolean;
+    editedByInvestor: boolean;
     createdAt?: string;
     updatedAt?: string;
 }
