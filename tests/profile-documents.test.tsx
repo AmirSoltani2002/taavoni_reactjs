@@ -15,6 +15,7 @@ const documentRecord = {
   detail: 'کارت ملی',
   document: 'national-card.pdf',
   validation: false,
+  editedByInvestor: false,
   createdAt: '2026-09-01T00:00:00.000Z',
   updatedAt: '2026-09-01T00:00:00.000Z',
 }
@@ -24,8 +25,15 @@ function setupProfileRequests(
   targetType: AccountType,
   selected = true,
   documentValidation = false,
+  documentEditedByInvestor = false,
 ) {
-  let documents = [{ ...documentRecord, validation: documentValidation }]
+  let documents = [
+    {
+      ...documentRecord,
+      validation: documentValidation,
+      editedByInvestor: documentEditedByInvestor,
+    },
+  ]
   let uploadedUserId: string | null = null
   let editedDetail: string | null = null
   let editedFilename: string | null = null
@@ -109,6 +117,7 @@ function setupProfileRequests(
           detail: body.match(/name="detail"\r\n\r\n([^\r]+)/)?.[1] ?? '',
           document: 'new-document.pdf',
           validation: viewerType === 'admin' || viewerType === 'system',
+          editedByInvestor: false,
         },
       ]
       return HttpResponse.json(documents[1], { status: 201 })
@@ -143,6 +152,10 @@ function setupProfileRequests(
                 viewerType === 'admin' || viewerType === 'system'
                   ? document.validation
                   : false,
+              editedByInvestor:
+                viewerType === 'admin' || viewerType === 'system'
+                  ? document.editedByInvestor
+                  : true,
             }
           : document,
       )
@@ -264,6 +277,47 @@ describe('ProfilePage documents access', () => {
     expect(screen.getByText('تاییدنشده')).toBeVisible()
   })
 
+  it('shows the one-time edit notice on an investor dashboard', async () => {
+    setupProfileRequests('free', 'free', false)
+    renderProfile(false)
+
+    expect(
+      await screen.findByRole('note'),
+    ).toHaveTextContent(
+      'عضو گرامی، توجه داشته باشید که ویرایش هر مدرک تنها یک بار و قبل از تایید شدن آن مدرک توسط ادمین قابل‌انجام است.',
+    )
+  })
+
+  it.each([
+    ['verified', true, false],
+    ['already edited', false, true],
+  ] as const)(
+    'hides the investor edit action when the document is %s',
+    async (_state, validation, editedByInvestor) => {
+      setupProfileRequests(
+        'free',
+        'free',
+        false,
+        validation,
+        editedByInvestor,
+      )
+      const user = userEvent.setup()
+      renderProfile(false)
+
+      const documentRow = (await screen.findByText('کارت ملی')).closest('tr')
+      expect(documentRow).not.toBeNull()
+      await user.click(
+        within(documentRow as HTMLTableRowElement).getByRole('button', {
+          name: 'عملیات',
+        }),
+      )
+
+      expect(
+        screen.queryByRole('button', { name: /ویرایش مدرک/ }),
+      ).not.toBeInTheDocument()
+    },
+  )
+
   it('lets an administrator verify a document and keeps verification idempotent', async () => {
     const requests = setupProfileRequests('admin', 'free')
     const user = userEvent.setup()
@@ -360,12 +414,12 @@ describe('ProfilePage documents access', () => {
     expect(requests.getEditedFilename()).not.toBeNull()
   })
 
-  it('shows dashboard edit actions without verification and invalidates an owner edit', async () => {
-    const requests = setupProfileRequests('free', 'free', false, true)
+  it('allows one unverified dashboard edit and then removes the edit action', async () => {
+    const requests = setupProfileRequests('free', 'free', false)
     const user = userEvent.setup()
     renderProfile(false)
 
-    expect(await screen.findByText('تاییدشده')).toBeVisible()
+    expect(await screen.findByText('تاییدنشده')).toBeVisible()
     await waitFor(() => expect(requests.loadedSections.size).toBe(5))
     await waitFor(() => {
       expect(screen.queryByText('...')).not.toBeInTheDocument()
@@ -394,10 +448,21 @@ describe('ProfilePage documents access', () => {
     expect(screen.getByText('تاییدنشده')).toBeVisible()
     expect(requests.getEditedDetail()).toBe('مدرک ویرایش‌شده')
     expect(requests.getEditedFilename()).toBeNull()
+
+    const editedDocumentRow = screen.getByText('مدرک ویرایش‌شده').closest('tr')
+    expect(editedDocumentRow).not.toBeNull()
+    await user.click(
+      within(editedDocumentRow as HTMLTableRowElement).getByRole('button', {
+        name: 'عملیات',
+      }),
+    )
+    expect(
+      screen.queryByRole('button', { name: /ویرایش مدرک/ }),
+    ).not.toBeInTheDocument()
   })
 
   it('shows document actions without verification on an administrator dashboard', async () => {
-    const requests = setupProfileRequests('admin', 'admin', false, true)
+    const requests = setupProfileRequests('admin', 'admin', false, true, true)
     const user = userEvent.setup()
     renderProfile(false)
 
@@ -418,6 +483,7 @@ describe('ProfilePage documents access', () => {
     ).toBeVisible()
     expect(screen.getByRole('button', { name: /ویرایش مدرک/ })).toBeVisible()
     expect(screen.getByRole('button', { name: 'حذف' })).toBeVisible()
+    expect(screen.queryByRole('note')).not.toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: /تایید مدرک/ }),
     ).not.toBeInTheDocument()

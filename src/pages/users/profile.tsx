@@ -35,7 +35,7 @@ import {
   User as UserIcon, Mail, Phone, MapPin, Calendar, FileText, 
   Edit2, Save, X, ArrowRight, CheckCircle2, Upload, Lock, 
   Award, Home, Briefcase, Hash, CreditCard, Camera,
-  Download, Eye, Pencil, Trash2, History
+  AlertCircle, Download, Eye, Pencil, Trash2, History
 } from "lucide-react";
 import { getTransactionHistoryColumns, type TransactionHistory } from "./transactionHistory";
 import { FaFaceSmile } from "react-icons/fa6";
@@ -141,7 +141,10 @@ export default function ProfilePage() {
 
   const documentOptions = canManageDocuments
     ? (document: UserDoc) => {
-      const options = [
+      const options: {
+        title: React.ReactNode;
+        onClick: () => void | Promise<void>;
+      }[] = [
         {
           title: (
             <>
@@ -151,7 +154,13 @@ export default function ProfilePage() {
           ),
           onClick: () => handleViewDocument(document),
         },
-        {
+      ];
+      const isAdministrativeViewer = ['admin', 'system'].includes(viewer?.type || '');
+      if (
+        isAdministrativeViewer ||
+        (!document.validation && !document.editedByInvestor)
+      ) {
+        options.push({
           title: (
             <>
               <Pencil className="w-4 h-4 ml-1 inline" />
@@ -159,8 +168,8 @@ export default function ProfilePage() {
             </>
           ),
           onClick: () => setEditingDocument(document),
-        },
-      ];
+        });
+      }
       if (userId) {
         options.push({
         title: (
@@ -1015,6 +1024,17 @@ export default function ProfilePage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-6">
+                  {canManageDocuments && !userId && !['admin', 'system'].includes(viewer?.type || '') && (
+                    <div
+                      role="note"
+                      className="mb-4 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+                    >
+                      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                      <p>
+                        عضو گرامی، توجه داشته باشید که ویرایش هر مدرک تنها یک بار و قبل از تایید شدن آن مدرک توسط ادمین قابل‌انجام است.
+                      </p>
+                    </div>
+                  )}
                   {canManageDocuments && (
                     <Card className="mb-6 bg-blue-50 border-blue-200">
                       <CardContent className="pt-6">
@@ -1023,25 +1043,25 @@ export default function ProfilePage() {
                           افزودن مدرک جدید
                         </h3>
                         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                          <Input 
+                          <Input
                             aria-label="موضوع مدرک"
-                            type='text' 
-                            value={fileInputTitle} 
-                            placeholder="موضوع فایل (اختیاری)" 
+                            type='text'
+                            value={fileInputTitle}
+                            placeholder="موضوع فایل (اختیاری)"
                             onChange={(e) => setFileInputTitle(e.target.value)}
                             className="flex-1 h-11"
                             disabled={uploading}
                           />
-                          <Input 
+                          <Input
                             aria-label="فایل مدرک"
-                            ref={fileInputRef} 
-                            type="file" 
+                            ref={fileInputRef}
+                            type="file"
                             accept="image/*,application/pdf"
                             className="flex-1 h-11"
                             disabled={uploading}
                           />
-                          <Button 
-                            onClick={handleAddDocument} 
+                          <Button
+                            onClick={handleAddDocument}
                             disabled={uploading}
                             className="gap-2 h-11"
                           >
