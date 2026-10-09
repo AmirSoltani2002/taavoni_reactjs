@@ -82,7 +82,7 @@ describe('Transaction currency labels', () => {
     expect(screen.queryByText(/تومان/)).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'عملیات' }))
     await user.click(
-      screen.getByRole('button', { name: /ویرایش تراکنش/ }),
+      await screen.findByRole('button', { name: /ویرایش تراکنش/ }),
     )
     expect(
       await screen.findByRole('heading', { name: 'ویرایش تراکنش' }),
@@ -104,7 +104,7 @@ describe('Transaction currency labels', () => {
     expect(screen.queryByText(/تومان/)).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'عملیات' }))
     await user.click(
-      screen.getByRole('button', { name: /ویرایش تراکنش/ }),
+      await screen.findByRole('button', { name: /ویرایش تراکنش/ }),
     )
     expect(
       await screen.findByRole('heading', { name: 'ویرایش تراکنش' }),
@@ -127,7 +127,7 @@ describe('Transaction currency labels', () => {
     expect(screen.queryByText(/تومان/)).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'عملیات' }))
     await user.click(
-      screen.getByRole('button', { name: /ویرایش تراکنش/ }),
+      await screen.findByRole('button', { name: /ویرایش تراکنش/ }),
     )
     expect(
       await screen.findByRole('heading', { name: 'ویرایش تراکنش' }),
