@@ -121,6 +121,15 @@ export default function ProfilePage() {
     )
   );
   const canManageTransactions = ['admin', 'system'].includes(viewer?.type || '');
+  const canChangePassword = Boolean(
+    !userId ||
+    (
+      user &&
+      viewer &&
+      ['admin', 'system'].includes(viewer.type || '') &&
+      !['admin', 'system'].includes(user.type || '')
+    )
+  );
 
   const refreshDocuments = () => {
     getTable(userId ? `user-doc/user/${userId}` : "user-doc/profile", (data: UserDoc[]) => {
@@ -793,6 +802,17 @@ export default function ProfilePage() {
                   </div>
                 </CardHeader>
                 <CardContent className="pt-6">
+                  {!userId && (
+                    <div
+                      role="note"
+                      className="mb-4 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+                    >
+                      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                      <p>
+                        کاربر گرامی، لطفا در حفظ و نگهداری رمز عبور خود کوشا باشید.
+                      </p>
+                    </div>
+                  )}
                   {/* Profile Image Section */}
                   <div className="mb-8 flex justify-center">
                     <div className="relative group">
@@ -1685,8 +1705,8 @@ export default function ProfilePage() {
                 )}
               </div>
               
-                {/* Password Change Section for System Users or Self */}
-                {(viewer?.type === 'system' || !userId) && (
+                {/* Password Change Section for Administrative Users or Self */}
+                {canChangePassword && (
                   <Card className="bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200">
                     <CardHeader>
                       <div className="flex justify-between items-center">
