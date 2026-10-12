@@ -144,7 +144,7 @@ describe('ProfilePage payments', () => {
       await screen.findByRole('button', { name: /مشاهده مستندات/ }),
     ).toBeVisible()
     expect(
-      screen.getByRole('button', { name: /دانلود مستندات/ }),
+      screen.getByRole('button', { name: /دریافت مستندات/ }),
     ).toBeVisible()
     expect(screen.getByRole('button', { name: /تایید/ })).toBeVisible()
     expect(

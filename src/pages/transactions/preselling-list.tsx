@@ -185,7 +185,7 @@ export default function PresellingTransactionsList() {
                             </h1>
                             <p className="text-slate-600 text-lg">
                                 {['admin', 'system'].includes(userInfo?.type || '') 
-                                    ? 'مشاهده و مدیریت تمام رسیدهای پیش‌فروش در سیستم' 
+                                    ? 'مشاهده و مدیریت تمام رسیدهای پیش‌فروش در سامانه'
                                     : 'رسیدهای پیش‌فروش شما'}
                             </p>
                         </div>

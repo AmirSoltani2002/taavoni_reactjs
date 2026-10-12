@@ -70,7 +70,7 @@ export const Step4Review: React.FC<Step4ReviewProps> = ({
               
               <div className="flex items-center gap-3">
                 <MapPin className="w-5 h-5 text-green-600" />
-                <span className="font-semibold text-slate-700">آدرس:</span>
+                <span className="font-semibold text-slate-700">نشانی:</span>
                 <span className="text-slate-900">{project.address}</span>
               </div>
               

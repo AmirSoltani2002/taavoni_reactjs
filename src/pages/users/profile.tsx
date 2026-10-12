@@ -436,10 +436,10 @@ export default function ProfilePage() {
           loadProfileImage(profileDoc.id);
         }
       });
-      toast.success("تصویر پروفایل با موفقیت آپلود شد");
+      toast.success("تصویر کاربری با موفقیت بارگذاری شد");
     } catch (error) {
       console.error('Error uploading profile image:', error);
-      toast.error("خطا در آپلود تصویر پروفایل");
+      toast.error("خطا در بارگذاری تصویر کاربری");
     } finally {
       setUploadingProfileImage(false);
       if (profileImageInputRef.current) {
@@ -463,11 +463,11 @@ export default function ProfilePage() {
         getTable(userId ? `user-doc/user/${userId}` : "user-doc/profile", (data: UserDoc[]) => {
           setDocs(data);
         });
-        toast.success("تصویر پروفایل با موفقیت حذف شد");
+        toast.success("تصویر کاربری با موفقیت حذف شد");
       }, true);
     } catch (error) {
       console.error('Error deleting profile image:', error);
-      toast.error("خطا در حذف تصویر پروفایل");
+      toast.error("خطا در حذف تصویر کاربری");
     }
   };
 
@@ -633,7 +633,7 @@ export default function ProfilePage() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">پروفایل کاربری</h1>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">پیشخوان کاربری</h1>
               <p className="text-gray-600 text-lg">{`اطلاعات و مدارک ${fullName}`}</p>
             </div>
             {userId && (
@@ -690,7 +690,7 @@ export default function ProfilePage() {
                 <DialogTitle>غیر فعال کردن حساب کاربری</DialogTitle>
                 <DialogDescription className="text-right">
                   آیا مطمئن هستید که می‌خواهید حساب کاربری {fullName} را غیر فعال کنید؟
-                  این عمل باعث می‌شود کاربر دیگر نتواند به سیستم دسترسی داشته باشد.
+                  این عمل باعث می‌شود کاربر دیگر نتواند به سامانه دسترسی داشته باشد.
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter className="gap-2">
@@ -875,7 +875,7 @@ export default function ProfilePage() {
                             <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center backdrop-blur-sm">
                               <div className="flex flex-col items-center gap-2">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-                                <div className="text-white text-sm font-medium">در حال آپلود...</div>
+                                <div className="text-white text-sm font-medium">در حال بارگذاری...</div>
                               </div>
                             </div>
                           )}
@@ -908,7 +908,7 @@ export default function ProfilePage() {
                       </div>
                     </div>
                     <div className="col-span-1 md:col-span-2 space-y-1">
-                      <Label className={LABEL_CLASS}><MapPin className="h-4 w-4 inline ml-2" />آدرس</Label>
+                      <Label className={LABEL_CLASS}><MapPin className="h-4 w-4 inline ml-2" />نشانی</Label>
                       <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg min-h-[60px]">{user.address || "-"}</div>
                     </div>
                   </div>
@@ -936,11 +936,11 @@ export default function ProfilePage() {
                 <CardContent className="pt-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-1">
-                      <Label className={LABEL_CLASS}><Mail className="h-4 w-4 inline ml-2" />ایمیل</Label>
+                      <Label className={LABEL_CLASS}><Mail className="h-4 w-4 inline ml-2" />پست الکترونیک</Label>
                       <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.email || "-"}</div>
                     </div>
                     <div className="space-y-1">
-                      <Label className={LABEL_CLASS}><Phone className="h-4 w-4 inline ml-2" />موبایل</Label>
+                      <Label className={LABEL_CLASS}><Phone className="h-4 w-4 inline ml-2" />تلفن همراه</Label>
                       <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.mobile || "-"}</div>
                     </div>
                     <div className="space-y-1">
@@ -1088,7 +1088,7 @@ export default function ProfilePage() {
                             {uploading ? (
                               <>
                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                در حال آپلود...
+                                در حال بارگذاری...
                               </>
                             ) : (
                               <>
@@ -1559,11 +1559,11 @@ export default function ProfilePage() {
                     <Input name="lastName" value={form.lastName ?? ""} onChange={handleChange} className="h-11" />
                   </div>
                   <div className="space-y-2">
-                    <Label className={LABEL_CLASS}><Mail className="h-4 w-4 inline ml-2" />ایمیل</Label>
+                    <Label className={LABEL_CLASS}><Mail className="h-4 w-4 inline ml-2" />پست الکترونیک</Label>
                     <Input name="email" value={form.email ?? ""} onChange={handleChange} type="email" className="h-11" />
                   </div>
                   <div className="space-y-2">
-                    <Label className={LABEL_CLASS}><Phone className="h-4 w-4 inline ml-2" />موبایل</Label>
+                    <Label className={LABEL_CLASS}><Phone className="h-4 w-4 inline ml-2" />تلفن همراه</Label>
                     <Input name="mobile" value={form.mobile ?? ""} onChange={handleChange} className="h-11" />
                   </div>
                   <div className="space-y-2">
@@ -1579,7 +1579,7 @@ export default function ProfilePage() {
                     <Input name="nationalNumber" value={form.nationalNumber ?? ""} onChange={handleChange} className="h-11" />
                   </div>
                   <div className="col-span-1 md:col-span-2 space-y-2">
-                    <Label className={LABEL_CLASS}><MapPin className="h-4 w-4 inline ml-2" />آدرس</Label>
+                    <Label className={LABEL_CLASS}><MapPin className="h-4 w-4 inline ml-2" />نشانی</Label>
                     <Input name="address" value={form.address ?? ""} onChange={handleChange} className="h-11" />
                   </div>
                   <div className="space-y-2">

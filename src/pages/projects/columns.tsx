@@ -88,7 +88,7 @@ export const columns: ColumnDef<Project>[] = [
     },
     {
         accessorKey: "address",
-        header: "آدرس",
+        header: "نشانی",
         cell: ({ cell }) => {
             const value = cell.getValue() as string;
             return value ? (value.length > 50 ? value.substring(0, 50) + "..." : value) : "-";

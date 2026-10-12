@@ -15,10 +15,10 @@ const getFarsiError = (err: string) => {
     '409': 'اطلاعات تکراری است و قابل ثبت نمی‌باشد',
     'incorrect password': 'رمز عبور اشتباه است',
     'homephone must be a valid phone number': 'شماره منزل باید شماره درست باشد.',
-    'mobile must be a valid phone number': 'شماره موبایل باید شماره درست باشد.',
+    'mobile must be a valid phone number': 'شماره تلفن همراه باید شماره درست باشد.',
     'workphone must be a valid phone number': 'شماره محل کار باید شماره درست باشد.',
     'sex should not be empty': 'لطفا جنسیت را مشخص کنید',
-    'email must be an email': 'ایمیل وارد شده صحیح نمی‌باشد',
+    'email must be an email': 'پست الکترونیک وارد شده صحیح نمی‌باشد',
     'type should not be empty': 'نوع حساب کاربری را تعیین کنید',
     'password is not strong enough': 'لطفا رمز عبور قوی‌تری انتخاب کنید',
     'martyrrelation is required for martyrfamily': 'لطفا نسبت با شهید را مشخص کنید',
@@ -147,7 +147,7 @@ export const uploadFile = async (
     }
   } catch (error: any) {
     console.error('Upload error:', error);
-    toast.error('خطا در آپلود فایل');
+    toast.error('خطا در بارگذاری فایل');
     return;
   }
 };
@@ -174,12 +174,12 @@ export const uploadMultipleFiles = async (files: File[], endpoint: string = 'upl
       return data.files?.map((f: any) => f.url || f.filename || f.path) || [];
     } else {
       const err = await response.json();
-      toast.error(err.message || 'خطا در آپلود فایل‌ها');
+      toast.error(err.message || 'خطا در بارگذاری فایل‌ها');
       return [];
     }
   } catch (error: any) {
     console.error('Upload error:', error);
-    toast.error('خطا در آپلود فایل‌ها');
+    toast.error('خطا در بارگذاری فایل‌ها');
     return [];
   }
 };
@@ -224,7 +224,7 @@ export const uploadProjectDoc = async (
             }
           });
         } else {
-          toast.error('خطا در آپلود سند پروژه');
+          toast.error('خطا در بارگذاری سند پروژه');
         }
       }
       return null;
@@ -232,7 +232,7 @@ export const uploadProjectDoc = async (
   } catch (error: any) {
     console.error('Upload error:', error);
     if (verbose) {
-      toast.error('خطا در آپلود سند پروژه');
+      toast.error('خطا در بارگذاری سند پروژه');
     }
     return null;
   }

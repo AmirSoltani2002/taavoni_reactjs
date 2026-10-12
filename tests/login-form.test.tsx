@@ -21,7 +21,7 @@ function renderLogin(type = 'admin') {
     <MemoryRouter initialEntries={['/']}>
       <Routes>
         <Route path="/" element={<LoginForm type={type} />} />
-        <Route path="/dashboard" element={<h1>داشبورد</h1>} />
+        <Route path="/dashboard" element={<h1>پیشخوان</h1>} />
       </Routes>
     </MemoryRouter>,
   )
@@ -65,7 +65,7 @@ describe('LoginForm', () => {
     await user.type(screen.getByLabelText('رمزعبور'), 'safe-password')
     await user.click(screen.getByRole('button', { name: 'ورود' }))
 
-    expect(await screen.findByRole('heading', { name: 'داشبورد' })).toBeVisible()
+    expect(await screen.findByRole('heading', { name: 'پیشخوان' })).toBeVisible()
     expect(loginBody).toEqual({
       nationalNumber: '1234567890',
       password: 'safe-password',
@@ -91,7 +91,7 @@ describe('LoginForm', () => {
       await screen.findByRole('button', { name: 'بله، ادامه می‌دهم' }),
     )
 
-    expect(await screen.findByRole('heading', { name: 'داشبورد' })).toBeVisible()
+    expect(await screen.findByRole('heading', { name: 'پیشخوان' })).toBeVisible()
   })
 
   it('uses native required-field validation before calling the API', async () => {

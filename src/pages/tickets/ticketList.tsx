@@ -93,12 +93,12 @@ const getTransferRequestContent = (user: User | undefined): string => {
 const FIELD_LABELS: Record<string, string> = {
     'name': 'نام',
     'lastName': 'نام خانوادگی',
-    'email': 'ایمیل',
-    'mobile': 'موبایل',
+    'email': 'پست الکترونیک',
+    'mobile': 'تلفن همراه',
     'homePhone': 'تلفن منزل',
     'workPhone': 'تلفن محل کار',
     'nationalNumber': 'کد ملی',
-    'address': 'آدرس',
+    'address': 'نشانی',
     'sex': 'جنسیت',
     'birthDay': 'تاریخ تولد',
     'isargaryType': 'نوع ایثارگری',
@@ -115,7 +115,7 @@ const getProfileInfoChangeContent = (user: User | undefined, selectedFields: str
         return PREDEFINED_TITLES['profile-info-change'].content;
     }
     let content = `با سلام و احترام\n\n
-    اینجانب ${user.name} ${user.lastName} با کد ملی ${user.nationalNumber} درخواست تغییر اطلاعات پروفایل خود را دارم.\n\n`;
+    اینجانب ${user.name} ${user.lastName} با کد ملی ${user.nationalNumber} درخواست تغییر اطلاعات کاربری خود را دارم.\n\n`;
     
     if (selectedFields.length > 0) {
         content += `مواردی که می‌خواهم تغییر دهم:\n\n`;
@@ -124,7 +124,7 @@ const getProfileInfoChangeContent = (user: User | undefined, selectedFields: str
         });
         content += `\n`;
     } else {
-        content += `لطفاً اطلاعات پروفایل من را بررسی و در صورت نیاز تغییر دهید.\n\n`;
+        content += `لطفاً اطلاعات کاربری من را بررسی و در صورت نیاز تغییر دهید.\n\n`;
     }
     
     content += `با تشکر`;
@@ -190,7 +190,7 @@ export default function TicketsList() {
                     return errorValue.message || JSON.stringify(errorValue);
                 }
             }
-            return 'خطا در بارگذاری تیکت‌ها';
+            return 'خطا در بارگذاری درخواست‌های پشتیبانی';
         }
         return null;
     };
@@ -318,7 +318,7 @@ export default function TicketsList() {
                             className="gap-2 px-4 py-3 text-sm font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-blue-50/50 hover:text-gray-700 hover:bg-gray-50/50 transition-colors"
                         >
                             <MessageSquare className="h-4 w-4" />
-                            <span>تیکت‌های باز</span>
+                            <span>درخواست‌های پشتیبانی باز</span>
                         </TabsTrigger>
                         <TabsTrigger 
                             value="archive" 
@@ -343,13 +343,13 @@ export default function TicketsList() {
                         className="mb-4"
                         onClick={() => setIsDialogOpen(true)}
                     >
-                        تیکت جدید +
+                        درخواست پشتیبانی جدید +
                     </Button>
                 </DialogTrigger>
                 <DialogContent>
                     <DialogHeader className="text-right sm:text-right">
                         <DialogTitle>
-                            لطفا موضوع تیکت خود را انتخاب کنید
+                            لطفا موضوع درخواست پشتیبانی خود را انتخاب کنید
                         </DialogTitle>
                     </DialogHeader>
                     <div className="grid gap-4">
@@ -394,7 +394,7 @@ export default function TicketsList() {
                                     name="custom-title" 
                                     value={customTitle} 
                                     onChange={(e) => setCustomTitle(e.target.value)}
-                                    placeholder="موضوع تیکت خود را بنویسید"
+                                    placeholder="موضوع درخواست پشتیبانی خود را بنویسید"
                                 />
                             </div>
                         )}
@@ -447,7 +447,7 @@ export default function TicketsList() {
                                     }}
                                     className="min-h-[120px] bg-slate-50"
                                 />
-                                <p className="text-xs text-gray-500">این محتوا به عنوان اولین پیام در تیکت ارسال خواهد شد</p>
+                                <p className="text-xs text-gray-500">این محتوا به عنوان اولین پیام در درخواست پشتیبانی ارسال خواهد شد</p>
                             </div>
                         )}
                     </div>
@@ -492,7 +492,7 @@ export default function TicketsList() {
                                     navigate(`/tickets/other/${newTicket.id}`);
                                 }
                             }}>
-                                ایجاد تیکت
+                                ایجاد درخواست پشتیبانی
                             </Button>
                         )}
                     </DialogFooter>
@@ -511,12 +511,12 @@ export default function TicketsList() {
                                         {row.closed ? (
                                             <>
                                                 <Unlock className="h-4 w-4" />
-                                                <span>باز کردن تیکت</span>
+                                                <span>باز کردن درخواست پشتیبانی</span>
                                             </>
                                         ) : (
                                             <>
                                                 <Lock className="h-4 w-4" />
-                                                <span>بستن تیکت</span>
+                                                <span>بستن درخواست پشتیبانی</span>
                                             </>
                                         )}
                                     </div>
@@ -548,12 +548,12 @@ export default function TicketsList() {
                                         {row.closed ? (
                                             <>
                                                 <Unlock className="h-4 w-4" />
-                                                <span>باز کردن تیکت</span>
+                                                <span>باز کردن درخواست پشتیبانی</span>
                                             </>
                                         ) : (
                                             <>
                                                 <Lock className="h-4 w-4" />
-                                                <span>بستن تیکت</span>
+                                                <span>بستن درخواست پشتیبانی</span>
                                             </>
                                         )}
                                     </div>

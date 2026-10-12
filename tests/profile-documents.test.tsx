@@ -240,7 +240,7 @@ describe('ProfilePage documents access', () => {
 
     expect(await screen.findByRole('button', { name: 'افزودن مدرک' })).toBeVisible()
     expect(screen.getByRole('button', { name: 'عملیات' })).toBeVisible()
-    expect(screen.getByTitle('دانلود فایل')).toBeVisible()
+    expect(screen.getByTitle('دریافت فایل')).toBeVisible()
   })
 
   it.each([
@@ -257,7 +257,7 @@ describe('ProfilePage documents access', () => {
       expect(await screen.findByText('کارت ملی')).toBeVisible()
       expect(screen.queryByRole('button', { name: 'افزودن مدرک' })).not.toBeInTheDocument()
       expect(screen.queryByRole('button', { name: 'حذف' })).not.toBeInTheDocument()
-      expect(screen.queryByTitle('دانلود فایل')).not.toBeInTheDocument()
+      expect(screen.queryByTitle('دریافت فایل')).not.toBeInTheDocument()
     },
   )
 
@@ -273,7 +273,7 @@ describe('ProfilePage documents access', () => {
     })
     await user.click(screen.getByRole('button', { name: 'عملیات' }))
     expect(await screen.findByRole('button', { name: 'حذف' })).toBeVisible()
-    expect(screen.getByTitle('دانلود فایل')).toBeVisible()
+    expect(screen.getByTitle('دریافت فایل')).toBeVisible()
     expect(screen.getByText('تاییدنشده')).toBeVisible()
   })
 

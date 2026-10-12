@@ -111,7 +111,7 @@ export default function ProjectsList() {
                                 مدیریت پروژه‌ها
                             </h1>
                             <p className="text-slate-600 text-lg">
-                                {['admin', 'system'].includes(userInfo?.type || '') ? 'مشاهده و مدیریت تمام پروژه‌های موجود در سیستم' : 'پروژه‌های شما'}
+                                {['admin', 'system'].includes(userInfo?.type || '') ? 'مشاهده و مدیریت تمام پروژه‌های موجود در سامانه' : 'پروژه‌های شما'}
                             </p>
                         </div>
                         
@@ -136,7 +136,7 @@ export default function ProjectsList() {
                                         <p className="text-3xl font-bold text-blue-900">{data.length}</p>
                                         <p className="text-xs text-blue-600 mt-1">
                                             <TrendingUp className="w-3 h-3 inline ml-1" />
-                                            فعال در سیستم
+                                            فعال در سامانه
                                         </p>
                                     </div>
                                     <div className="p-3 bg-blue-500 rounded-xl">

@@ -148,7 +148,7 @@ describe('UserCreate', () => {
     const user = userEvent.setup()
     renderUserForm('admin')
     await fillRequiredTextFields(user)
-    await user.type(screen.getByLabelText('موبایل*'), '09120000000')
+    await user.type(screen.getByLabelText('تلفن همراه*'), '09120000000')
     await selectOption(user, 'جنسیت*', 'مرد')
     await user.click(screen.getByRole('button', { name: 'تاریخ تولد' }))
 

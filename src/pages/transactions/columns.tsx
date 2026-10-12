@@ -194,11 +194,11 @@ export const getTransactionOptions = (onRefresh?: () => void, userInfo?: User, o
                 document.body.removeChild(a);
             } else {
                 const err = await resp.json();
-                toast.error(err.message || 'خطا در دانلود فایل');
+                toast.error(err.message || 'خطا در دریافت فایل');
             }
         } catch (error: any) {
             console.error('Download error:', error);
-            toast.error('خطا در دانلود فایل');
+            toast.error('خطا در دریافت فایل');
         }
     };
 
@@ -253,7 +253,7 @@ export const getTransactionOptions = (onRefresh?: () => void, userInfo?: User, o
                 title: (
                     <>
                         <Download className="w-4 h-4 ml-1 inline" />
-                        دانلود مستندات
+                        دریافت مستندات
                     </>
                 ),
                 onClick: () => handleDownload(transaction)
@@ -435,11 +435,11 @@ export const getFinalTransactionOptions = (onRefresh?: () => void, userInfo?: Us
                 document.body.removeChild(a);
             } else {
                 const err = await resp.json();
-                toast.error(err.message || 'خطا در دانلود فایل');
+                toast.error(err.message || 'خطا در دریافت فایل');
             }
         } catch (error: any) {
             console.error('Download error:', error);
-            toast.error('خطا در دانلود فایل');
+            toast.error('خطا در دریافت فایل');
         }
     };
 
@@ -505,7 +505,7 @@ export const getFinalTransactionOptions = (onRefresh?: () => void, userInfo?: Us
                 title: (
                     <>
                         <Download className="w-4 h-4 ml-1 inline" />
-                        دانلود مستندات
+                        دریافت مستندات
                     </>
                 ),
                 onClick: () => handleDownload(transaction)

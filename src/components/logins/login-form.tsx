@@ -77,7 +77,7 @@ export function LoginForm({
       <div className={cn("flex flex-col gap-6", className)} {...props}>
         <Card>
           <CardHeader>
-            <CardTitle className="ml-auto">به اکانت خود وارد شوید</CardTitle>
+            <CardTitle className="ml-auto">به حساب کاربری خود وارد شوید</CardTitle>
             <CardDescription className="ml-auto">
               کد ملی خود را در زیر وارد کنید تا به حساب خود وارد شوید
             </CardDescription>

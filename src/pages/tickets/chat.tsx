@@ -7,7 +7,7 @@ import { type User } from "../users/columns";
 import { PageLoader } from "@/components/ui/loader";
 
 const TicketNotFound = <div>
-      تیکت مورد نظر پیدا نشد
+      درخواست پشتیبانی مورد نظر پیدا نشد
     </div>
 export default function ChatPage() {
   const { ticketId, ticketType } = useParams();

@@ -213,7 +213,7 @@ export default function PreSellingList() {
                             </h1>
                             <p className="text-slate-600 text-lg">
                                 {isAdmin 
-                                    ? 'مشاهده و مدیریت تمام پیش‌فروش‌های موجود در سیستم' 
+                                    ? 'مشاهده و مدیریت تمام پیش‌فروش‌های موجود در سامانه'
                                     : 'پیش‌فروش‌های شما'}
                             </p>
                         </div>
