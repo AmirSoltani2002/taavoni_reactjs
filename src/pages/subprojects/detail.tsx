@@ -422,7 +422,7 @@ export default function SubProjectDetail() {
                             <div className="mt-4">
                                 <Label className="text-slate-700 font-semibold mb-2 block flex items-center gap-2">
                                     <MapPin className="w-4 h-4 text-green-600" />
-                                    آدرس پروژه
+                                    نشانی پروژه
                                 </Label>
                                 <div className="p-4 bg-gradient-to-br from-slate-50 to-blue-50 rounded-lg border-2 border-slate-200 hover:border-green-300 transition-all duration-200">
                                     <p className="text-slate-900 font-medium leading-relaxed text-base">
@@ -484,7 +484,7 @@ export default function SubProjectDetail() {
                                                 size="sm"
                                                 onClick={() => downloadDocument(image.id, 'project-docs', `project-image-${image.index + 1}`, true)}
                                                 className="h-10 w-10 p-0 text-white hover:bg-blue-500/80 bg-blue-500/60 backdrop-blur-sm"
-                                                title="دانلود تصویر"
+                                                title="دریافت تصویر"
                                             >
                                                 <Download className="h-5 w-5" />
                                             </Button>
@@ -555,7 +555,7 @@ export default function SubProjectDetail() {
                                                             size="sm"
                                                             onClick={() => downloadDocument(doc.id!, 'project-docs', doc.detail || 'document', true)}
                                                             className="h-8 w-8 p-0 text-blue-600 hover:bg-blue-50"
-                                                            title="دانلود سند"
+                                                            title="دریافت سند"
                                                         >
                                                             <Download className="h-4 w-4" />
                                                         </Button>
@@ -621,13 +621,13 @@ export default function SubProjectDetail() {
                                                         <div className="space-y-1 text-sm text-slate-600">
                                                             {currentOwner.email && (
                                                                 <p className="flex items-center gap-2">
-                                                                    <span className="font-medium">ایمیل:</span>
+                                                                    <span className="font-medium">پست الکترونیک:</span>
                                                                     <span>{currentOwner.email}</span>
                                                                 </p>
                                                             )}
                                                             {currentOwner.mobile && (
                                                                 <p className="flex items-center gap-2">
-                                                                    <span className="font-medium">موبایل:</span>
+                                                                    <span className="font-medium">تلفن همراه:</span>
                                                                     <span>{currentOwner.mobile}</span>
                                                                 </p>
                                                             )}
@@ -649,7 +649,7 @@ export default function SubProjectDetail() {
                                                             }}
                                                             className="text-indigo-600 border-indigo-300 hover:bg-indigo-50"
                                                         >
-                                                            مشاهده پروفایل
+                                                            مشاهده پیشخوان کاربری
                                                         </Button>
                                                     )}
                                                 </div>

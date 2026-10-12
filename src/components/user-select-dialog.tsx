@@ -110,7 +110,7 @@ export function UserSelectDialog({ open, onOpenChange, subProjectId, onAssignCom
               <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 id="user-search"
-                placeholder="جستجو بر اساس نام، ایمیل، موبایل یا کد ملی..."
+                placeholder="جستجو بر اساس نام، پست الکترونیک، تلفن همراه یا کد ملی..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pr-10"

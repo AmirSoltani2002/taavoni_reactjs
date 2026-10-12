@@ -196,7 +196,7 @@ export default function TransactionsList() {
                             </h1>
                             <p className="text-slate-600 text-lg">
                                 {['admin', 'system'].includes(userInfo?.type || '') 
-                                    ? 'مشاهده و مدیریت تمام رسیدهای پرداخت در سیستم' 
+                                    ? 'مشاهده و مدیریت تمام رسیدهای پرداخت در سامانه'
                                     : 'رسیدهای پرداخت شما'}
                             </p>
                         </div>

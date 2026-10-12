@@ -110,7 +110,7 @@ export type UserDoc = {
 
 export const getUserType = (type: User['type'] | string): string => {
     if(type === 'system') {
-        return 'مدیر سیستم';
+        return 'مدیر سامانه';
     } else if(type === 'admin') {
         return 'ادمین';
     } else {
@@ -146,11 +146,11 @@ export const columns: ColumnDef<User>[] = [
     },
     {
         accessorKey: "mobile",
-        header: "موبایل",
+        header: "تلفن همراه",
     },
     {
         accessorKey: "type",
-        header: "نوع اکانت",
+        header: "نوع حساب کاربری",
         cell: ({ cell }) => {
             const v = cell.getValue() as User['type'];
             return getUserType(v);
@@ -194,7 +194,7 @@ export const getDocsColumns = (
         accessorFn: (row) => row.detail || 'بدون موضوع',
     },
     {
-        header: 'تاریخ آپلود',
+        header: 'تاریخ بارگذاری',
         accessorFn: (row) => {
             if(row.updatedAt){
                 return (new Date(row.updatedAt)).toLocaleDateString('fa-IR');
@@ -204,7 +204,7 @@ export const getDocsColumns = (
         }
     },
     {
-        header: 'دانلود',
+        header: 'دریافت',
         accessorFn: row => row.id,
         cell: ({row}) => {
             if (!canDownload) return null;
@@ -231,7 +231,7 @@ export const getDocsColumns = (
                     }}
                     disabled={isDownloading}
                     className="h-8 w-8 p-0 text-blue-600 hover:bg-blue-50"
-                    title="دانلود فایل"
+                    title="دریافت فایل"
                 >
                     {isDownloading ? (
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>

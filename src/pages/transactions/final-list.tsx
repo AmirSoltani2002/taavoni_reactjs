@@ -202,7 +202,7 @@ export default function FinalTransactionsList() {
                             </h1>
                             <p className="text-slate-600 text-lg">
                                 {['admin', 'system'].includes(userInfo?.type || '') 
-                                    ? 'مشاهده و مدیریت تمام رسیدهای نهایی در سیستم' 
+                                    ? 'مشاهده و مدیریت تمام رسیدهای نهایی در سامانه'
                                     : 'رسیدهای نهایی شما'}
                             </p>
                         </div>

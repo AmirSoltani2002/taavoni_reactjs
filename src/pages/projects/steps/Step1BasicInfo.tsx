@@ -108,14 +108,14 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
             } catch (error) {
               console.error('Error fetching image:', error);
             }
-            toast.success(`تصویر ${imageIndex + 1} با موفقیت آپلود شد`);
+            toast.success(`تصویر ${imageIndex + 1} با موفقیت بارگذاری شد`);
           } else {
             // Upload failed, remove the image from state
             if (setProjectImages) {
               const filtered = projectImages.filter((_, i) => i !== imageIndex);
               setProjectImages(filtered);
             }
-            toast.error(`خطا در آپلود تصویر ${imageIndex + 1}`);
+            toast.error(`خطا در بارگذاری تصویر ${imageIndex + 1}`);
           }
         } catch (error) {
           console.error('Error uploading image:', error);
@@ -124,7 +124,7 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
             const filtered = projectImages.filter((_, i) => i !== imageIndex);
             setProjectImages(filtered);
           }
-          toast.error(`خطا در آپلود تصویر ${imageIndex + 1}`);
+          toast.error(`خطا در بارگذاری تصویر ${imageIndex + 1}`);
         } finally {
           setUploadingImages(prev => ({ ...prev, [imageIndex]: false }));
         }
@@ -283,13 +283,13 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
         if (docFileInputRef.current) {
           docFileInputRef.current.value = '';
         }
-        toast.success('سند با موفقیت آپلود شد');
+        toast.success('سند با موفقیت بارگذاری شد');
       } else {
-        toast.error('خطا در آپلود سند');
+        toast.error('خطا در بارگذاری سند');
       }
     } catch (error) {
       console.error('Error uploading document:', error);
-      toast.error('خطا در آپلود سند');
+      toast.error('خطا در بارگذاری سند');
     } finally {
       setUploadingDoc(false);
     }
@@ -366,7 +366,7 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                 <div className="p-1 rounded-md">
                   <MapPin className="w-4 h-4 text-green-600" />
                 </div>
-                آدرس پروژه
+                نشانی پروژه
               </Label>
               <Input 
                 type='text' 
@@ -374,7 +374,7 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                 value={project.address || ""} 
                 onChange={(e) => handleProjectChange(e.target.name, e.target.value)}
                 className="h-12 bg-white/50 border-slate-200 focus:bg-white focus:border-green-400 focus:ring-green-400/20 transition-all duration-200"
-                placeholder="آدرس کامل پروژه را وارد کنید..."
+                placeholder="نشانی کامل پروژه را وارد کنید..."
               />
             </div>
 
@@ -511,7 +511,7 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                           onClick={() => downloadDocument(imageId, 'project-docs', `project-image-${index + 1}`, true)}
                           className="h-10 w-10 p-0 text-white hover:bg-blue-500/80 bg-blue-500/60 backdrop-blur-sm"
                           disabled={uploadingImages[index]}
-                          title="دانلود تصویر"
+                          title="دریافت تصویر"
                         >
                           <Download className="h-5 w-5" />
                         </Button>
@@ -534,7 +534,7 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                       <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm">
                         <div className="flex flex-col items-center gap-2">
                           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-                          <span className="text-white text-xs font-medium">در حال آپلود...</span>
+                          <span className="text-white text-xs font-medium">در حال بارگذاری...</span>
                         </div>
                       </div>
                     )}
@@ -598,7 +598,7 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
               </div>
             </div>
             <p className="text-xs text-slate-500 text-center">
-              تصاویر زیبایی از پروژه خود آپلود کنید
+              تصاویر زیبایی از پروژه خود بارگذاری کنید
             </p>
           </div>
         </div>
@@ -637,7 +637,7 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                             size="sm"
                             onClick={() => downloadDocument(doc.id!, 'project-docs', doc.title || 'document', true)}
                             className="h-8 w-8 p-0 text-blue-600 hover:bg-blue-50"
-                            title="دانلود سند"
+                            title="دریافت سند"
                           >
                             <Download className="h-4 w-4" />
                           </Button>
@@ -711,12 +711,12 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                       {uploadingDoc ? (
                         <>
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          در حال آپلود...
+                          در حال بارگذاری...
                         </>
                       ) : (
                         <>
                           <Plus className="w-4 h-4 mr-2" />
-                          آپلود سند
+                          بارگذاری سند
                         </>
                       )}
                     </Button>
@@ -731,10 +731,10 @@ export const Step1BasicInfo: React.FC<Step1BasicInfoProps> = ({
                   <FileText className="w-5 h-5 text-amber-600" />
                   <div>
                     <p className="text-sm font-medium mb-1">
-                      برای آپلود اسناد، ابتدا پروژه را ایجاد کنید
+                      برای بارگذاری اسناد، ابتدا پروژه را ایجاد کنید
                     </p>
                     <p className="text-xs text-amber-600">
-                      پس از ایجاد پروژه، می‌توانید اسناد را در این بخش آپلود کنید
+                      پس از ایجاد پروژه، می‌توانید اسناد را در این بخش بارگذاری کنید
                     </p>
                   </div>
                 </div>

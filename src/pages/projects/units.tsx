@@ -136,7 +136,7 @@ export default function ProjectUnits() {
                             </div>
                             {project.address && (
                                 <div className="flex items-center gap-2">
-                                    <span className="font-semibold">آدرس:</span>
+                                    <span className="font-semibold">نشانی:</span>
                                     <span>{project.address}</span>
                                 </div>
                             )}

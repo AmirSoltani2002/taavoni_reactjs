@@ -38,7 +38,7 @@ export function AppSidebar() {
     onClick?: () => void;
   }[]>([
     {
-      title: "پروفایل",
+      title: "پیشخوان کاربری",
       url: "/dashboard",
       icon: Home,
     },
@@ -60,7 +60,7 @@ export function AppSidebar() {
     if(isAdmin) {
       setItems([
         {
-          title: "پروفایل",
+          title: "پیشخوان کاربری",
           url: "/dashboard",
           icon: Home,
         },
@@ -145,7 +145,7 @@ export function AppSidebar() {
     } else {
       setItems([
         {
-          title: "پروفایل",
+          title: "پیشخوان کاربری",
           url: "/dashboard",
           icon: Home,
         },
@@ -198,7 +198,7 @@ export function AppSidebar() {
                   {isAdmin && (
                     <Badge variant="secondary" className="text-xs px-2 py-0 h-5 bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 border-purple-200">
                       <Crown className="h-3 w-3 mr-1" />
-                      {userInfo?.type === 'system' ? 'مدیر سیستم' : 'ادمین'}
+                      {userInfo?.type === 'system' ? 'مدیر سامانه' : 'ادمین'}
                     </Badge>
                   )}
                   {!isAdmin && userInfo?.accepted && (
@@ -247,7 +247,7 @@ export function AppSidebar() {
                           <HoverCardContent className="max-w-xs text-xs text-center">
                             حساب شما هنوز تایید نشده است.<br />
                             لطفا با پشتیبانی تماس بگیرید.<br />
-                            <a href="/tickets/list" className="text-blue-600 underline">ارسال تیکت</a>
+                            <a href="/tickets/list" className="text-blue-600 underline">ارسال درخواست پشتیبانی</a>
                           </HoverCardContent>
                         </HoverCard>
                       ) : item.onClick ? (

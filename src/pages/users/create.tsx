@@ -76,7 +76,7 @@ export default function UserCreate({ initialValues, onSubmit, isEdit }: UserCrea
         hideWhenNotAdmin: false,
       },
       {
-        title: 'ایمیل',
+        title: 'پست الکترونیک',
         name: 'email',
         isRequired: false,
         type: 'email',
@@ -91,13 +91,13 @@ export default function UserCreate({ initialValues, onSubmit, isEdit }: UserCrea
         type: 'password',
       },
       {
-        title: 'موبایل',
+        title: 'تلفن همراه',
         name: 'mobile',
         isRequired: true,
         hideWhenNotAdmin: true,
       },
       {
-        title: 'آدرس',
+        title: 'نشانی',
         name: 'address',
         isRequired: false,
         className: "col-span-2",

@@ -39,7 +39,7 @@ export function SignupForm({
     [k: string]: string
   } = {
     'شماره تلفن همراه': '0900000000',
-    'ایمیل': 'example@gmail.com',
+    'پست الکترونیک': 'example@gmail.com',
     'شماره تلفن منزل': '02100000000',
     'شماره تلفن محل کار': '02100000000',
     'sex': 'جنسیت را انتخاب کنید.',
@@ -88,10 +88,10 @@ export function SignupForm({
             // Optionally, add user info or metadata here
             try {
               postTable('user-doc', fileFormData, () => {
-                toast('کارت ملی با موفقیت آپلود شد.');
+                toast('کارت ملی با موفقیت بارگذاری شد.');
               });
             } catch (err) {
-              toast('خطا در آپلود کارت ملی');
+              toast('خطا در بارگذاری کارت ملی');
             }
           }}>
             <div className="flex flex-col gap-6">
@@ -102,7 +102,7 @@ export function SignupForm({
                   { label: 'نام خانوادگی', name: 'lastName', type: 'text', placeholder: '' },
                   { label: 'کدملی', name: 'nationalNumber', type: 'text', placeholder: '' },
                   { label: 'تاریخ تولد', name: 'birthDay', type: 'date', placeholder: '' },
-                  { label: 'ایمیل', name: 'email', type: 'email', placeholder: 'example@gmail.com' },
+                  { label: 'پست الکترونیک', name: 'email', type: 'email', placeholder: 'example@gmail.com' },
                   { label: 'شماره تلفن همراه', name: 'mobile', type: 'tel', placeholder: '0900000000' },
                   { label: 'شماره تلفن منزل', name: 'homePhone', type: 'tel', placeholder: '02100000000' },
                   { label: 'شماره تلفن محل کار', name: 'workPhone', type: 'tel', placeholder: '02100000000' },
@@ -169,7 +169,7 @@ export function SignupForm({
                 </div>
               </div>
               <div>
-                <Label htmlFor="address" className="mr-auto">آدرس</Label>
+                <Label htmlFor="address" className="mr-auto">نشانی</Label>
                 <Input
                   name="address"
                   id="address"
@@ -203,7 +203,7 @@ export function SignupForm({
               </div>
               {/* User type expects nationalCard (string), not file. Add a separate upload for ID card file. */}
               <div>
-                <Label htmlFor="id-card-upload" className="ml-auto">آپلود تصویر یا PDF کارت ملی</Label>
+                <Label htmlFor="id-card-upload" className="ml-auto">بارگذاری تصویر یا PDF کارت ملی</Label>
                 <Input
                   name="idCardFile"
                   id="id-card-upload"
