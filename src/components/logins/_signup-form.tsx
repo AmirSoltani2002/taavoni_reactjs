@@ -122,7 +122,7 @@ export function SignupForm({
                           name={item.name}
                           type={item.type}
                           placeholder={item.placeholder}
-                          required
+                          required={item.name !== 'homePhone' && item.name !== 'workPhone'}
                         />
                       </div>
                     )}
