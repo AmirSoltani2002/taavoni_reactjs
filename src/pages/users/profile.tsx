@@ -793,7 +793,7 @@ export default function ProfilePage() {
                       <UserIcon className="h-5 w-5 text-blue-600" />
                       اطلاعات شخصی
                     </CardTitle>
-                    {((viewer?.type === 'system' || viewer?.type === 'admin') || (!userId && !user.accepted)) && (
+                    {((viewer?.type === 'system' || viewer?.type === 'admin') || !userId) && (
                       <Button onClick={() => setEdit(true)} variant="outline" size="sm" className="gap-2">
                         <Edit2 className="h-4 w-4" />
                         ویرایش
@@ -908,8 +908,12 @@ export default function ProfilePage() {
                       </div>
                     </div>
                     <div className="col-span-1 md:col-span-2 space-y-1">
-                      <Label className={LABEL_CLASS}><MapPin className="h-4 w-4 inline ml-2" />نشانی</Label>
+                      <Label className={LABEL_CLASS}><MapPin className="h-4 w-4 inline ml-2" />نشانی محل سکونت</Label>
                       <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg min-h-[60px]">{user.address || "-"}</div>
+                    </div>
+                    <div className="col-span-1 md:col-span-2 space-y-1">
+                      <Label className={LABEL_CLASS}><Briefcase className="h-4 w-4 inline ml-2" />نشانی محل کار</Label>
+                      <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg min-h-[60px]">{user.workAddress || "-"}</div>
                     </div>
                   </div>
                 </CardContent>
@@ -925,7 +929,7 @@ export default function ProfilePage() {
                       <Phone className="h-5 w-5 text-blue-600" />
                       اطلاعات تماس
                     </CardTitle>
-                    {((viewer?.type === 'system' || viewer?.type === 'admin') || (!userId && !user.accepted)) && (
+                    {((viewer?.type === 'system' || viewer?.type === 'admin') || !userId) && (
                       <Button onClick={() => setEdit(true)} variant="outline" size="sm" className="gap-2">
                         <Edit2 className="h-4 w-4" />
                         ویرایش
@@ -1567,20 +1571,24 @@ export default function ProfilePage() {
                     <Input name="mobile" value={form.mobile ?? ""} onChange={handleChange} className="h-11" />
                   </div>
                   <div className="space-y-2">
-                    <Label className={LABEL_CLASS}><Home className="h-4 w-4 inline ml-2" />تلفن منزل</Label>
-                    <Input name="homePhone" value={form.homePhone ?? ""} onChange={handleChange} className="h-11" />
+                    <Label htmlFor="homePhone" className={LABEL_CLASS}><Home className="h-4 w-4 inline ml-2" />تلفن منزل</Label>
+                    <Input id="homePhone" name="homePhone" value={form.homePhone ?? ""} onChange={handleChange} className="h-11" />
                   </div>
                   <div className="space-y-2">
-                    <Label className={LABEL_CLASS}><Briefcase className="h-4 w-4 inline ml-2" />تلفن محل کار</Label>
-                    <Input name="workPhone" value={form.workPhone ?? ""} onChange={handleChange} className="h-11" />
+                    <Label htmlFor="workPhone" className={LABEL_CLASS}><Briefcase className="h-4 w-4 inline ml-2" />تلفن محل کار</Label>
+                    <Input id="workPhone" name="workPhone" value={form.workPhone ?? ""} onChange={handleChange} className="h-11" />
                   </div>
                   <div className="space-y-2">
                     <Label className={LABEL_CLASS}><Hash className="h-4 w-4 inline ml-2" />کد ملی</Label>
                     <Input name="nationalNumber" value={form.nationalNumber ?? ""} onChange={handleChange} className="h-11" />
                   </div>
                   <div className="col-span-1 md:col-span-2 space-y-2">
-                    <Label className={LABEL_CLASS}><MapPin className="h-4 w-4 inline ml-2" />نشانی</Label>
-                    <Input name="address" value={form.address ?? ""} onChange={handleChange} className="h-11" />
+                    <Label htmlFor="address" className={LABEL_CLASS}><MapPin className="h-4 w-4 inline ml-2" />نشانی محل سکونت</Label>
+                    <Input id="address" name="address" value={form.address ?? ""} onChange={handleChange} className="h-11" />
+                  </div>
+                  <div className="col-span-1 md:col-span-2 space-y-2">
+                    <Label htmlFor="workAddress" className={LABEL_CLASS}><Briefcase className="h-4 w-4 inline ml-2" />نشانی محل کار</Label>
+                    <Input id="workAddress" name="workAddress" value={form.workAddress ?? ""} onChange={handleChange} className="h-11" />
                   </div>
                   <div className="space-y-2">
                     <Label className={LABEL_CLASS}><UserIcon className="h-4 w-4 inline ml-2" />جنسیت</Label>

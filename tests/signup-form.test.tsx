@@ -43,7 +43,7 @@ describe('SignupForm', () => {
     expect(confirmationInput).toHaveValue('safe-password')
   })
 
-  it('posts a birthday as the selected local calendar day', async () => {
+  it('posts a birthday without requiring home and work phone numbers', async () => {
     let requestBody: Record<string, unknown> | undefined
     server.use(
       http.post(api_base_url + '/users', async ({ request }) => {
@@ -59,8 +59,8 @@ describe('SignupForm', () => {
     await user.type(screen.getByLabelText('کدملی'), '0012345678')
     await user.type(screen.getByLabelText('پست الکترونیک'), 'ali@example.com')
     await user.type(screen.getByLabelText('شماره تلفن همراه'), '09120000000')
-    await user.type(screen.getByLabelText('شماره تلفن منزل'), '02100000000')
-    await user.type(screen.getByLabelText('شماره تلفن محل کار'), '02100000000')
+    expect(screen.getByLabelText('شماره تلفن منزل')).not.toBeRequired()
+    expect(screen.getByLabelText('شماره تلفن محل کار')).not.toBeRequired()
     await user.type(screen.getByLabelText('نشانی'), 'تهران')
     const passwordInput = screen.getByLabelText('رمز عبور', { selector: 'input' })
     const passwordRepeatInput = screen.getByLabelText('تکرار رمز عبور')
@@ -83,7 +83,11 @@ describe('SignupForm', () => {
     await user.click(submitButton)
 
     await waitFor(() => {
-      expect(requestBody).toMatchObject({ birthDay: '2026-09-23' })
+      expect(requestBody).toMatchObject({
+        birthDay: '2026-09-23',
+        homePhone: '',
+        workPhone: '',
+      })
     })
   })
 })

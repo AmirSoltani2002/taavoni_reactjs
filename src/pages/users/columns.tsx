@@ -75,6 +75,7 @@ export type User = {
     updatedAt?: string;
     createdAt?: string;
     address?: string;
+    workAddress?: string;
     birthDay?: string;
     email?: string;
     homePhone?: string;
