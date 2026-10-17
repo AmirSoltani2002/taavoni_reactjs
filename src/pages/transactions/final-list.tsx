@@ -19,8 +19,10 @@ import { Label } from "@/components/ui/label"
 import type { SubProject } from "../projects/columns"
 import { UserSelect } from "@/components/user-select"
 import TransactionEditDialog from "./transaction-edit-dialog"
+import { useNavigate } from "react-router-dom"
 
 export default function FinalTransactionsList() {
+    const navigate = useNavigate()
     const [data, setData] = useState<FinalTransaction[]>([])
     const [userInfo, setUserInfo] = useState<User>()
     const [isLoading, setIsLoading] = useState(true)
@@ -357,6 +359,9 @@ export default function FinalTransactionsList() {
                             tableName="final-transaction"
                             onRefresh={refreshData}
                             options={getFinalTransactionOptions(refreshData, userInfo, setEditingTransaction)}
+                            onClickRow={['admin', 'system'].includes(userInfo?.type || '')
+                                ? (transaction) => transaction.userId && navigate(`/users/${transaction.userId}#payments`)
+                                : undefined}
                         />
                     </div>
                 </div>
