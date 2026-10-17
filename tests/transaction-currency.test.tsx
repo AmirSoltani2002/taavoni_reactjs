@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { HttpResponse, http } from 'msw'
+import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 import FinalTransactionsList from '@/pages/transactions/final-list'
 import PresellingTransactionsList from '@/pages/transactions/preselling-list'
@@ -76,7 +77,11 @@ describe('Transaction currency labels', () => {
       ),
     )
 
-    render(<PresellingTransactionsList />)
+    render(
+      <MemoryRouter>
+        <PresellingTransactionsList />
+      </MemoryRouter>,
+    )
 
     expect(await screen.findAllByText(/ریال/)).toHaveLength(3)
     expect(screen.queryByText(/تومان/)).not.toBeInTheDocument()
@@ -98,7 +103,11 @@ describe('Transaction currency labels', () => {
       ),
     )
 
-    render(<FinalTransactionsList />)
+    render(
+      <MemoryRouter>
+        <FinalTransactionsList />
+      </MemoryRouter>,
+    )
 
     expect(await screen.findAllByText(/ریال/)).toHaveLength(4)
     expect(screen.queryByText(/تومان/)).not.toBeInTheDocument()
@@ -144,7 +153,11 @@ describe('Transaction currency labels', () => {
       ),
     )
 
-    render(<PresellingTransactionsList />)
+    render(
+      <MemoryRouter>
+        <PresellingTransactionsList />
+      </MemoryRouter>,
+    )
 
     expect(await screen.findByText('transaction-1')).toBeVisible()
     expect(screen.queryByText('ویرایش تراکنش')).not.toBeInTheDocument()
