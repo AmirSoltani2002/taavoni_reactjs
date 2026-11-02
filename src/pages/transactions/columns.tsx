@@ -1,4 +1,4 @@
-import { type ColumnDef } from "@tanstack/react-table"
+import { type ColumnDef, type Row } from "@tanstack/react-table"
 import { Download, Eye, CheckCircle2, Pencil, XCircle } from "lucide-react"
 import { updateTableRow } from "@/general"
 import { api_base_url } from "@/config"
@@ -45,6 +45,34 @@ export type FinalTransaction = {
     subProject?: SubProject;
 }
 
+type TransactionWithUser = {
+    userId?: number;
+    user?: User;
+}
+
+const persianUserCollator = new Intl.Collator('fa-IR', {
+    usage: 'sort',
+    sensitivity: 'base',
+});
+
+const getUserDisplayName = (user?: User) =>
+    `${user?.name || ''} ${user?.lastName || ''}`.trim();
+
+const compareTransactionUsers = <T extends TransactionWithUser>(rowA: Row<T>, rowB: Row<T>) => {
+    const nameComparison = persianUserCollator.compare(
+        getUserDisplayName(rowA.original.user),
+        getUserDisplayName(rowB.original.user),
+    );
+    if (nameComparison !== 0) return nameComparison;
+
+    const userIdA = rowA.original.user?.id ?? rowA.original.userId;
+    const userIdB = rowB.original.user?.id ?? rowB.original.userId;
+    if (userIdA === userIdB) return 0;
+    if (userIdA === undefined) return 1;
+    if (userIdB === undefined) return -1;
+    return userIdA - userIdB;
+};
+
 export const getColumns = (): ColumnDef<Transaction>[] => {
     const baseColumns: ColumnDef<Transaction>[] = [
     {
@@ -75,6 +103,7 @@ export const getColumns = (): ColumnDef<Transaction>[] => {
     {
         accessorKey: "user",
         header: "کاربر",
+        sortingFn: compareTransactionUsers,
         cell: ({ row }) => {
             const user = row.original.user;
             if (!user) return "-";
@@ -334,6 +363,7 @@ export const getFinalTransactionColumns = (): ColumnDef<FinalTransaction>[] => {
         {
             accessorKey: "user",
             header: "کاربر",
+            sortingFn: compareTransactionUsers,
             cell: ({ row }) => {
                 const user = row.original.user;
                 if (!user) return "-";
