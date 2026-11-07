@@ -113,12 +113,20 @@ export function AppSidebar() {
           title: "رسیدهای پرداخت",
           options: [
             {
-              title: "رسیدهای پیش‌فروش",
+              title: "ریز رسید‌های پیش‌فروش",
               url: '/transactions/preselling/list',
             },
             {
-              title: "رسیدهای نهایی",
+              title: "جمع رسیدهای پیش‌فروش",
+              url: '/transactions/preselling/sumlist',
+            },
+            {
+              title: "ریز رسیدهای نهایی",
               url: '/transactions/final/list',
+            },
+            {
+              title: "جمع رسیدهای نهایی",
+              url: '/transactions/final/sumlist',
             },
             
           ],
@@ -158,11 +166,11 @@ export function AppSidebar() {
           title: "رسیدهای پرداخت",
           options: [
             {
-              title: "رسیدهای پیش‌فروش",
+              title: "ریز رسید‌های پیش‌فروش",
               url: '/transactions/preselling/list',
             },
             {
-              title: "رسیدهای نهایی",
+              title: "ریز رسیدهای نهایی",
               url: '/transactions/final/list',
             },
             

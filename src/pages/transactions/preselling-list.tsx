@@ -183,7 +183,7 @@ export default function PresellingTransactionsList() {
                         <div className="space-y-1">
                             <h1 className="text-4xl font-bold text-slate-900 flex items-center gap-3">
                                 <CreditCard className="w-10 h-10 text-blue-600" />
-                                رسیدهای پیش‌فروش
+                                ریز رسید‌های پیش‌فروش
                             </h1>
                             <p className="text-slate-600 text-lg">
                                 {['admin', 'system'].includes(userInfo?.type || '') 
