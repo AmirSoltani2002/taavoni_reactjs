@@ -24,7 +24,6 @@ export default function TransactionSummaryList({ type }: { type: ReceiptType }) 
     const [allowed, setAllowed] = useState(false)
     const [projectId, setProjectId] = useState<number | ''>('')
     const [userId, setUserId] = useState<number | ''>('')
-    const [targetBank, setTargetBank] = useState('')
 
     useEffect(() => {
         let active = true
@@ -59,12 +58,10 @@ export default function TransactionSummaryList({ type }: { type: ReceiptType }) 
     const users = useMemo(() => Array.from(new Map(data.flatMap(receipt =>
         receipt.user?.id === undefined ? [] : [[receipt.user.id, receipt.user] as const]
     )).values()), [data])
-    const banks = useMemo(() => Array.from(new Set(data.flatMap(receipt => receipt.targetBank ? [receipt.targetBank] : []))).sort(), [data])
     const filtered = useMemo(() => data.filter(receipt =>
         (!projectId || getReceiptProject(receipt, type)?.id === projectId) &&
-        (!userId || (receipt.userId ?? receipt.user?.id) === userId) &&
-        (!targetBank || receipt.targetBank === targetBank)
-    ), [data, type, projectId, userId, targetBank])
+        (!userId || (receipt.userId ?? receipt.user?.id) === userId)
+    ), [data, type, projectId, userId])
     const summaries = useMemo(() => summarizeReceipts(filtered, type), [filtered, type])
     const totalAmount = filtered.reduce((sum, receipt) => sum + (receipt.amount ?? 0), 0)
     const label = type === 'preselling' ? 'پیش‌فروش' : 'نهایی'
@@ -80,7 +77,7 @@ export default function TransactionSummaryList({ type }: { type: ReceiptType }) 
                 </div>
                 {error && <p role="alert" className="text-destructive">{error}</p>}
                 {allowed && !error && <>
-                    <div className="bg-white rounded-xl shadow-sm border p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="bg-white rounded-xl shadow-sm border p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="projectFilter">فیلتر بر اساس پروژه</Label>
                             <select id="projectFilter" className={selectClassName} value={projectId} onChange={event => setProjectId(event.target.value ? Number(event.target.value) : '')}>
@@ -89,13 +86,6 @@ export default function TransactionSummaryList({ type }: { type: ReceiptType }) 
                             </select>
                         </div>
                         <UserSelect users={users} selectedUserId={userId} onUserSelect={setUserId} placeholder="همه کاربران" label="فیلتر بر اساس کاربر" showAllOption />
-                        <div className="space-y-2">
-                            <Label htmlFor="targetBankFilter">فیلتر بر اساس بانک مقصد</Label>
-                            <select id="targetBankFilter" className={selectClassName} value={targetBank} onChange={event => setTargetBank(event.target.value)}>
-                                <option value="">همه بانک‌ها</option>
-                                {banks.map(bank => <option key={bank} value={bank}>{bank}</option>)}
-                            </select>
-                        </div>
                     </div>
                     {filtered.length > 0 && <section aria-label="آمار تراکنش‌های فیلتر شده" className="bg-white rounded-xl shadow-sm border p-6">
                         <h2 className="text-xl font-bold text-slate-900 mb-4">آمار تراکنش‌های فیلتر شده</h2>

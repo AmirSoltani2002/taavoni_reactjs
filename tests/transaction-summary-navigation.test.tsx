@@ -20,7 +20,7 @@ describe('Receipt summary navigation', () => {
     const sidebar = await screen.findByRole('button', { name: 'رسیدهای پرداخت' })
     if (sidebar.getAttribute('aria-expanded') !== 'true') await user.click(sidebar)
     await waitFor(() => expect(screen.getAllByRole('link').filter(link => link.getAttribute('href')?.startsWith('/transactions/')).map(link => link.textContent)).toEqual([
-      'ریز رسید‌های پیش‌فروش', 'جمع رسیدهای پیش‌فروش', 'ریز رسیدهای نهایی', 'جمع رسیدهای نهایی',
+      'رسیدهای پیش‌فروش', 'جمع رسیدهای پیش‌فروش', 'رسیدهای نهایی', 'جمع رسیدهای نهایی',
     ]))
     await user.click(screen.getByRole('link', { name: 'جمع رسیدهای نهایی' }))
     expect(await screen.findByRole('heading', { name: 'جمع رسیدهای نهایی' })).toBeVisible()
@@ -40,6 +40,7 @@ describe('Receipt summary navigation', () => {
     if (menu.getAttribute('aria-expanded') !== 'true') await user.click(menu)
     expect(screen.queryByRole('link', { name: 'جمع رسیدهای پیش‌فروش' })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'جمع رسیدهای نهایی' })).not.toBeInTheDocument()
-    expect(within(document.body).getByRole('link', { name: 'ریز رسیدهای نهایی' })).toBeVisible()
+    expect(within(document.body).getByRole('link', { name: 'رسیدهای پیش‌فروش' })).toBeVisible()
+    expect(within(document.body).getByRole('link', { name: 'رسیدهای نهایی' })).toBeVisible()
   })
 })
