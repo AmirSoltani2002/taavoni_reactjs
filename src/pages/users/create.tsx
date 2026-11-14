@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type HTMLInputTypeAttribute } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { postTable } from "@/general";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
@@ -194,6 +195,17 @@ export default function UserCreate({ initialValues, onSubmit, isEdit }: UserCrea
               urlType={urlType} 
             />
           ))}
+          {isEdit && (
+            <div>
+              <label htmlFor="user-id">کد شناسه</label>
+              <Input
+                id="user-id"
+                value={initialValues?.id?.toString() ?? ''}
+                disabled
+                className="bg-muted text-muted-foreground"
+              />
+            </div>
+          )}
         </div>
         <Button type="submit" className="w-full mt-4">{`${isEdit ? 'تغییر' : 'افزودن'} ${NAME_TO_DISPLAY}`}</Button>
       </form>
