@@ -500,7 +500,7 @@ export default function ProjectCreate({
           block.floorCount > 0 &&
           isNonNegativeInteger(block.negativeFloorCount) &&
           block.shareArea >= 0 &&
-          block.buildingArea > 0
+          block.buildingArea >= 0
         );
       case 2:
         return areNegativeFloorsValid();

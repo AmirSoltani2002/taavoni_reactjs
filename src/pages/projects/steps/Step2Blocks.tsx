@@ -140,15 +140,15 @@ export const Step2Blocks: React.FC<Step2BlocksProps> = ({
                   </div>
 
                   <div>
-                    <Label className="flex items-center gap-2 text-slate-700 font-medium mb-2">
+                    <Label htmlFor={`share-area-${block.id}`} className="flex items-center gap-2 text-slate-700 font-medium mb-2">
                       <Square className="w-4 h-4 text-purple-600" />
-                      مساحت مشاعات (متر مربع) *
+                      مساحت مشاعات (متر مربع)
                     </Label>
                      <Input 
-                       required 
+                       id={`share-area-${block.id}`}
                        type='number' 
                        value={block.shareArea || ""} 
-                       onChange={(e) => updateBlock(block.id!, 'shareArea', e.target.value ? Number(e.target.value) : "")}
+                       onChange={(e) => updateBlock(block.id!, 'shareArea', Number(e.target.value))}
                        className="h-10"
                        min="0"
                        placeholder="مساحت مشاعات..."
@@ -156,15 +156,15 @@ export const Step2Blocks: React.FC<Step2BlocksProps> = ({
                   </div>
 
                   <div>
-                    <Label className="flex items-center gap-2 text-slate-700 font-medium mb-2">
+                    <Label htmlFor={`building-area-${block.id}`} className="flex items-center gap-2 text-slate-700 font-medium mb-2">
                       <Square className="w-4 h-4 text-orange-600" />
-                      مساحت زیربنا (متر مربع) *
+                      مساحت زیربنا (متر مربع)
                     </Label>
                      <Input 
-                       required 
+                       id={`building-area-${block.id}`}
                        type='number' 
                        value={block.buildingArea || ""} 
-                       onChange={(e) => updateBlock(block.id!, 'buildingArea', e.target.value ? Number(e.target.value) : "")}
+                       onChange={(e) => updateBlock(block.id!, 'buildingArea', Number(e.target.value))}
                        className="h-10"
                        min="1"
                        placeholder="مساحت زیربنا..."
