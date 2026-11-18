@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState, type HTMLInputTypeAttribute } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { postTable } from "@/general";
+import { getTable, postTable } from "@/general";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
 import { REGULAR_USER_TYPE_OPTIONS, type User } from "./columns";
 import FInput from "@/components/ui/functional-input";
+import { parseUserIdentifier, USER_IDENTIFIER_ERROR } from "@/lib/user-identifier";
 
 // User type based on columns.tsx
 
@@ -34,6 +35,12 @@ type UserCreateProps = {
 
 export default function UserCreate({ initialValues, onSubmit, isEdit }: UserCreateProps) {
   const [form, setForm] = useState<User>(initialValues || initialState);
+  const [viewer, setViewer] = useState<User | null>(null);
+  const [identifierInput, setIdentifierInput] = useState(initialValues?.identifier?.toString() ?? '');
+  const canEditIdentifier = viewer?.type === 'admin' || viewer?.type === 'system';
+  useEffect(() => {
+    getTable('users/profile', setViewer, false);
+  }, []);
   const [searchParams] = useSearchParams();
   const urlType = searchParams.get("type");
   const FIELDS = useMemo(() => {
@@ -147,16 +154,25 @@ export default function UserCreate({ initialValues, onSubmit, isEdit }: UserCrea
       toast.error('لطفا نوع عضویت را مشخص کنید');
       return;
     }
+    const identifier = parseUserIdentifier(identifierInput);
+    if (canEditIdentifier && Number.isNaN(identifier)) {
+      toast.error(USER_IDENTIFIER_ERROR);
+      return;
+    }
     // Filter out empty strings before submitting
     const cleanedForm = Object.fromEntries(
       Object.entries(form).filter(([, value]) => value !== ''),
     ) as Partial<User>;
     
+    delete cleanedForm.identifier;
+    if (canEditIdentifier) cleanedForm.identifier = identifier;
+
     if (onSubmit) {
       onSubmit(cleanedForm as User);
     } else {
-      postTable('users', cleanedForm, () => {
+      postTable(canEditIdentifier ? 'users/admin' : 'users', cleanedForm, () => {
         toast.success('کاربر با موفقیت ایجاد شد');
+        setIdentifierInput('');
         // Reset form - create new object and ensure string fields are empty strings (not undefined) for controlled inputs
         setForm({
           ...initialState,
@@ -195,14 +211,16 @@ export default function UserCreate({ initialValues, onSubmit, isEdit }: UserCrea
               urlType={urlType} 
             />
           ))}
-          {isEdit && (
+          {(isEdit || canEditIdentifier) && (
             <div>
               <label htmlFor="user-id">کد شناسه</label>
               <Input
                 id="user-id"
-                value={initialValues?.id?.toString() ?? ''}
-                disabled
-                className="bg-muted text-muted-foreground"
+                value={identifierInput}
+                onChange={event => setIdentifierInput(event.target.value)}
+                inputMode="numeric"
+                readOnly={!canEditIdentifier}
+                className={!canEditIdentifier ? 'bg-muted text-muted-foreground' : undefined}
               />
             </div>
           )}

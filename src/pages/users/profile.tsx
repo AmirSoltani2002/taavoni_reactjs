@@ -30,6 +30,7 @@ import { PageLoader } from "@/components/ui/loader";
 import FInput from "@/components/ui/functional-input";
 import { cn } from "@/lib/utils";
 import { formatDateOnly } from "@/lib/date";
+import { parseUserIdentifier, USER_IDENTIFIER_ERROR } from "@/lib/user-identifier";
 import UserProjects from "./userProjects";
 import { 
   User as UserIcon, Mail, Phone, MapPin, Calendar, FileText, 
@@ -69,6 +70,8 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [user, setUser] = useState<User | null>(null);
   const [viewer, setViewer] = useState<User | null>(null);
+  const [identifierInput, setIdentifierInput] = useState('');
+  const canEditIdentifier = viewer?.type === 'admin' || viewer?.type === 'system';
   const [edit, setEdit] = useState(false);
   const [form, setForm] = useState<Partial<User>>({});
   const [fullName, setFullName] = useState<string>("")
@@ -229,6 +232,7 @@ export default function ProfilePage() {
     getTable(userId ? `users/${userId}` : "users/profile", (data: User) => {
       setUser(data);
       setForm(data);
+      setIdentifierInput(data.identifier?.toString() ?? '');
       setBirthDate(data.birthDay ? new Date(data.birthDay) : undefined);
       setLoading(false);
       if(userId){
@@ -575,10 +579,20 @@ export default function ProfilePage() {
       toast.error(validationError);
       return;
     }
-    updateTableRow("users", userId ? userId : 'profile', { ...form, accepted: undefined, birthDay: birthDate ? formatDateOnly(birthDate) : undefined }, () => {
+    const identifier = parseUserIdentifier(identifierInput);
+    if (canEditIdentifier && Number.isNaN(identifier)) {
+      toast.error(USER_IDENTIFIER_ERROR);
+      return;
+    }
+    const updatedForm = { ...form };
+    delete updatedForm.identifier;
+    if (canEditIdentifier) updatedForm.identifier = identifier;
+    updateTableRow("users", userId ? userId : 'profile', { ...updatedForm, accepted: undefined, birthDay: birthDate ? formatDateOnly(birthDate) : undefined }, (updatedUser: User) => {
       toast.success("اطلاعات با موفقیت ویرایش شد");
       setEdit(false);
-      setUser({ ...user, ...form } as User);
+      setUser(updatedUser);
+      setForm(updatedUser);
+      setIdentifierInput(updatedUser.identifier?.toString() ?? '');
     });
   };
 
@@ -906,6 +920,10 @@ export default function ProfilePage() {
                       <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">
                         {user.birthDay ? (new Date(user.birthDay || '')).toLocaleDateString('fa-IR') : 'تاریخ تولد ثبت نشده'}
                       </div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className={LABEL_CLASS}><Hash className="h-4 w-4 inline ml-2" />شناسه</Label>
+                      <div className="text-gray-900 font-medium bg-gray-50 p-3 rounded-lg">{user.identifier ?? '-'}</div>
                     </div>
                     <div className="col-span-1 md:col-span-2 space-y-1">
                       <Label className={LABEL_CLASS}><MapPin className="h-4 w-4 inline ml-2" />نشانی محل سکونت</Label>
@@ -1600,12 +1618,24 @@ export default function ProfilePage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
+                  <div className="col-start-1 space-y-2">
                     <Label className={LABEL_CLASS}><Calendar className="h-4 w-4 inline ml-2" />تاریخ تولد</Label>
                     <Calendar22 date={birthDate} setDate={d => { 
                         setBirthDate(d); 
                         setForm(f => ({ ...f, birthDay: d ? formatDateOnly(d) : undefined }));
                     }} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="identifier" className={LABEL_CLASS}><Hash className="h-4 w-4 inline ml-2" />شناسه</Label>
+                    <Input
+                      id="identifier"
+                      name="identifier"
+                      value={identifierInput}
+                      onChange={event => setIdentifierInput(event.target.value)}
+                      inputMode="numeric"
+                      readOnly={!canEditIdentifier}
+                      className="h-11"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="isargaryType" className={LABEL_CLASS}>نوع ایثارگری</Label>
@@ -1811,7 +1841,8 @@ export default function ProfilePage() {
                     className="flex-1 gap-2 h-11"
                     onClick={() => { 
                       setEdit(false); 
-                      setForm(user); 
+                      setForm(user);
+                      setIdentifierInput(user.identifier?.toString() ?? '');
                       setBirthDate(user.birthDay ? new Date(user.birthDay) : undefined); 
                     }}
                   >
