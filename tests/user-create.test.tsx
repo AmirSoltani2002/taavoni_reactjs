@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { HttpResponse, http } from 'msw'
 import { MemoryRouter } from 'react-router-dom'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import UserCreate from '@/pages/users/create'
 import { api_base_url } from '@/config'
 import { Toaster } from '@/components/ui/sonner'
@@ -61,6 +61,9 @@ async function selectOption(
 }
 
 describe('UserCreate', () => {
+  beforeEach(() => {
+    server.use(http.get(api_base_url + '/users/profile', () => HttpResponse.json({ id: 1, type: 'admin' })))
+  })
   it.each(['admin', 'other'] as const)(
     'shows and hides the password on the %s creation path',
     async (type) => {
@@ -91,7 +94,7 @@ describe('UserCreate', () => {
   it('requires a valid membership type instead of submitting the URL marker', async () => {
     const requestSpy = vi.fn()
     server.use(
-      http.post(api_base_url + '/users', () => {
+      http.post(api_base_url + '/users/admin', () => {
         requestSpy()
         return HttpResponse.json({ id: 1 })
       }),
@@ -113,7 +116,7 @@ describe('UserCreate', () => {
   it('posts a selected faculty membership type', async () => {
     let requestBody: Record<string, unknown> | undefined
     server.use(
-      http.post(api_base_url + '/users', async ({ request }) => {
+      http.post(api_base_url + '/users/admin', async ({ request }) => {
         requestBody = await request.json() as Record<string, unknown>
         return HttpResponse.json({ id: 1, ...requestBody })
       }),
@@ -140,7 +143,7 @@ describe('UserCreate', () => {
   it('posts an administrator birthday as the selected local calendar day', async () => {
     let requestBody: Record<string, unknown> | undefined
     server.use(
-      http.post(api_base_url + '/users', async ({ request }) => {
+      http.post(api_base_url + '/users/admin', async ({ request }) => {
         requestBody = await request.json() as Record<string, unknown>
         return HttpResponse.json({ id: 1, ...requestBody })
       }),

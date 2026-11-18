@@ -75,6 +75,7 @@ export function DataTable<TData extends { id?: number }, TValue>({
     } else {
       return <div className="fixed overflow-auto inset-0 z-50 flex items-center justify-center bg-black/40" 
         onClick={(e) => {
+          e.stopPropagation();
           if(e.target === e.currentTarget){
             setEditRow(null);
           }

@@ -72,6 +72,7 @@ export const getFrontPresenceTypeLabel = (value: User['frontPresenceType']) =>
 // You can use a Zod schema here if you want.
 export type User = {
     id?: number
+    identifier?: number | null;
     updatedAt?: string;
     createdAt?: string;
     address?: string;
@@ -121,8 +122,9 @@ export const getUserType = (type: User['type'] | string): string => {
 
 export const columns: ColumnDef<User>[] = [
     {
-        accessorKey: "id",
+        accessorKey: "identifier",
         header: "شناسه",
+        cell: ({ row }) => row.original.identifier ?? "-",
     },
     {
         accessorKey: "name",

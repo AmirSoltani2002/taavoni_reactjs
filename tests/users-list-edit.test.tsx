@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { HttpResponse, http } from 'msw'
 import { MemoryRouter } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { api_base_url } from '@/config'
 import { updateTableRow } from '@/general'
 import UserCreate from '@/pages/users/create'
@@ -11,7 +11,10 @@ import type { User } from '@/pages/users/columns'
 import { server } from './mocks/server'
 
 describe('UsersList edit identifier', () => {
-  it('shows the selected user identifier as the sixth disabled field', async () => {
+  beforeEach(() => {
+    server.use(http.get(api_base_url + '/users/profile', () => HttpResponse.json({ id: 1, type: 'admin' })))
+  })
+  it('shows the selected user identifier as the sixth optional editable field', async () => {
     const rows: User[] = [
       {
         id: 41, name: 'علی', lastName: 'رضایی', sex: 'male',
@@ -19,7 +22,7 @@ describe('UsersList edit identifier', () => {
       },
       {
         id: 73, name: 'مریم', lastName: 'احمدی', sex: 'female',
-        nationalNumber: '0098765432', type: 'employee',
+        nationalNumber: '0098765432', type: 'employee', identifier: 120,
       },
     ]
     server.use(
@@ -38,8 +41,9 @@ describe('UsersList edit identifier', () => {
 
     const identifier = screen.getByRole('textbox', { name: 'کد شناسه' })
     expect(identifier).toBeVisible()
-    expect(identifier).toHaveValue('73')
-    expect(identifier).toBeDisabled()
+    expect(identifier).toHaveValue('120')
+    await waitFor(() => expect(identifier).not.toHaveAttribute('readonly'))
+    expect(identifier).not.toBeRequired()
     expect(screen.getAllByLabelText(/\*$|^کد شناسه$/)).toEqual([
       screen.getByLabelText('نام*'),
       screen.getByLabelText('نام خانوادگی*'),
@@ -48,11 +52,12 @@ describe('UsersList edit identifier', () => {
       screen.getByLabelText('نوع عضویت*'),
       identifier,
     ])
+    await user.clear(identifier)
     await user.type(identifier, '999')
-    expect(identifier).toHaveValue('73')
+    expect(identifier).toHaveValue('999')
   })
 
-  it('saves editable fields through the existing API helper without sending the identifier', async () => {
+  it('saves editable fields through the existing API helper without sending the primary key', async () => {
     let requestBody: Record<string, unknown> | undefined
     server.use(
       http.patch(api_base_url + '/users/73', async ({ request }) => {
@@ -85,13 +90,14 @@ describe('UsersList edit identifier', () => {
         sex: 'female',
         nationalNumber: '0098765432',
         type: 'employee',
+        identifier: null,
       })
     })
   })
 
   it.each(['admin', 'system', 'other'])(
-    'omits the identifier on the %s creation path',
-    (type) => {
+    'shows an optional identifier to the admin on the %s creation path',
+    async (type) => {
       render(
         <MemoryRouter initialEntries={['/users/create?type=' + type]}>
           <UserCreate />
@@ -99,7 +105,7 @@ describe('UsersList edit identifier', () => {
       )
 
       expect(screen.getByLabelText('نام*')).toBeVisible()
-      expect(screen.queryByLabelText('کد شناسه')).not.toBeInTheDocument()
+      expect(await screen.findByLabelText('کد شناسه')).not.toBeRequired()
     },
   )
 })
